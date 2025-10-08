@@ -1,0 +1,268 @@
+.movieCard {
+  background: linear-gradient(145deg, var(--bg-secondary), #0e0e0e);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.1);
+  transition: var(--transition);
+  position: relative;
+  cursor: pointer;
+}
+
+.movieCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), var(--shadow-glow);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.posterContainer {
+  position: relative;
+  overflow: hidden;
+  height: 400px;
+}
+
+.poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition);
+}
+
+.movieCard:hover .poster {
+  transform: scale(1.05);
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    transparent 0%, 
+    transparent 50%, 
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  opacity: 0;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.movieCard:hover .overlay {
+  opacity: 1;
+}
+
+.playButton {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  transform: scale(0.8);
+}
+
+.movieCard:hover .playButton {
+  transform: scale(1);
+}
+
+.playButton:hover {
+  background: var(--color-gold);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.playIcon {
+  font-size: 24px;
+  color: var(--bg-primary);
+  margin-left: 3px;
+}
+
+.rating {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--color-gold);
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.genre {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(178, 34, 34, 0.9);
+  color: var(--color-white);
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.content {
+  padding: 20px;
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin-bottom: 8px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.duration,
+.releaseYear {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.description {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.bookBtn {
+  flex: 1;
+  background: linear-gradient(45deg, var(--color-gold), #ffed4a);
+  color: var(--bg-primary);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--border-radius-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bookBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+}
+
+.detailBtn {
+  background: transparent;
+  color: var(--color-gold);
+  border: 1px solid var(--color-gold);
+  padding: 10px 15px;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 14px;
+}
+
+.detailBtn:hover {
+  background: var(--color-gold);
+  color: var(--bg-primary);
+}
+
+.comingSoon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(178, 34, 34, 0.95);
+  color: var(--color-white);
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 2;
+}
+
+.movieCard.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.movieCard.disabled:hover {
+  transform: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .posterContainer {
+    height: 350px;
+  }
+  
+  .content {
+    padding: 15px;
+  }
+  
+  .title {
+    font-size: 1.2rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .bookBtn,
+  .detailBtn {
+    padding: 12px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .posterContainer {
+    height: 300px;
+  }
+  
+  .overlay {
+    opacity: 1;
+    background: linear-gradient(
+      transparent 0%, 
+      transparent 40%, 
+      rgba(0, 0, 0, 0.9) 100%
+    );
+  }
+  
+  .playButton {
+    transform: scale(0.9);
+  }
+}
