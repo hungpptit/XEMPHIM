@@ -128,6 +128,34 @@ const SeatSelection = () => {
     );
   };
 
+  const renderSeatRow = (row, rowIndex) => {
+    const rowSeats = row;
+    const rowLetter = rowSeats[0].row;
+    
+    return (
+      <div key={rowIndex} className={styles.row}>
+        <div className={styles.rowLabel}>
+          {rowLetter}
+        </div>
+        
+        {/* Ghế 1-3 */}
+        {rowSeats.slice(0, 3).map(seat => renderSeat(seat))}
+        
+        {/* Lối đi 1 */}
+        <div className={styles.aisle}></div>
+        
+        {/* Ghế 4-9 */}
+        {rowSeats.slice(3, 9).map(seat => renderSeat(seat))}
+        
+        {/* Lối đi 2 */}
+        <div className={styles.aisle}></div>
+        
+        {/* Ghế 10-12 */}
+        {rowSeats.slice(9, 12).map(seat => renderSeat(seat))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className={styles.seatSelection}>
@@ -188,35 +216,24 @@ const SeatSelection = () => {
           <div className={styles.screen}></div>
           
           <div className={styles.seatsGrid}>
-            {seatMap.map((row, rowIndex) => (
-              <div key={rowIndex} className={styles.row}>
-                <div className={styles.rowLabel}>
-                  {row[0].row}
-                </div>
-                {row.slice(0, 4).map(seat => renderSeat(seat))}
-                <div className={styles.aisle}></div>
-                {row.slice(4, 8).map(seat => renderSeat(seat))}
-                <div className={styles.aisle}></div>
-                {row.slice(8, 12).map(seat => renderSeat(seat))}
-              </div>
-            ))}
+            {seatMap.map((row, rowIndex) => renderSeatRow(row, rowIndex))}
           </div>
 
           <div className={styles.legend}>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.available}`}></div>
+              <div className={`${styles.legendSeat} ${styles.available}`}>1</div>
               Ghế trống
             </div>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.selected}`}></div>
+              <div className={`${styles.legendSeat} ${styles.selected}`}>2</div>
               Ghế đã chọn
             </div>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.occupied}`}></div>
+              <div className={`${styles.legendSeat} ${styles.occupied}`}>3</div>
               Ghế đã đặt
             </div>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.vip} ${styles.available}`}></div>
+              <div className={`${styles.legendSeat} ${styles.vip} ${styles.available}`}>V</div>
               Ghế VIP
             </div>
           </div>

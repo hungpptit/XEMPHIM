@@ -72,15 +72,19 @@
 }
 
 .seatsGrid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 30px;
-  justify-items: center;
+  align-items: center;
 }
 
 .row {
-  display: contents;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
 }
 
 .rowLabel {
@@ -89,24 +93,30 @@
   justify-content: center;
   color: var(--color-gold);
   font-weight: 600;
-  font-size: 14px;
-  width: 30px;
-  height: 30px;
+  font-size: 16px;
+  width: 35px;
+  height: 35px;
+  min-width: 35px;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
 .seat {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: var(--transition);
   position: relative;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 35px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .seat.available {
@@ -149,7 +159,21 @@
 }
 
 .aisle {
-  width: 15px;
+  width: 25px;
+  min-width: 25px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.aisle::after {
+  content: '';
+  width: 2px;
+  height: 20px;
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 1px;
 }
 
 .legend {
@@ -157,7 +181,11 @@
   justify-content: center;
   gap: 30px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-small);
+  border: 1px solid rgba(255, 215, 0, 0.1);
 }
 
 .legendItem {
@@ -166,12 +194,19 @@
   gap: 8px;
   font-size: 14px;
   color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 .legendSeat {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar {
@@ -325,6 +360,27 @@
     position: static;
     order: -1;
   }
+  
+  .row {
+    gap: 6px;
+  }
+  
+  .seat {
+    width: 32px;
+    height: 32px;
+    font-size: 11px;
+  }
+  
+  .rowLabel {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
+  
+  .aisle {
+    width: 20px;
+    height: 32px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -337,15 +393,29 @@
     gap: 10px;
   }
   
-  .seatsGrid {
-    grid-template-columns: repeat(10, 1fr);
-    gap: 6px;
+  .row {
+    gap: 5px;
   }
   
   .seat {
-    width: 25px;
-    height: 25px;
+    width: 28px;
+    height: 28px;
     font-size: 10px;
+  }
+  
+  .rowLabel {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+  
+  .aisle {
+    width: 18px;
+    height: 28px;
+  }
+  
+  .aisle::after {
+    height: 16px;
   }
   
   .legend {
@@ -362,15 +432,31 @@
 }
 
 @media (max-width: 480px) {
-  .seatsGrid {
-    grid-template-columns: repeat(8, 1fr);
+  .row {
     gap: 4px;
   }
   
   .seat {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     font-size: 9px;
+    border-radius: 6px;
+  }
+  
+  .rowLabel {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  
+  .aisle {
+    width: 15px;
+    height: 24px;
+  }
+  
+  .aisle::after {
+    height: 14px;
+    width: 1px;
   }
   
   .legend {
@@ -386,5 +472,9 @@
   
   .mainContent {
     padding: 0 15px;
+  }
+  
+  .seatsGrid {
+    gap: 8px;
   }
 }
