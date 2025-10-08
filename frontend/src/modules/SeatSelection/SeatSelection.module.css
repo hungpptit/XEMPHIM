@@ -79,6 +79,34 @@
   align-items: center;
 }
 
+.seatNumbers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 10px;
+  color: var(--color-gold);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.numberGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.numberGroup span {
+  width: 35px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
 .row {
   display: flex;
   align-items: center;
@@ -154,8 +182,20 @@
 }
 
 .seat.vip.selected {
-  background: var(--color-gold);
-  color: var(--bg-primary);
+  background: linear-gradient(45deg, var(--color-gold), #ffed4a) !important;
+  color: var(--bg-primary) !important;
+  border: 2px solid var(--color-gold) !important;
+  transform: scale(1.15) !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8) !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+}
+
+.seat.vip.occupied {
+  background: #991b1b !important;
+  border: 2px solid #dc2626 !important;
+  color: var(--color-white) !important;
+  cursor: not-allowed !important;
 }
 
 .aisle {
@@ -179,7 +219,7 @@
 .legend {
   display: flex;
   justify-content: center;
-  gap: 30px;
+  gap: 15px;
   flex-wrap: wrap;
   margin-bottom: 25px;
   padding: 20px;
@@ -371,6 +411,10 @@
     font-size: 11px;
   }
   
+  .seat.vip.selected {
+    font-size: 14px !important;
+  }
+  
   .rowLabel {
     width: 32px;
     height: 32px;
@@ -380,6 +424,16 @@
   .aisle {
     width: 20px;
     height: 32px;
+  }
+  
+  .numberGroup {
+    gap: 6px;
+  }
+  
+  .numberGroup span {
+    width: 32px;
+    height: 18px;
+    font-size: 10px;
   }
 }
 
@@ -403,6 +457,10 @@
     font-size: 10px;
   }
   
+  .seat.vip.selected {
+    font-size: 12px !important;
+  }
+  
   .rowLabel {
     width: 28px;
     height: 28px;
@@ -419,7 +477,11 @@
   }
   
   .legend {
-    gap: 15px;
+    gap: 10px;
+  }
+  
+  .legendItem {
+    font-size: 12px;
   }
   
   .cinemaContainer {
@@ -428,6 +490,16 @@
   
   .sidebar {
     padding: 20px;
+  }
+  
+  .numberGroup {
+    gap: 5px;
+  }
+  
+  .numberGroup span {
+    width: 28px;
+    height: 16px;
+    font-size: 9px;
   }
 }
 
@@ -441,6 +513,10 @@
     height: 24px;
     font-size: 9px;
     border-radius: 6px;
+  }
+  
+  .seat.vip.selected {
+    font-size: 10px !important;
   }
   
   .rowLabel {
@@ -476,5 +552,19 @@
   
   .seatsGrid {
     gap: 8px;
+  }
+  
+  .numberGroup {
+    gap: 4px;
+  }
+  
+  .numberGroup span {
+    width: 24px;
+    height: 14px;
+    font-size: 8px;
+  }
+  
+  .seatNumbers {
+    gap: 4px;
   }
 }

@@ -56,7 +56,7 @@ const Home = () => {
     },
     {
       id: 5,
-      title: "Doctor Strange 2",
+      title: "Doctor Strange in the Multiverse of Madness",
       description: "Stephen Strange khám phá những thực tại khác nhau trong đa vũ trụ.",
       poster: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?ixlib=rb-4.0.3&w=400",
       rating: 8.3,

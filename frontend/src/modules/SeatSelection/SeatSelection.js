@@ -30,9 +30,19 @@ const SeatSelection = () => {
       const rowSeats = [];
       for (let i = 1; i <= seatsPerRow; i++) {
         // Create some random occupied seats
-        const isOccupied = Math.random() < 0.3;
+        let isOccupied = Math.random() < 0.3;
+        
         // VIP seats (rows F, G, H)
         const isVip = ['F', 'G', 'H'].includes(row);
+        
+        // Đảm bảo có một số ghế VIP bị đặt để test
+        if (isVip && (
+          (row === 'F' && [2, 8].includes(i)) ||
+          (row === 'G' && [6, 11].includes(i)) ||
+          (row === 'H' && [4, 9].includes(i))
+        )) {
+          isOccupied = true;
+        }
         
         rowSeats.push({
           id: `${row}${i}`,
@@ -115,6 +125,16 @@ const SeatSelection = () => {
       seatClass += ` ${styles.vip}`;
     }
 
+    // Hiển thị icon cho ghế VIP
+    let seatContent = '';
+    if (seat.type === 'vip') {
+      if (seat.status === 'occupied') {
+        seatContent = '❌';
+      } else if (isSelected) {
+        seatContent = '⭐';
+      }
+    }
+
     return (
       <button
         key={seat.id}
@@ -123,7 +143,7 @@ const SeatSelection = () => {
         disabled={seat.status === 'occupied'}
         title={`Ghế ${seat.id} - ${seat.type === 'vip' ? 'VIP' : 'Thường'} - ${seat.price.toLocaleString()}đ`}
       >
-        {seat.number}
+        {seatContent}
       </button>
     );
   };
@@ -216,25 +236,61 @@ const SeatSelection = () => {
           <div className={styles.screen}></div>
           
           <div className={styles.seatsGrid}>
+            {/* Trục X - Số ghế */}
+            <div className={styles.seatNumbers}>
+              <div className={styles.rowLabel}></div>
+              {/* Số 1-3 */}
+              <div className={styles.numberGroup}>
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+              </div>
+              <div className={styles.aisle}></div>
+              {/* Số 4-9 */}
+              <div className={styles.numberGroup}>
+                <span>4</span>
+                <span>5</span>
+                <span>6</span>
+                <span>7</span>
+                <span>8</span>
+                <span>9</span>
+              </div>
+              <div className={styles.aisle}></div>
+              {/* Số 10-12 */}
+              <div className={styles.numberGroup}>
+                <span>10</span>
+                <span>11</span>
+                <span>12</span>
+              </div>
+            </div>
+            
             {seatMap.map((row, rowIndex) => renderSeatRow(row, rowIndex))}
           </div>
 
           <div className={styles.legend}>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.available}`}>1</div>
-              Ghế trống
+              <div className={`${styles.legendSeat} ${styles.available}`}></div>
+              <span>🟢 Ghế trống</span>
             </div>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.selected}`}>2</div>
-              Ghế đã chọn
+              <div className={`${styles.legendSeat} ${styles.selected}`}></div>
+              <span>🟡 Ghế đã chọn</span>
             </div>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.occupied}`}>3</div>
-              Ghế đã đặt
+              <div className={`${styles.legendSeat} ${styles.occupied}`}></div>
+              <span>🔴 Ghế đã đặt</span>
             </div>
             <div className={styles.legendItem}>
-              <div className={`${styles.legendSeat} ${styles.vip} ${styles.available}`}>V</div>
-              Ghế VIP
+              <div className={`${styles.legendSeat} ${styles.vip} ${styles.available}`}></div>
+              <span>🟣 Ghế VIP trống</span>
+            </div>
+            <div className={styles.legendItem}>
+              <div className={`${styles.legendSeat} ${styles.vip} ${styles.selected}`}>⭐</div>
+              <span>Ghế VIP đã chọn</span>
+            </div>
+            <div className={styles.legendItem}>
+              <div className={`${styles.legendSeat} ${styles.vip} ${styles.occupied}`}>❌</div>
+              <span>Ghế VIP đã đặt</span>
             </div>
           </div>
         </div>
