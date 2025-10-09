@@ -1,0 +1,17 @@
+{
+  "name": "xemphim-backend",
+  "version": "0.1.0",
+  "description": "Backend skeleton for XEMPHIM project",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "mssql": "^12.0.0",
+    "sequelize": "^6.37.7",
+    "tedious": "^19.0.0"
+  }
+}
