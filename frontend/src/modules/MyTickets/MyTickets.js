@@ -34,10 +34,15 @@ const MyTickets = () => {
           const userId = user.id || user.user_id;
           const { bookingAPI } = await import('../../services/api');
           const response = await bookingAPI.getUserBookings(userId);
+          console.log('getUserBookings response:', response);
           
-          if (response && response.bookings) {
+          // Handle response format
+          const responseData = response.data || response;
+          const bookings = responseData.bookings || responseData || [];
+          
+          if (bookings && Array.isArray(bookings)) {
             // Map backend data to frontend format
-            const mappedTickets = response.bookings.map(booking => ({
+            const mappedTickets = bookings.map(booking => ({
               id: booking.id.toString(),
               movie: booking.movie,
               showtime: {
@@ -50,17 +55,13 @@ const MyTickets = () => {
               status: booking.status,
               bookingDate: booking.created_at
             }));
+            console.log('Mapped tickets with seats:', mappedTickets.map(t => ({ id: t.id, seats: t.selectedSeats })));
             setTickets(mappedTickets);
           }
         }
       } catch (error) {
         console.error('Error loading tickets:', error);
-        // Fallback to localStorage if API fails
-        const savedBookings = localStorage.getItem('bookings');
-        if (savedBookings) {
-          const bookings = JSON.parse(savedBookings);
-          setTickets(bookings);
-        }
+        setTickets([]);
       } finally {
         setLoading(false);
       }
@@ -99,7 +100,6 @@ const MyTickets = () => {
       );
       
       setTickets(updatedTickets);
-      localStorage.setItem('bookings', JSON.stringify(updatedTickets));
       alert('Vé đã được hủy thành công');
     }
   };
@@ -273,7 +273,7 @@ const MyTickets = () => {
                         <div className={styles.seatsList}>
                           {ticket.selectedSeats.map(seat => (
                             <span key={seat.id} className={styles.seatItem}>
-                              {seat.id}
+                              {seat.displayName || `${seat.row}${seat.number}`}
                             </span>
                           ))}
                         </div>

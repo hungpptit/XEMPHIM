@@ -133,22 +133,29 @@ const Payment = () => {
     try {
       // Call backend to confirm payment
       const { bookingAPI } = await import('../../services/api');
-      const result = await bookingAPI.confirmPayment({
-        booking_id: bookingId,
+      console.log('Confirming payment for booking:', bookingId);
+      
+      const result = await bookingAPI.confirmPayment(bookingId, {
         payment_method: selectedMethod,
         payment_payload: {
           transaction_ref: `TXN_${Date.now()}`,
           response_code: '00' // success code
         }
       });
+      
+      console.log('Payment confirmation result:', result);
 
-      if (result && result.booking) {
+      // Handle response format (API might return {data: ...} or direct object)
+      const responseData = result.data || result;
+      console.log('Response data:', responseData);
+
+      if (responseData && responseData.booking) {
         setProcessing(false);
         setShowSuccessModal(true);
         
         // Save booking info to localStorage for MyTickets
         const bookingData = {
-          id: result.booking.id.toString(),
+          id: responseData.booking.id.toString(),
           movie,
           showtime,
           selectedSeats,

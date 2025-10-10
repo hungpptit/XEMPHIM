@@ -175,32 +175,54 @@ export const expireLockedBookings = async () => {
 // Get user bookings with related data
 export const getUserBookings = async (userId) => {
   try {
+    console.log('Getting bookings for user:', userId);
+    
+    // Back to Showtime-only join + manual Movie lookup
     const bookings = await Booking.findAll({
       where: { user_id: userId },
       include: [
         {
           model: Showtime,
-          include: [
-            { model: sequelize.models.Movie, attributes: ['id', 'title', 'poster', 'duration'] }
-          ],
           attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price']
         },
         {
           model: BookingSeat,
-          include: [
-            { model: Seat, attributes: ['id', 'row_name', 'seat_number', 'seat_type'] }
-          ],
-          attributes: ['seat_id', 'price']
-        },
-        {
-          model: Payment,
-          attributes: ['id', 'payment_method', 'amount', 'status', 'created_at']
+          include: [{
+            model: Seat,
+            attributes: ['id', 'row_name', 'seat_number', 'seat_type', 'price_modifier']
+          }],
+          attributes: ['id', 'seat_id', 'price']
         }
       ],
-      order: [['created_at', 'DESC']],
-      attributes: ['id', 'booking_code', 'total_price', 'status', 'created_at', 'expire_at']
+      attributes: ['id', 'booking_code', 'total_price', 'status', 'created_at', 'expire_at'],
+      order: [['created_at', 'DESC']]
     });
 
+    console.log('Found bookings with showtimes:', bookings.length);
+
+    // Get unique movie IDs and fetch movies separately
+    const { Movie } = await import('../models/index.js');
+    const movieIds = [...new Set(bookings.map(b => b.Showtime?.movie_id).filter(Boolean))];
+    console.log('Loading movies for IDs:', movieIds);
+    
+    const movies = await Movie.findAll({
+      where: { id: movieIds },
+      attributes: ['id', 'title', 'poster_url', 'duration_minutes'] // Use correct DB column names
+    });
+    
+    const movieMap = movies.reduce((acc, movie) => {
+      acc[movie.id] = {
+        id: movie.id,
+        title: movie.name,      // Map name to title for frontend
+        poster: movie.poster_url, // Map poster_url to poster
+        duration: movie.duration_minutes // Map duration_minutes to duration
+      };
+      return acc;
+    }, {});
+    
+    console.log('Loaded movies:', Object.keys(movieMap));
+
+    // Return with manual movie lookup (avoid join issues)
     return bookings.map(booking => ({
       id: booking.id,
       booking_code: booking.booking_code,
@@ -208,12 +230,17 @@ export const getUserBookings = async (userId) => {
       status: booking.status,
       created_at: booking.created_at,
       expire_at: booking.expire_at,
-      movie: booking.Showtime?.Movie ? {
-        id: booking.Showtime.Movie.id,
-        title: booking.Showtime.Movie.title,
-        poster: booking.Showtime.Movie.poster,
-        duration: booking.Showtime.Movie.duration
-      } : null,
+      movie: booking.Showtime?.movie_id && movieMap[booking.Showtime.movie_id] ? {
+        id: movieMap[booking.Showtime.movie_id].id,
+        title: movieMap[booking.Showtime.movie_id].title,
+        poster: movieMap[booking.Showtime.movie_id].poster,
+        duration: movieMap[booking.Showtime.movie_id].duration
+      } : {
+        id: booking.Showtime?.movie_id || 1,
+        title: `Movie ${booking.Showtime?.movie_id || 'Unknown'}`,
+        poster: '/placeholder.jpg',
+        duration: 120
+      },
       showtime: booking.Showtime ? {
         id: booking.Showtime.id,
         hall_id: booking.Showtime.hall_id,
@@ -221,15 +248,15 @@ export const getUserBookings = async (userId) => {
         end_time: booking.Showtime.end_time,
         base_price: booking.Showtime.base_price
       } : null,
-      seats: booking.BookingSeats?.map(bs => ({
-        id: bs.Seat?.id,
-        row: bs.Seat?.row_name,
-        number: bs.Seat?.seat_number,
-        type: bs.Seat?.seat_type,
-        price: bs.price,
-        displayName: `${bs.Seat?.row_name}${bs.Seat?.seat_number}`
-      })) || [],
-      payment: booking.Payments?.[0] || null
+      seats: booking.BookingSeats ? booking.BookingSeats.map(bookingSeat => ({
+        id: bookingSeat.Seat?.id || bookingSeat.seat_id,
+        row: bookingSeat.Seat?.row_name || 'A',
+        number: bookingSeat.Seat?.seat_number || 1,
+        type: bookingSeat.Seat?.seat_type || 'regular',
+        price: bookingSeat.price || 0,
+        displayName: bookingSeat.Seat ? `${bookingSeat.Seat.row_name}${bookingSeat.Seat.seat_number}` : `A${bookingSeat.seat_id}`
+      })) : [],
+      payment: null
     }));
   } catch (err) {
     console.error('Error getting user bookings:', err);

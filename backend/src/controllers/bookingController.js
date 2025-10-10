@@ -23,7 +23,10 @@ export const lockSeatHandler = async (req, res) => {
 
 export const confirmPaymentHandler = async (req, res) => {
   try {
-    const { booking_id, payment_method, payment_payload } = req.body;
+    const booking_id = req.params.bookingId; // Get from URL params
+    const { payment_method, payment_payload } = req.body;
+    console.log('Confirming payment for booking:', booking_id);
+    
     const result = await bookingService.confirmPayment({ booking_id, payment_method, payment_payload });
     if (!result.success) return res.status(400).json({ message: result.message });
     res.json({ booking: result.booking, payment: result.payment });

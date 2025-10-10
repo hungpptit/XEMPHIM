@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/lock-seat', bookingController.lockSeatHandler);
 
 // POST confirm payment
-router.post('/confirm-payment', bookingController.confirmPaymentHandler);
+router.post('/:bookingId/confirm-payment', bookingController.confirmPaymentHandler);
 
 // GET user bookings
 router.get('/user/:userId', bookingController.getUserBookingsHandler);
