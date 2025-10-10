@@ -1,0 +1,1 @@
+Authtoken saved to configuration file: C:\Users\Tuan Hung\AppData\Local/ngrok/ngrok.yml 

@@ -264,9 +264,55 @@ export const getUserBookings = async (userId) => {
   }
 };
 
+// Create a Sepay QR (mock) and store a pending Payment record with qr_url and expire_at
+export const createSepayQR = async ({ booking_id, expiresIn = 60 }) => {
+  const booking = await Booking.findByPk(booking_id);
+  if (!booking) throw new Error('Booking not found');
+  // generate a VietQR-like image URL if account configured, otherwise fallback to Google Charts
+  const sepayAccount = process.env.SEPAY_ACCOUNT || '02042004666';
+  const amount = Number(booking.total_price || 0);
+  // Example: https://img.vietqr.io/image/TPB-02042004666-compact2.png?amount=120000&addInfo=BOOK456
+  let qrUrl;
+  if (sepayAccount) {
+    // Use numeric booking id in addInfo so webhook regex like /BOOK\d+/ can extract it
+    const addInfo = encodeURIComponent(`BOOK${booking.id}`);
+    qrUrl = `https://img.vietqr.io/image/TPB-${sepayAccount}-compact2.png?amount=${amount}&addInfo=${addInfo}`;
+  } else {
+    const qrData = encodeURIComponent(`PAY:${booking.booking_code};AMT:${amount}`);
+    qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${qrData}`;
+  }
+  const expireAt = new Date(Date.now() + expiresIn * 1000);
+
+  // create or update a pending payment record
+  const payment = await Payment.create({
+    booking_id: booking.id,
+    payment_method: 'sepay',
+    payment_code: uuidv4(),
+    amount: booking.total_price,
+    qr_url: qrUrl,
+    expire_at: expireAt,
+    status: 'pending',
+    created_at: new Date()
+  });
+
+  return { qr_url: qrUrl, expires_in: expiresIn, expires_at: expireAt.toISOString(), payment_id: payment.id };
+};
+
+export const getBookingStatus = async ({ booking_id }) => {
+  const booking = await Booking.findByPk(booking_id, { attributes: ['id', 'status', 'booking_code'] });
+  if (!booking) return null;
+  return { id: booking.id, status: booking.status, booking_code: booking.booking_code };
+};
+
 export default {
   lockSeats,
   confirmPayment,
   expireLockedBookings,
-  getUserBookings
+  getUserBookings,
+  createSepayQR,
+  getBookingStatus
 };
+
+
+
+

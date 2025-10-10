@@ -7,15 +7,37 @@ import authRoutes from './routes/auth.js';
 import movieRoutes from './routes/movies.js';
 import seatRoutes from './routes/seatRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
+import paymentsRoutes from './routes/payments.js';
 import { startExpireJob } from './jobs/expireBookingsJob.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
 
 // Middlewares
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+// Allow webhook calls from anywhere, but restrict browser calls to localhost:3000
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    // Allow localhost:3000 (frontend)
+    if (origin === 'http://localhost:3000') return callback(null, true);
+    // Allow localhost:9090 (webhook forwarder)
+    if (origin.startsWith('http://localhost:')) return callback(null, true);
+    // Reject other origins
+    console.warn(`❌ Blocked by CORS: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+
+// Logging middleware for debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} requested`);
+  next();
+});
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
@@ -26,7 +48,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/seats', seatRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/showtimes', (req, res) => res.status(501).json({ message: 'Not implemented' }));
-app.use('/api/payments', (req, res) => res.status(501).json({ message: 'Not implemented' }));
+app.use('/api/payments', paymentsRoutes);
 app.use('/api/users', (req, res) => res.status(501).json({ message: 'Not implemented' }));
 
 // Start server

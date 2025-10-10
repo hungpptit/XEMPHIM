@@ -51,8 +51,37 @@ export const getUserBookingsHandler = async (req, res) => {
   }
 };
 
+export const createSepayQRHandler = async (req, res) => {
+  try {
+    const bookingId = req.params.bookingId;
+    const result = await bookingService.createSepayQR({ booking_id: bookingId, expiresIn: 60 });
+    res.json(result);
+  } catch (err) {
+    console.error('Error creating Sepay QR:', err && err.stack ? err.stack : err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getBookingStatusHandler = async (req, res) => {
+  try {
+    const bookingId = req.params.bookingId;
+    const result = await bookingService.getBookingStatus({ booking_id: bookingId });
+    if (!result) return res.status(404).json({ message: 'Booking not found' });
+    res.json(result);
+  } catch (err) {
+    console.error('Error getting booking status:', err && err.stack ? err.stack : err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export default {
   lockSeatHandler,
   confirmPaymentHandler,
-  getUserBookingsHandler
+  getUserBookingsHandler,
+  createSepayQRHandler,
+  getBookingStatusHandler
 };
+
+
+
+

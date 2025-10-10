@@ -19,5 +19,8 @@
     "mssql": "^12.0.0",
     "sequelize": "^6.37.7",
     "tedious": "^19.0.0"
+  },
+  "devDependencies": {
+    "ngrok": "^5.0.0-beta.2"
   }
 }
