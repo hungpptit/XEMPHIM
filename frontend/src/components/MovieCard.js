@@ -22,8 +22,8 @@ const MovieCard = ({ movie }) => {
 
   const handleTrailerPlay = (e) => {
     e.stopPropagation();
-    // Implement trailer modal or navigation
-    console.log('Play trailer for:', movie.title);
+    // Navigate to movie detail and request scrolling to trailer
+    navigate(`/movies/${movie.id}`, { state: { scrollToTrailer: true } });
   };
 
   return (

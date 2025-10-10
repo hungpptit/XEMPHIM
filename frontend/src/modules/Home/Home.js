@@ -2,88 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlay, FaTicketAlt, FaShieldAlt, FaMobile } from 'react-icons/fa';
 import MovieCard from '../../components/MovieCard';
+import axios from 'axios';
+import { listMovies } from '../../services/movieService';
 import styles from './Home.module.css';
 
 const Home = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock data for movies
-  const mockMovies = [
-    {
-      id: 1,
-      title: "Spider-Man: No Way Home",
-      description: "Peter Parker phải đối mặt với những thách thức lớn nhất khi danh tính Spider-Man bị tiết lộ.",
-      poster: "https://images.unsplash.com/photo-1635805737707-575885ab0820?ixlib=rb-4.0.3&w=400",
-      rating: 8.9,
-      duration: 148,
-      releaseYear: 2024,
-      genre: "Hành động",
-      isAvailable: true
-    },
-    {
-      id: 2,
-      title: "Avatar: The Way of Water",
-      description: "Jake Sully và gia đình phải đối mặt với những thách thức mới trên hành tinh Pandora.",
-      poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?ixlib=rb-4.0.3&w=400",
-      rating: 9.2,
-      duration: 192,
-      releaseYear: 2024,
-      genre: "Sci-Fi",
-      isAvailable: true
-    },
-    {
-      id: 3,
-      title: "Top Gun: Maverick",
-      description: "Pete 'Maverick' Mitchell trở lại với vai trò phi công huấn luyện cho thế hệ mới.",
-      poster: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&w=400",
-      rating: 8.7,
-      duration: 130,
-      releaseYear: 2024,
-      genre: "Hành động",
-      isAvailable: true
-    },
-    {
-      id: 4,
-      title: "Black Panther: Wakanda Forever",
-      description: "Wakanda phải bảo vệ quốc gia của mình trước những thế lực thù địch mới.",
-      poster: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&w=400",
-      rating: 8.5,
-      duration: 161,
-      releaseYear: 2024,
-      genre: "Hành động",
-      isAvailable: false
-    },
-    {
-      id: 5,
-      title: "Doctor Strange in the Multiverse of Madness",
-      description: "Stephen Strange khám phá những thực tại khác nhau trong đa vũ trụ.",
-      poster: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?ixlib=rb-4.0.3&w=400",
-      rating: 8.3,
-      duration: 126,
-      releaseYear: 2024,
-      genre: "Fantasy",
-      isAvailable: true
-    },
-    {
-      id: 6,
-      title: "The Batman",
-      description: "Bruce Wayne trong những năm đầu làm Batman đối mặt với tội phạm tại Gotham.",
-      poster: "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?ixlib=rb-4.0.3&w=400",
-      rating: 8.8,
-      duration: 176,
-      releaseYear: 2024,
-      genre: "Hành động",
-      isAvailable: false
-    }
-  ];
-
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setMovies(mockMovies);
-      setLoading(false);
-    }, 1000);
+    let mounted = true;
+    const load = async () => {
+      try {
+        const data = await listMovies();
+        if (!mounted) return;
+        setMovies(data);
+      } catch (err) {
+        console.error('Failed to load movies', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
   }, []);
 
   const nowShowingMovies = movies.filter(movie => movie.isAvailable);

@@ -36,32 +36,41 @@ const Payment = require('./payment')(sequelize, DataTypes);
 const SysDiagram = require('./sysdiagram')(sequelize, DataTypes);
 
 // Associations
-Movie.hasMany(Showtime, { foreignKey: 'movie_id' });
-Showtime.belongsTo(Movie, { foreignKey: 'movie_id' });
+// Movie -> Showtime: prevent deleting a Movie while Showtimes exist (use RESTRICT)
+Movie.hasMany(Showtime, { foreignKey: 'movie_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+Showtime.belongsTo(Movie, { foreignKey: 'movie_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 
-CinemaHall.hasMany(Seat, { foreignKey: 'hall_id' });
-Seat.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
+// CinemaHall -> Seat: do not allow deleting a hall when seats exist (RESTRICT)
+CinemaHall.hasMany(Seat, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+Seat.belongsTo(CinemaHall, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 
-CinemaHall.hasMany(Showtime, { foreignKey: 'hall_id' });
-Showtime.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
+// CinemaHall -> Showtime: prevent deleting a hall when showtimes exist (RESTRICT)
+CinemaHall.hasMany(Showtime, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+Showtime.belongsTo(CinemaHall, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 
-Movie.belongsToMany(Genre, { through: MovieGenre, foreignKey: 'movie_id', otherKey: 'genre_id' });
-Genre.belongsToMany(Movie, { through: MovieGenre, foreignKey: 'genre_id', otherKey: 'movie_id' });
+// Movie <-> Genre (join table MovieGenre): cascade delete on association rows
+Movie.belongsToMany(Genre, { through: MovieGenre, foreignKey: 'movie_id', otherKey: 'genre_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+Genre.belongsToMany(Movie, { through: MovieGenre, foreignKey: 'genre_id', otherKey: 'movie_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
-User.hasMany(Booking, { foreignKey: 'user_id' });
-Booking.belongsTo(User, { foreignKey: 'user_id' });
+// User -> Booking: if a user is removed, keep bookings for audit (SET NULL)
+User.hasMany(Booking, { foreignKey: 'user_id', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+Booking.belongsTo(User, { foreignKey: 'user_id', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
 
-Showtime.hasMany(Booking, { foreignKey: 'showtime_id' });
-Booking.belongsTo(Showtime, { foreignKey: 'showtime_id' });
+// Showtime -> Booking: do not allow deleting a showtime with existing bookings (RESTRICT)
+Showtime.hasMany(Booking, { foreignKey: 'showtime_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+Booking.belongsTo(Showtime, { foreignKey: 'showtime_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 
-Booking.hasMany(BookingSeat, { foreignKey: 'booking_id' });
-BookingSeat.belongsTo(Booking, { foreignKey: 'booking_id' });
+// Booking -> BookingSeat: deleting a booking should remove its seats (CASCADE)
+Booking.hasMany(BookingSeat, { foreignKey: 'booking_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+BookingSeat.belongsTo(Booking, { foreignKey: 'booking_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
-Seat.hasMany(BookingSeat, { foreignKey: 'seat_id' });
-BookingSeat.belongsTo(Seat, { foreignKey: 'seat_id' });
+// Seat -> BookingSeat: prevent deleting a seat if booking records exist (RESTRICT)
+Seat.hasMany(BookingSeat, { foreignKey: 'seat_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BookingSeat.belongsTo(Seat, { foreignKey: 'seat_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 
-Booking.hasOne(Payment, { foreignKey: 'booking_id' });
-Payment.belongsTo(Booking, { foreignKey: 'booking_id' });
+// Booking -> Payment: deleting a booking should remove its payment record (CASCADE)
+Booking.hasOne(Payment, { foreignKey: 'booking_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+Payment.belongsTo(Booking, { foreignKey: 'booking_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 module.exports = {
   sequelize,

@@ -14,7 +14,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 // Route mounts
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/movies', (req, res) => res.status(501).json({ message: 'Not implemented' }));
+app.use('/api/movies', require('./routes/movies'));
 app.use('/api/showtimes', (req, res) => res.status(501).json({ message: 'Not implemented' }));
 app.use('/api/bookings', (req, res) => res.status(501).json({ message: 'Not implemented' }));
 app.use('/api/payments', (req, res) => res.status(501).json({ message: 'Not implemented' }));
