@@ -9,6 +9,9 @@ import styles from './Home.module.css';
 const Home = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const PAGE_SIZE = 10;
+  const [nowPage, setNowPage] = useState(1);
+  const [comingPage, setComingPage] = useState(1);
 
   useEffect(() => {
     let mounted = true;
@@ -29,6 +32,36 @@ const Home = () => {
 
   const nowShowingMovies = movies.filter(movie => movie.isAvailable);
   const comingSoonMovies = movies.filter(movie => !movie.isAvailable);
+
+  // pagination calculations
+  const nowTotalPages = Math.max(1, Math.ceil(nowShowingMovies.length / PAGE_SIZE));
+  const comingTotalPages = Math.max(1, Math.ceil(comingSoonMovies.length / PAGE_SIZE));
+
+  const nowPageClamped = Math.min(Math.max(1, nowPage), nowTotalPages);
+  const comingPageClamped = Math.min(Math.max(1, comingPage), comingTotalPages);
+
+  const nowSlice = nowShowingMovies.slice((nowPageClamped - 1) * PAGE_SIZE, nowPageClamped * PAGE_SIZE);
+  const comingSlice = comingSoonMovies.slice((comingPageClamped - 1) * PAGE_SIZE, comingPageClamped * PAGE_SIZE);
+
+  const scrollToElem = (id) => {
+    try {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const goToNowPage = (p) => {
+    setNowPage(p);
+    // scroll to the now showing section so user stays in context
+    setTimeout(() => scrollToElem('now-section'), 50);
+  };
+
+  const goToComingPage = (p) => {
+    setComingPage(p);
+    setTimeout(() => scrollToElem('coming-section'), 50);
+  };
 
   if (loading) {
     return (
@@ -75,12 +108,17 @@ const Home = () => {
 
       <div className="container">
         {/* Now Showing Section */}
-        <section className={styles.section}>
+  <section id="now-section" className={styles.section}>
           <h2 className={styles.sectionTitle}>Phim Đang Chiếu</h2>
           <div className={styles.moviesGrid}>
-            {nowShowingMovies.map(movie => (
+            {nowSlice.map(movie => (
               <MovieCard key={movie.id} movie={movie} />
             ))}
+          </div>
+          <div className={styles.pagination}>
+            <button disabled={nowPageClamped <= 1} onClick={() => goToNowPage(nowPageClamped - 1)}>Prev</button>
+            <span>Trang {nowPageClamped} / {nowTotalPages}</span>
+            <button disabled={nowPageClamped >= nowTotalPages} onClick={() => goToNowPage(nowPageClamped + 1)}>Next</button>
           </div>
           <Link to="/movies" className={styles.viewAllBtn}>
             Xem tất cả phim
@@ -88,12 +126,17 @@ const Home = () => {
         </section>
 
         {/* Coming Soon Section */}
-        <section className={styles.section}>
+  <section id="coming-section" className={styles.section}>
           <h2 className={styles.sectionTitle}>Phim Sắp Chiếu</h2>
           <div className={styles.moviesGrid}>
-            {comingSoonMovies.map(movie => (
+            {comingSlice.map(movie => (
               <MovieCard key={movie.id} movie={movie} />
             ))}
+          </div>
+          <div className={styles.pagination}>
+            <button disabled={comingPageClamped <= 1} onClick={() => goToComingPage(comingPageClamped - 1)}>Prev</button>
+            <span>Trang {comingPageClamped} / {comingTotalPages}</span>
+            <button disabled={comingPageClamped >= comingTotalPages} onClick={() => goToComingPage(comingPageClamped + 1)}>Next</button>
           </div>
         </section>
 

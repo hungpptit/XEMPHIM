@@ -256,3 +256,51 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Pagination styles for movie lists */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px 0 30px;
+}
+
+.pagination button {
+  background: linear-gradient(45deg, var(--color-gold), #ffed4a);
+  color: var(--bg-primary);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(255, 215, 0, 0.16);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.28);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.pagination span {
+  color: var(--color-white);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    gap: 8px;
+  }
+  .pagination button {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+}
