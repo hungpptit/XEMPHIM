@@ -1,6 +1,7 @@
 {
   "name": "xemphim-backend",
   "version": "0.1.0",
+  "type": "module",
   "description": "Backend skeleton for XEMPHIM project",
   "main": "src/index.js",
   "scripts": {

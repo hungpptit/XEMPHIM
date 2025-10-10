@@ -1,56 +1,65 @@
-const moviesService = require('../services/moviesService');
+import * as moviesService from '../services/moviesService.js';
 
-const list = async (req, res) => {
+// 🟢 Lấy danh sách phim
+export const list = async (req, res) => {
   try {
     const movies = await moviesService.listMovies();
     res.json({ movies });
   } catch (err) {
-    console.error(err);
+    console.error('Error listing movies:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-const detail = async (req, res) => {
+// 🔵 Lấy chi tiết phim
+export const detail = async (req, res) => {
   try {
-    const m = await moviesService.getMovieById(req.params.id);
-    if (!m) return res.status(404).json({ message: 'Movie not found' });
-    res.json({ movie: m });
+    const movie = await moviesService.getMovieById(req.params.id);
+    if (!movie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+    res.json({ movie });
   } catch (err) {
-    console.error(err);
+    console.error('Error getting movie detail:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-const create = async (req, res) => {
+// 🟠 Tạo mới phim
+export const create = async (req, res) => {
   try {
-    const m = await moviesService.createMovie(req.body);
-    res.status(201).json({ movie: m });
+    const movie = await moviesService.createMovie(req.body);
+    res.status(201).json({ movie });
   } catch (err) {
-    console.error(err);
+    console.error('Error creating movie:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-const update = async (req, res) => {
+// 🟣 Cập nhật phim
+export const update = async (req, res) => {
   try {
-    const m = await moviesService.updateMovie(req.params.id, req.body);
-    if (!m) return res.status(404).json({ message: 'Movie not found' });
-    res.json({ movie: m });
+    const movie = await moviesService.updateMovie(req.params.id, req.body);
+    if (!movie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+    res.json({ movie });
   } catch (err) {
-    console.error(err);
+    console.error('Error updating movie:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-const remove = async (req, res) => {
+// 🔴 Xóa phim
+export const remove = async (req, res) => {
   try {
     const ok = await moviesService.deleteMovie(req.params.id);
-    if (!ok) return res.status(404).json({ message: 'Movie not found' });
+    if (!ok) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
     res.json({ message: 'Movie deleted' });
   } catch (err) {
-    console.error(err);
+    console.error('Error deleting movie:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
-
-module.exports = { list, detail, create, update, remove };

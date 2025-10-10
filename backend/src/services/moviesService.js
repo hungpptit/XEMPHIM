@@ -1,18 +1,45 @@
-const { Movie, Genre } = require('../models');
+import { Movie, Genre } from '../models/index.js';
 
-const listMovies = async () => {
+// 🟢 Lấy tất cả phim
+export const listMovies = async () => {
   return Movie.findAll({
-    attributes: ['id', 'title', 'description', 'poster_url', 'backdrop_url', 'trailer_url', 'duration_minutes', 'release_date', 'rating', 'director', 'status']
+    attributes: [
+      'id',
+      'title',
+      'description',
+      'poster_url',
+      'backdrop_url',
+      'trailer_url',
+      'duration_minutes',
+      'release_date',
+      'rating',
+      'director',
+      'status'
+    ]
   });
 };
 
-const getMovieById = async (id) => {
+// 🔵 Lấy phim theo ID
+export const getMovieById = async (id) => {
   return Movie.findByPk(id, {
-    attributes: ['id', 'title', 'description', 'poster_url', 'backdrop_url', 'trailer_url', 'duration_minutes', 'release_date', 'rating', 'director', 'status']
+    attributes: [
+      'id',
+      'title',
+      'description',
+      'poster_url',
+      'backdrop_url',
+      'trailer_url',
+      'duration_minutes',
+      'release_date',
+      'rating',
+      'director',
+      'status'
+    ]
   });
 };
 
-const createMovie = async (payload) => {
+// 🟠 Tạo phim mới
+export const createMovie = async (payload) => {
   const m = await Movie.create({
     title: payload.title,
     description: payload.description,
@@ -25,16 +52,20 @@ const createMovie = async (payload) => {
     director: payload.director || null,
     status: payload.status || 'active'
   });
+
   if (payload.genres && Array.isArray(payload.genres)) {
     const genres = await Genre.findAll({ where: { id: payload.genres } });
     await m.setGenres(genres);
   }
+
   return m;
 };
 
-const updateMovie = async (id, payload) => {
+// 🟣 Cập nhật phim
+export const updateMovie = async (id, payload) => {
   const movie = await Movie.findByPk(id);
   if (!movie) return null;
+
   await movie.update({
     title: payload.title ?? movie.title,
     description: payload.description ?? movie.description,
@@ -47,18 +78,19 @@ const updateMovie = async (id, payload) => {
     director: payload.director ?? movie.director,
     status: payload.status ?? movie.status
   });
+
   if (payload.genres && Array.isArray(payload.genres)) {
     const genres = await Genre.findAll({ where: { id: payload.genres } });
     await movie.setGenres(genres);
   }
+
   return movie;
 };
 
-const deleteMovie = async (id) => {
+// 🔴 Xóa phim
+export const deleteMovie = async (id) => {
   const movie = await Movie.findByPk(id);
   if (!movie) return false;
   await movie.destroy();
   return true;
 };
-
-module.exports = { listMovies, getMovieById, createMovie, updateMovie, deleteMovie };

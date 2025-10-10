@@ -28,21 +28,8 @@ const MovieDetail = () => {
         const m = await getMovie(id);
         if (!mounted) return;
         if (m) {
-          setMovie({
-            id: m.id,
-            title: m.title,
-            description: m.description,
-            poster: m.poster_url || m.poster,
-            backdrop: m.backdrop_url || m.backdrop,
-            rating: parseFloat(m.rating) || 0,
-            duration: m.duration_minutes || null,
-            releaseYear: m.release_date ? new Date(m.release_date).getFullYear() : null,
-            genres: [],
-            director: m.director || '',
-            cast: [],
-            trailerUrl: m.trailer_url || m.trailerUrl || '',
-            isAvailable: ['now_showing', 'active', 'available'].includes((m.status || '').toString().toLowerCase())
-          });
+          // movieService.getMovie returns a normalized movie object (mapped fields)
+          setMovie(m);
           // showtimes still mocked for now until showtime API implemented
           setShowtimes([
             {
