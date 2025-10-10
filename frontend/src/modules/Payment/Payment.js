@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import authService from '../../services/authService';
 import { 
   FaArrowLeft, 
   FaCreditCard, 
@@ -25,6 +26,7 @@ const Payment = () => {
     phone: '',
     agreeTerms: false
   });
+  const [isUser, setIsUser] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -66,6 +68,30 @@ const Payment = () => {
       navigate('/');
     }
   }, [movie, showtime, selectedSeats, navigate]);
+
+  // If user is logged in (cookie based), prefill customer info so they don't need to type
+  React.useEffect(() => {
+    let mounted = true;
+    const loadCurrentUser = async () => {
+      try {
+        const u = await authService.getCurrentUser();
+        if (!mounted) return;
+        if (u) {
+          setCustomerInfo(prev => ({
+            ...prev,
+            fullName: u.full_name || u.fullName || u.name || prev.fullName || '',
+            email: u.email || prev.email || '',
+            phone: u.phone || u.phone_number || u.mobile || prev.phone || ''
+          }));
+          setIsUser(true);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    loadCurrentUser();
+    return () => { mounted = false; };
+  }, []);
 
   const handleInputChange = (field, value) => {
     setCustomerInfo(prev => ({ ...prev, [field]: value }));
@@ -206,6 +232,7 @@ const Payment = () => {
                   placeholder="Nhập họ và tên"
                   value={customerInfo.fullName}
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
+                  readOnly={isUser}
                 />
               </div>
               
@@ -217,6 +244,7 @@ const Payment = () => {
                   placeholder="Nhập số điện thoại"
                   value={customerInfo.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
+                  readOnly={isUser}
                 />
               </div>
             </div>
@@ -229,6 +257,7 @@ const Payment = () => {
                 placeholder="Nhập địa chỉ email"
                 value={customerInfo.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
+                readOnly={isUser}
               />
             </div>
 

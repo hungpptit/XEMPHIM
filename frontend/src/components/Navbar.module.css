@@ -12,11 +12,12 @@
 
 .container {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; /* keep logo and links together on the left */
   align-items: center;
-  padding: 15px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 28px; /* space between logo, nav links and right section */
+  width: 100%;
+  padding: 12px 24px;
+  margin: 0; /* remove auto-centering to allow full-width layout */
 }
 
 .logo {
@@ -42,7 +43,7 @@
 
 .navLinks {
   display: flex;
-  gap: 30px;
+  gap: 18px; /* tighter grouping for the main links */
   list-style: none;
   margin: 0;
   padding: 0;
@@ -83,6 +84,7 @@
   display: flex;
   align-items: center;
   gap: 20px;
+  margin-left: auto; /* push search + user to the far right */
 }
 
 .searchBox {

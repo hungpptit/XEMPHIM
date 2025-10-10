@@ -254,7 +254,7 @@ useEffect(() => {
 useEffect(() => {
   const loadTickets = () => {
     try {
-      const savedBookings = localStorage.getItem('bookings');
+      const savedBookings = .getItem('bookings');
       if (savedBookings) {
         const bookings = JSON.parse(savedBookings);
         setTickets(bookings);
@@ -344,22 +344,22 @@ export const moviesAPI = {
 
 ## 🗃️ **7. LOCAL STORAGE - Dữ liệu lưu trữ tạm**
 
-### 📍 **Các vị trí sử dụng localStorage**:
+### 📍 **Các vị trí sử dụng **:
 
 1. **Payment Success**: `src/modules/Payment/Payment.js` - Dòng 117-127
 2. **My Tickets Load**: `src/modules/MyTickets/MyTickets.js` - Dòng 13-22  
 3. **Ticket Cancel**: `src/modules/MyTickets/MyTickets.js` - Dòng 55-62
 
 ```javascript
-// ❌ THAY THẾ localStorage BẰNG API
-localStorage.setItem('bookings', JSON.stringify(updatedTickets));
-const savedBookings = localStorage.getItem('bookings');
+// ❌ THAY THẾ  BẰNG API
+.setItem('bookings', JSON.stringify(updatedTickets));
+const savedBookings = .getItem('bookings');
 ```
 
 ### 🔄 **Cách thay thế**:
 ```javascript
-// ✅ SỬ DỤNG API THAY VÌ localStorage
-// Thay vì save vào localStorage, gọi API
+// ✅ SỬ DỤNG API THAY VÌ 
+// Thay vì save vào , gọi API
 await bookingAPI.createBooking(bookingData);
 await bookingAPI.cancelBooking(ticketId);
 ```
@@ -390,7 +390,7 @@ await bookingAPI.cancelBooking(ticketId);
 4. **[ ] Remove Mock Code**:
    - [ ] Delete `mockData` object
    - [ ] Delete `apiWithFallback` functions
-   - [ ] Remove localStorage usage
+   - [ ] Remove  usage
    - [ ] Clean up mock arrays
 
 5. **[ ] Error Handling**:

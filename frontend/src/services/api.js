@@ -7,18 +7,12 @@ export const API = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true // ensure cookies are sent by default
 });
 
 // Request interceptor
 API.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
+  (config) => config,
   (error) => {
     return Promise.reject(error);
   }
@@ -31,7 +25,8 @@ API.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
+      // clear any legacy auth tokens and redirect to login
+      try{ localStorage.removeItem('authToken'); localStorage.removeItem('token'); }catch(e){}
       window.location.href = '/login';
     }
     return Promise.reject(error);

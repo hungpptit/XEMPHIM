@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import authService from '../services/authService';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaSearch, FaBars, FaUser } from 'react-icons/fa';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Simulate login state
+  const [user, setUser] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      const u = await authService.getCurrentUser();
+      if(mounted) setUser(u);
+    };
+    init();
+
+    const onAuth = async () => {
+      const u = await authService.getCurrentUser();
+      setUser(u);
+    };
+    window.addEventListener('authChanged', onAuth);
+    return () => { mounted = false; window.removeEventListener('authChanged', onAuth); };
+  }, []);
 
   const isActiveLink = (path) => {
     return location.pathname === path ? styles.active : '';
@@ -18,8 +36,12 @@ const Navbar = () => {
     console.log('Searching for:', searchQuery);
   };
 
-  const handleLogin = () => {
-    setIsLoggedIn(!isLoggedIn);
+  const handleLogin = () => navigate('/login');
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setUser(null);
+    navigate('/');
   };
 
   return (
@@ -69,12 +91,12 @@ const Navbar = () => {
           </form>
 
           <div className={styles.userSection}>
-            {isLoggedIn ? (
+            {user ? (
               <div className={styles.userInfo}>
                 <div className={styles.avatar}>
                   <FaUser />
                 </div>
-                <span>Người dùng</span>
+                <Link to="/profile" className={styles.userNameLink}>Hi, {user.full_name || user.fullName || user.email}</Link>
               </div>
             ) : (
               <button 

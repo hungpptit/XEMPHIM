@@ -6,6 +6,9 @@ import MovieDetail from './modules/MovieDetail/MovieDetail';
 import SeatSelection from './modules/SeatSelection/SeatSelection';
 import Payment from './modules/Payment/Payment';
 import MyTickets from './modules/MyTickets/MyTickets';
+import Login from './modules/Auth/Login';
+import Register from './modules/Auth/Register';
+import Profile from './modules/Auth/Profile';
 import './styles/theme.module.css';
 
 function App() {
@@ -22,6 +25,9 @@ function App() {
             <Route path="/movies/:id/seat-selection" element={<SeatSelection />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/my-tickets" element={<MyTickets />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>
       </div>
