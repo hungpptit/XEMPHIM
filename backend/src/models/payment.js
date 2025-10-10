@@ -3,7 +3,8 @@ export default (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      allowNull: false
+      allowNull: false,
+      autoIncrement: true
     },
     booking_id: {
       type: DataTypes.INTEGER,

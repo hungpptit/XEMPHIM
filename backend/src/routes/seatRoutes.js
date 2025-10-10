@@ -4,12 +4,16 @@ import {
   getSeat,
   createNewSeat,
   updateSeatById,
-  deleteSeatById
+  deleteSeatById,
+  getSeatMap
 } from '../controllers/seatController.js';
 
 const router = express.Router();
 
 router.get('/', getAllSeats);
+// Specific route for showtime seat map must come before the generic '/:id' route
+// GET /showtimes/:showtimeId/seats
+router.get('/showtimes/:showtimeId/seats', getSeatMap);
 router.get('/:id', getSeat);
 router.post('/', createNewSeat);
 router.put('/:id', updateSeatById);

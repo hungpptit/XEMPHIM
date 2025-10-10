@@ -30,18 +30,33 @@ const MovieDetail = () => {
         if (m) {
           // movieService.getMovie returns a normalized movie object (mapped fields)
           setMovie(m);
-          // showtimes still mocked for now until showtime API implemented
-          setShowtimes([
-            {
-              date: new Date().toISOString().slice(0,10),
-              dateLabel: 'Hôm nay',
-              times: [
-                { time: '10:00', cinema: 'Rạp A', availableSeats: 40, totalSeats: 60 },
-                { time: '13:30', cinema: 'Rạp B', availableSeats: 28, totalSeats: 50 },
-                { time: '19:00', cinema: 'Rạp C', availableSeats: 0, totalSeats: 80 }
-              ]
-            }
-          ]);
+          // load real showtimes from backend
+          try {
+            const { moviesAPI } = await import('../../services/api');
+            const response = await moviesAPI.getMovieShowtimes(id);
+            console.log('API Response:', response); // Debug log
+            // Handle both direct array and wrapped response
+            const rows = response.data || response || [];
+            console.log('Showtimes rows:', rows); // Debug log
+            // rows expected: [{ id, movie_id, hall_id, start_time, end_time, base_price }, ...]
+            const grouped = {};
+            (rows || []).forEach(st => {
+              const date = new Date(st.start_time).toISOString().slice(0,10);
+              if (!grouped[date]) grouped[date] = { date, dateLabel: date === new Date().toISOString().slice(0,10) ? 'Hôm nay' : date, times: [] };
+              grouped[date].times.push({
+                id: st.id,
+                time: new Date(st.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                cinema: `Rạp ${st.hall_id}`,
+                availableSeats: null,
+                totalSeats: null
+              });
+            });
+            setShowtimes(Object.values(grouped));
+          } catch (e) {
+            console.error('Failed to load showtimes from API', e);
+            // When showtimes cannot be loaded, show an empty list so users don't interact with fake data
+            setShowtimes([]);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -65,9 +80,11 @@ const MovieDetail = () => {
     }
   }, [loading, movie, location]);
 
-  const handleTimeSlotClick = (date, time, cinema) => {
+  const handleTimeSlotClick = (date, slot) => {
+    // slot is expected to be { id, time, cinema, ... }
+    console.log('Navigate to seat-selection', { movieId: id, showtime: slot });
     navigate(`/movies/${id}/seat-selection`, {
-      state: { movie, showtime: { date, time, cinema } }
+      state: { movie, showtime: { id: slot.id, date, time: slot.time, cinema: slot.cinema } }
     });
   };
 
@@ -245,7 +262,7 @@ const MovieDetail = () => {
                       <div
                         key={slotIndex}
                         className={`${styles.timeSlot} ${slot.availableSeats === 0 ? styles.unavailable : ''}`}
-                        onClick={() => slot.availableSeats > 0 && handleTimeSlotClick(day.date, slot.time, slot.cinema)}
+                        onClick={() => (slot.availableSeats === null || slot.availableSeats > 0) && handleTimeSlotClick(day.date, slot)}
                       >
                         <div className={styles.showTime}>{slot.time}</div>
                         <div className={styles.cinemaInfo}>
@@ -254,9 +271,9 @@ const MovieDetail = () => {
                         </div>
                         <div className={styles.seatInfo}>
                           <FaUsers style={{ marginRight: '5px' }} />
-                          {slot.availableSeats > 0 
+                          {slot.availableSeats !== null
                             ? `${slot.availableSeats}/${slot.totalSeats} ghế trống`
-                            : 'Hết vé'
+                            : 'Cập nhật số ghế'
                           }
                         </div>
                       </div>

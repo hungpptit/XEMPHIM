@@ -20,16 +20,47 @@ const MyTickets = () => {
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    // Load tickets from localStorage
-    const loadTickets = () => {
+    // Load tickets from backend API
+    const loadTickets = async () => {
       try {
+        // Clear old mock data
+        localStorage.removeItem('bookings');
+        
+        // Get current user ID
+        const { default: authService } = await import('../../services/authService');
+        const user = await authService.getCurrentUser();
+        
+        if (user && (user.id || user.user_id)) {
+          const userId = user.id || user.user_id;
+          const { bookingAPI } = await import('../../services/api');
+          const response = await bookingAPI.getUserBookings(userId);
+          
+          if (response && response.bookings) {
+            // Map backend data to frontend format
+            const mappedTickets = response.bookings.map(booking => ({
+              id: booking.id.toString(),
+              movie: booking.movie,
+              showtime: {
+                date: new Date(booking.showtime.start_time).toISOString().slice(0, 10),
+                time: new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                cinema: `Rạp ${booking.showtime.hall_id}`
+              },
+              selectedSeats: booking.seats,
+              totalPrice: booking.total_price,
+              status: booking.status,
+              bookingDate: booking.created_at
+            }));
+            setTickets(mappedTickets);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading tickets:', error);
+        // Fallback to localStorage if API fails
         const savedBookings = localStorage.getItem('bookings');
         if (savedBookings) {
           const bookings = JSON.parse(savedBookings);
           setTickets(bookings);
         }
-      } catch (error) {
-        console.error('Error loading tickets:', error);
       } finally {
         setLoading(false);
       }

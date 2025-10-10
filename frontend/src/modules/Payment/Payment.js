@@ -30,7 +30,7 @@ const Payment = () => {
   const [processing, setProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const { movie, showtime, selectedSeats, totalPrice } = location.state || {};
+  const { movie, showtime, selectedSeats, totalPrice, bookingId } = location.state || {};
 
   const paymentMethods = [
     {
@@ -64,10 +64,11 @@ const Payment = () => {
   ];
 
   React.useEffect(() => {
-    if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0) {
+    if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0 || !bookingId) {
+      console.warn('Missing payment data:', { movie, showtime, selectedSeats, bookingId });
       navigate('/');
     }
-  }, [movie, showtime, selectedSeats, navigate]);
+  }, [movie, showtime, selectedSeats, bookingId, navigate]);
 
   // If user is logged in (cookie based), prefill customer info so they don't need to type
   React.useEffect(() => {
@@ -122,31 +123,53 @@ const Payment = () => {
 
   const handlePayment = async () => {
     if (!validateForm()) return;
+    if (!bookingId) {
+      alert('Không tìm thấy thông tin booking. Vui lòng thử lại.');
+      return;
+    }
 
     setProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Call backend to confirm payment
+      const { bookingAPI } = await import('../../services/api');
+      const result = await bookingAPI.confirmPayment({
+        booking_id: bookingId,
+        payment_method: selectedMethod,
+        payment_payload: {
+          transaction_ref: `TXN_${Date.now()}`,
+          response_code: '00' // success code
+        }
+      });
+
+      if (result && result.booking) {
+        setProcessing(false);
+        setShowSuccessModal(true);
+        
+        // Save booking info to localStorage for MyTickets
+        const bookingData = {
+          id: result.booking.id.toString(),
+          movie,
+          showtime,
+          selectedSeats,
+          totalPrice,
+          customerInfo,
+          paymentMethod: selectedMethod,
+          bookingDate: new Date().toISOString(),
+          status: 'confirmed'
+        };
+        
+        const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+        existingBookings.push(bookingData);
+        localStorage.setItem('bookings', JSON.stringify(existingBookings));
+      } else {
+        throw new Error('Payment confirmation failed');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
       setProcessing(false);
-      setShowSuccessModal(true);
-      
-      // Save booking info to localStorage
-      const bookingData = {
-        id: Date.now().toString(),
-        movie,
-        showtime,
-        selectedSeats,
-        totalPrice,
-        customerInfo,
-        paymentMethod: selectedMethod,
-        bookingDate: new Date().toISOString(),
-        status: 'confirmed'
-      };
-      
-      const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-      existingBookings.push(bookingData);
-      localStorage.setItem('bookings', JSON.stringify(existingBookings));
-    }, 3000);
+      alert('Thanh toán thất bại. Vui lòng thử lại.');
+    }
   };
 
   const handleSuccessClose = () => {
@@ -154,7 +177,7 @@ const Payment = () => {
     navigate('/my-tickets');
   };
 
-  if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0) {
+  if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0 || !bookingId) {
     return (
       <div className={styles.payment}>
         <div className="container">
@@ -340,7 +363,7 @@ const Payment = () => {
             <div className={styles.seatsList}>
               {selectedSeats?.map(seat => (
                 <span key={seat.id} className={styles.seatItem}>
-                  {seat.id}
+                  {seat.displayName || seat.id}
                 </span>
               ))}
             </div>

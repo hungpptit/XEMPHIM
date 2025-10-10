@@ -1,6 +1,7 @@
 import {
     listSeats, getSeatById, createSeat, updateSeat, deleteSeat
 } from "../services/seatService.js";
+import { getSeatMapForShowtime } from '../services/seatService.js';
 
 export const getAllSeats = async (req, res) =>{
     try{
@@ -32,13 +33,13 @@ export const createNewSeat  = async (req, res) =>{
     }
 };
 
-export const updateSeatById = async (res, req) =>{
-    try{
+export const updateSeatById = async (req, res) => {
+    try {
         const seat = await updateSeat(req.params.id, req.body);
-        if (!seat) return res.status(404).json({message: " Seat not found"});
+        if (!seat) return res.status(404).json({ message: 'Seat not found' });
         res.json(seat);
-    }catch(err){
-        res.status(400).json({message: err.message});
+    } catch (err) {
+        res.status(400).json({ message: err.message });
     }
 };
 
@@ -50,4 +51,21 @@ export const deleteSeatById = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+};
+
+export const getSeatMap = async (req, res) => {
+    try {
+        const showtimeId = parseInt(req.params.showtimeId || req.query.showtimeId, 10);
+        if (Number.isNaN(showtimeId)) return res.status(400).json({ message: 'Invalid showtime id' });
+
+        console.log(`GET /api/seats/showtimes/${showtimeId}/seats requested`);
+
+        const data = await getSeatMapForShowtime(showtimeId);
+        if (!data) return res.status(404).json({ message: 'Showtime not found' });
+        res.json(data);
+    } catch (err) {
+        // Log full stack to help debugging in development
+        console.error('Error in getSeatMap:', err && err.stack ? err.stack : err);
+        res.status(500).json({ message: err.message });
+    }
 };

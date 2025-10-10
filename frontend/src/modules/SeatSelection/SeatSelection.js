@@ -8,7 +8,7 @@ import {
   FaUsers
 } from 'react-icons/fa';
 import styles from './SeatSelection.module.css';
-
+import seatService from '../../services/seatService';
 const SeatSelection = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -20,7 +20,7 @@ const SeatSelection = () => {
 
   const { movie, showtime } = location.state || {};
 
-  // Mock seat map data
+  // Mock seat map data (fallback)
   const generateSeatMap = () => {
     const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
     const seatsPerRow = 12;
@@ -29,26 +29,13 @@ const SeatSelection = () => {
     rows.forEach(row => {
       const rowSeats = [];
       for (let i = 1; i <= seatsPerRow; i++) {
-        // Create some random occupied seats
-        let isOccupied = Math.random() < 0.3;
-        
-        // VIP seats (rows F, G, H)
         const isVip = ['F', 'G', 'H'].includes(row);
-        
-        // Đảm bảo có một số ghế VIP bị đặt để test
-        if (isVip && (
-          (row === 'F' && [2, 8].includes(i)) ||
-          (row === 'G' && [6, 11].includes(i)) ||
-          (row === 'H' && [4, 9].includes(i))
-        )) {
-          isOccupied = true;
-        }
-        
         rowSeats.push({
           id: `${row}${i}`,
           row: row,
           number: i,
-          status: isOccupied ? 'occupied' : 'available',
+          displayName: `${row}${i}`, // A1, B2, C3...
+          status: 'available', // deterministic fallback: treat as available
           type: isVip ? 'vip' : 'regular',
           price: isVip ? 150000 : 100000
         });
@@ -59,17 +46,53 @@ const SeatSelection = () => {
     return map;
   };
 
+  const mapBackendSeatMap = (backend) => {
+    if (!backend || !Array.isArray(backend.seatMap)) return [];
+    // backend.seatMap: [{ row: 'A', seats: [{id,row,number,status,type,price}, ...] }, ...]
+    return backend.seatMap.map(r => r.seats.map(s => ({
+      id: s.id,
+      row: s.row,
+      number: s.number,
+      displayName: `${s.row}${s.number}`, // A1, B5, F12...
+      status: s.status,
+      type: s.type,
+      price: s.price
+    })));
+  };
+
   useEffect(() => {
     if (!movie || !showtime) {
       navigate('/');
       return;
     }
 
-    // Simulate API call to get seat map
-    setTimeout(() => {
-      setSeatMap(generateSeatMap());
-      setLoading(false);
-    }, 1000);
+    // Call backend API to get seat map for this showtime
+    (async () => {
+      try {
+        setLoading(true);
+        const showtimeId = showtime?.id || id;
+        console.log('Loading seat map for showtime:', showtimeId); // Debug log
+        
+        // Use bookingAPI instead of seatService
+        const { bookingAPI } = await import('../../services/api');
+        const response = await bookingAPI.getSeatMap(showtimeId);
+        console.log('Seat map response:', response); // Debug log
+        
+        // Handle response format
+        const seatData = response.data || response;
+        if (seatData && seatData.seatMap) {
+          setSeatMap(mapBackendSeatMap(seatData));
+        } else {
+          console.warn('No seat map data, using mock fallback');
+          setSeatMap(generateSeatMap());
+        }
+      } catch (err) {
+        console.error('Error fetching seat map', err);
+        setSeatMap(generateSeatMap());
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [movie, showtime, navigate]);
 
   const handleSeatClick = (seat) => {
@@ -99,14 +122,94 @@ const SeatSelection = () => {
       return;
     }
 
-    navigate('/payment', {
-      state: {
-        movie,
-        showtime,
-        selectedSeats,
-        totalPrice: getTotalPrice()
+    (async () => {
+      try {
+        // prepare payload
+        // ensure selected seat ids are numeric DB ids (not label strings from mock)
+        const invalid = selectedSeats.some(s => typeof s.id !== 'number' && !/^[0-9]+$/.test(String(s.id)));
+        if (invalid) {
+          alert('Có ghế đang ở chế độ mock (ví dụ A1). Vui lòng làm mới sơ đồ ghế để lấy dữ liệu thực trước khi giữ ghế.');
+          return;
+        }
+
+        // Get current user if logged in
+        let currentUserId = null;
+        try {
+          const { default: authService } = await import('../../services/authService');
+          const user = await authService.getCurrentUser();
+          currentUserId = user?.id || user?.user_id || null;
+        } catch (e) {
+          console.warn('Could not get current user:', e);
+        }
+
+        const payload = {
+          user_id: currentUserId, // Use real user ID if available
+          showtime_id: showtime?.id,
+          seat_ids: selectedSeats.map(s => Number(s.id))
+        };
+
+        console.log('lockSeat payload:', payload);
+        console.log('Current user ID:', currentUserId);
+        console.log('Showtime ID:', showtime?.id);
+        console.log('Selected seat IDs:', selectedSeats.map(s => s.id));
+        
+        // Validate payload
+        if (!currentUserId) {
+          alert('Vui lòng đăng nhập để đặt vé');
+          navigate('/login');
+          return;
+        }
+        
+        if (!showtime?.id) {
+          alert('Thông tin suất chiếu không hợp lệ');
+          return;
+        }
+        
+        if (selectedSeats.length === 0) {
+          alert('Vui lòng chọn ít nhất 1 ghế');
+          return;
+        }
+        
+        // Use bookingAPI instead of seatService
+        const { bookingAPI } = await import('../../services/api');
+        const res = await bookingAPI.lockSeats(payload);
+        console.log('lockSeat response:', res);
+        
+        // Handle response format (API might return {data: ...} or direct object)
+        const responseData = res.data || res;
+        console.log('Response data:', responseData);
+        
+        if (responseData && responseData.success && responseData.booking) {
+          // success: pass booking info to payment page
+          const booking = responseData.booking;
+          console.log('Booking object:', booking);
+          
+          navigate('/payment', {
+            state: {
+              movie,
+              showtime,
+              selectedSeats,
+              totalPrice: getTotalPrice(),
+              bookingId: booking.id || booking.booking_id || booking.uuid
+            }
+          });
+        } else if (responseData && responseData.success === false && responseData.conflicts) {
+          // conflict: some seats already taken
+          alert(`Ghế đã bị người khác giữ: ${res.conflicts.join(', ')}. Vui lòng chọn ghế khác.`);
+          // refresh seat map
+          const showtimeId = showtime?.id || id;
+          const fresh = await seatService.getSeatMap(showtimeId);
+          if (fresh && fresh.seatMap) setSeatMap(mapBackendSeatMap(fresh));
+        } else {
+          // unexpected response format
+          console.warn('Unexpected lockSeat response format:', res);
+          alert('Phản hồi không mong đợi từ server. Vui lòng thử lại.');
+        }
+      } catch (err) {
+        console.error('Error locking seats', err);
+        alert('Không thể giữ ghế, thử lại sau');
       }
-    });
+    })();
   };
 
   const renderSeat = (seat) => {
@@ -141,7 +244,7 @@ const SeatSelection = () => {
         className={seatClass}
         onClick={() => handleSeatClick(seat)}
         disabled={seat.status === 'occupied'}
-        title={`Ghế ${seat.id} - ${seat.type === 'vip' ? 'VIP' : 'Thường'} - ${seat.price.toLocaleString()}đ`}
+        title={`Ghế ${seat.displayName || seat.id} - ${seat.type === 'vip' ? 'VIP' : 'Thường'} - ${seat.price.toLocaleString()}đ`}
       >
         {seatContent}
       </button>
@@ -328,7 +431,7 @@ const SeatSelection = () => {
               <div className={styles.seatsList}>
                 {selectedSeats.map(seat => (
                   <span key={seat.id} className={styles.selectedSeat}>
-                    {seat.id}
+                    {seat.displayName || seat.id}
                   </span>
                 ))}
               </div>

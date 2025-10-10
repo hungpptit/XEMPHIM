@@ -54,6 +54,22 @@ Showtime.belongsTo(Movie, { foreignKey: 'movie_id' });
 CinemaHall.hasMany(Seat, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 Seat.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
 
+// Booking relations
+Showtime.hasMany(Booking, { foreignKey: 'showtime_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+Booking.belongsTo(Showtime, { foreignKey: 'showtime_id' });
+
+User.hasMany(Booking, { foreignKey: 'user_id', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+Booking.belongsTo(User, { foreignKey: 'user_id' });
+
+Booking.hasMany(BookingSeat, { foreignKey: 'booking_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+BookingSeat.belongsTo(Booking, { foreignKey: 'booking_id' });
+
+Seat.hasMany(BookingSeat, { foreignKey: 'seat_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+BookingSeat.belongsTo(Seat, { foreignKey: 'seat_id' });
+
+Booking.hasMany(Payment, { foreignKey: 'booking_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+Payment.belongsTo(Booking, { foreignKey: 'booking_id' });
+
 // (Các quan hệ khác giữ nguyên như cũ…)
 
 export {

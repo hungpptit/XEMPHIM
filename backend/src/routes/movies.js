@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.get('/', controller.list);
 router.get('/:id', controller.detail);
+router.get('/:id/showtimes', controller.getShowtimesByMovie);
 router.post('/', controller.create);
 router.put('/:id', controller.update);
 router.delete('/:id', controller.remove);

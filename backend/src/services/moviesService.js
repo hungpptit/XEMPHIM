@@ -94,3 +94,14 @@ export const deleteMovie = async (id) => {
   await movie.destroy();
   return true;
 };
+
+// 🔔 Lấy danh sách showtimes cho 1 movie
+export const getShowtimesForMovie = async (movieId) => {
+  // lazy import to avoid circular
+  const { Showtime } = await import('../models/index.js');
+  return Showtime.findAll({
+    where: { movie_id: movieId },
+    attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price'],
+    order: [['start_time', 'ASC']]
+  });
+};
