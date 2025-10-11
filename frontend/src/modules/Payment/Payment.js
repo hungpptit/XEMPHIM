@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSpinner, FaSyncAlt } from 'react-icons/fa';
 import styles from './Payment.module.css';
+import Popup from '../../components/Popup'; // Import the custom Popup component
 
 const Payment = () => {
   const location = useLocation();
@@ -13,6 +14,8 @@ const Payment = () => {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [loadingQr, setLoadingQr] = useState(false);
   const [polling, setPolling] = useState(false);
+  const [showPopup, setShowPopup] = useState(false); // State to manage popup visibility
+  const [popupActions, setPopupActions] = useState({}); // State to manage popup actions
   const pollRef = useRef(null);
 
   useEffect(() => {
@@ -43,7 +46,20 @@ const Payment = () => {
           if (status === 'confirmed') {
             clearInterval(pollRef.current);
             setPolling(false);
-            navigate('/my-tickets');
+
+            setShowPopup(true);
+            const timeoutId = setTimeout(() => {
+              setShowPopup(false);
+              navigate('/my-tickets');
+            }, 10000);
+
+            const handleConfirm = () => {
+              clearTimeout(timeoutId);
+              setShowPopup(false);
+              navigate('/my-tickets');
+            };
+
+            setPopupActions({ handleConfirm });
           }
         } catch (e) {
           // ignore transient errors
@@ -122,8 +138,8 @@ const Payment = () => {
             {loadingQr ? (
               <div className={styles.loadingBox}><FaSpinner className="loading" /> Đang tạo mã QR...</div>
             ) : qrUrl ? (
-              <div className={styles.qrCard}>
-                <img src={qrUrl} alt="Sepay QR" className={styles.qrImage} />
+              <div className={`${styles.qrCard} ${secondsLeft <= 0 ? styles.qrExpired : ''}`}>
+                <img src={qrUrl} alt="Sepay QR" className={`${styles.qrImage} ${secondsLeft <= 0 ? styles.qrImageExpired : ''}`} />
                 <div className={styles.qrInfo}>
                   <div className={styles.accountName}>Pham Tuan Hung</div>
                   <div className={styles.bookingCode}>
@@ -175,6 +191,14 @@ const Payment = () => {
           <div className={`${styles.priceRow} ${styles.total}`}><span>Tổng cộng:</span><span>{totalPrice?.toLocaleString()}đ</span></div>
         </div>
       </div>
+
+      {/* Render the custom Popup component */}
+      {showPopup && (
+        <Popup
+          message="Bạn sẽ được chuyển đến trang vé trong giây lát."
+          onConfirm={popupActions.handleConfirm}
+        />
+      )}
     </div>
   );
 };
