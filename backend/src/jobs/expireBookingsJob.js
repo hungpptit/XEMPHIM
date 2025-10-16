@@ -7,6 +7,8 @@ export const startExpireJob = (intervalSeconds = 60) => {
     try {
       const updated = await bookingService.expireLockedBookings();
       if (updated > 0) console.log(`Expired ${updated} locked bookings`);
+      const updatedPayments = await bookingService.expirePendingPayments();
+      if (updatedPayments > 0) console.log(`Expired ${updatedPayments} pending payments`);
     } catch (err) {
       console.error('Expire job error', err);
     }

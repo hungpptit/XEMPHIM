@@ -74,12 +74,39 @@ export const getBookingStatusHandler = async (req, res) => {
   }
 };
 
+export const cancelBookingHandler = async (req, res) => {
+  try {
+    const bookingId = req.params.bookingId;
+    const result = await bookingService.cancelBooking({ booking_id: bookingId });
+    if (!result.success) return res.status(400).json({ message: result.message });
+    res.json({ success: true, booking: result.booking });
+  } catch (err) {
+    console.error('Error cancelling booking:', err && err.stack ? err.stack : err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const refundBookingHandler = async (req, res) => {
+  try {
+    const bookingId = req.params.bookingId;
+    const { reason } = req.body;
+    const result = await bookingService.refundBooking({ booking_id: bookingId, reason });
+    if (!result.success) return res.status(400).json({ message: result.message });
+    res.json({ success: true, booking: result.booking, refund: result.refund });
+  } catch (err) {
+    console.error('Error refunding booking:', err && err.stack ? err.stack : err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export default {
   lockSeatHandler,
   confirmPaymentHandler,
   getUserBookingsHandler,
   createSepayQRHandler,
-  getBookingStatusHandler
+  getBookingStatusHandler,
+  cancelBookingHandler,
+  refundBookingHandler
 };
 
 

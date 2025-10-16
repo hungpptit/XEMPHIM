@@ -36,7 +36,27 @@ export const confirmPaymentFromWebhook = async (req, res) => {
       return res.status(400).json({ message: 'Paid amount does not match booking amount' });
     }
 
-    console.log(`🧾 Creating Payment record for booking ${booking.id} ...`);
+    console.log(`🧾 Finalizing Payment for booking ${booking.id} ...`);
+    // Try to find an existing pending payment for this booking
+    const pending = await Payment.findOne({ where: { booking_id: booking.id, status: 'pending' }, order: [['created_at', 'DESC']] });
+    if (pending) {
+      pending.status = 'paid';
+      pending.payment_method = 'sepay-webhook';
+      pending.payment_code = pending.payment_code || referenceCode;
+      pending.amount = paid;
+      pending.transaction_ref = referenceCode || pending.transaction_ref;
+      pending.secure_hash = accountNumber || pending.secure_hash;
+      pending.created_at = transactionDate ? new Date(transactionDate) : pending.created_at;
+      await pending.save();
+
+      booking.status = 'confirmed';
+      await booking.save();
+      console.log(`✅ Booking ${bookingCode} marked as confirmed (updated pending payment ${pending.id}).`);
+
+      return res.json({ success: true, message: `Payment confirmed for ${bookingCode}`, booking: booking.toJSON(), payment: pending.toJSON() });
+    }
+
+    // fallback: create a paid payment record if none pending found
     const { v4: uuidv4 } = await import('uuid');
     const payment = await Payment.create({
       booking_id: booking.id,
@@ -54,14 +74,9 @@ export const confirmPaymentFromWebhook = async (req, res) => {
 
     booking.status = 'confirmed';
     await booking.save();
-    console.log(`✅ Booking ${bookingCode} marked as confirmed.`);
+    console.log(`✅ Booking ${bookingCode} marked as confirmed (created payment ${payment.id}).`);
 
-    return res.json({
-      success: true,
-      message: `Payment confirmed for ${bookingCode}`,
-      booking: booking.toJSON(),
-      payment: payment.toJSON(),
-    });
+    return res.json({ success: true, message: `Payment confirmed for ${bookingCode}`, booking: booking.toJSON(), payment: payment.toJSON() });
   } catch (err) {
     console.error('💥 Error in webhook confirm handler:', err);
     return res.status(500).json({ message: err.message });

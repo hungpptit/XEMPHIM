@@ -265,37 +265,70 @@ export const getUserBookings = async (userId) => {
 };
 
 // Create a Sepay QR (mock) and store a pending Payment record with qr_url and expire_at
+// Create a Sepay QR (mock) and store or reuse a single pending Payment record
 export const createSepayQR = async ({ booking_id, expiresIn = 60 }) => {
-  const booking = await Booking.findByPk(booking_id);
-  if (!booking) throw new Error('Booking not found');
-  // generate a VietQR-like image URL if account configured, otherwise fallback to Google Charts
-  const sepayAccount = process.env.SEPAY_ACCOUNT || '02042004666';
-  const amount = Number(booking.total_price || 0);
-  // Example: https://img.vietqr.io/image/TPB-02042004666-compact2.png?amount=120000&addInfo=BOOK456
-  let qrUrl;
-  if (sepayAccount) {
-    // Use numeric booking id in addInfo so webhook regex like /BOOK\d+/ can extract it
-    const addInfo = encodeURIComponent(`BOOK${booking.id}`);
-    qrUrl = `https://img.vietqr.io/image/TPB-${sepayAccount}-compact2.png?amount=${amount}&addInfo=${addInfo}`;
-  } else {
-    const qrData = encodeURIComponent(`PAY:${booking.booking_code};AMT:${amount}`);
-    qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${qrData}`;
+  // Start transaction to ensure atomicity and prevent race conditions
+  const t = await sequelize.transaction();
+  try {
+    const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!booking) throw new Error('Booking not found');
+    // Build QR URL
+    const sepayAccount = process.env.SEPAY_ACCOUNT || '02042004666';
+    const amount = Number(booking.total_price || 0);
+    let qrUrl;
+    if (sepayAccount) {
+      const addInfo = encodeURIComponent(`BOOK${booking.id}`);
+      qrUrl = `https://img.vietqr.io/image/TPB-${sepayAccount}-compact2.png?amount=${amount}&addInfo=${addInfo}`;
+    } else {
+      const qrData = encodeURIComponent(`PAY:${booking.booking_code};AMT:${amount}`);
+      qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${qrData}`;
+    }
+    const expireAt = new Date(Date.now() + expiresIn * 1000);
+    const now = new Date();
+    // Lock and check for existing pending Payment
+    let payment = await Payment.findOne({
+      where: { booking_id: booking.id, status: 'pending' },
+      order: [['created_at', 'DESC']],
+      transaction: t,
+      lock: t.LOCK.UPDATE
+    });
+    if (payment && payment.expire_at && new Date(payment.expire_at) > now) {
+      // Reuse existing
+      payment.qr_url = qrUrl;
+      payment.expire_at = expireAt;
+      await payment.save({ transaction: t });
+    } else {
+      // Attempt to create a new pending record, catch duplicates
+      try {
+        payment = await Payment.create({
+          booking_id: booking.id,
+          payment_method: 'sepay',
+          payment_code: uuidv4(),
+          amount: booking.total_price,
+          qr_url: qrUrl,
+          expire_at: expireAt,
+          status: 'pending',
+          created_at: now
+        }, { transaction: t });
+      } catch (err) {
+        if (err.name === 'SequelizeUniqueConstraintError') {
+          // Another transaction created a pending payment concurrently
+          payment = await Payment.findOne({
+            where: { booking_id: booking.id, status: 'pending' },
+            order: [['created_at', 'DESC']],
+            transaction: t
+          });
+        } else {
+          throw err;
+        }
+      }
+    }
+    await t.commit();
+    return { qr_url: qrUrl, expires_in: expiresIn, expires_at: expireAt.toISOString(), payment_id: payment.id };
+  } catch (err) {
+    await t.rollback();
+    throw err;
   }
-  const expireAt = new Date(Date.now() + expiresIn * 1000);
-
-  // create or update a pending payment record
-  const payment = await Payment.create({
-    booking_id: booking.id,
-    payment_method: 'sepay',
-    payment_code: uuidv4(),
-    amount: booking.total_price,
-    qr_url: qrUrl,
-    expire_at: expireAt,
-    status: 'pending',
-    created_at: new Date()
-  });
-
-  return { qr_url: qrUrl, expires_in: expiresIn, expires_at: expireAt.toISOString(), payment_id: payment.id };
 };
 
 export const getBookingStatus = async ({ booking_id }) => {
@@ -304,14 +337,98 @@ export const getBookingStatus = async ({ booking_id }) => {
   return { id: booking.id, status: booking.status, booking_code: booking.booking_code };
 };
 
+// Cancel a booking (user action before payment)
+export const cancelBooking = async ({ booking_id }) => {
+  const t = await sequelize.transaction();
+  try {
+    const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!booking) { await t.rollback(); return { success: false, message: 'Booking not found' }; }
+    if (booking.status === 'confirmed') { await t.rollback(); return { success: false, message: 'Cannot cancel a confirmed booking' }; }
+  // Mark booking as cancelled
+  booking.status = 'cancelled';
+    await booking.save({ transaction: t });
+    // Mark any pending payments as cancelled as well
+    await Payment.update(
+      { status: 'cancelled' },
+      { where: { booking_id: booking.id, status: 'pending' }, transaction: t }
+    );
+    await t.commit();
+    return { success: true, booking: booking.toJSON() };
+  } catch (err) {
+    try { await t.rollback(); } catch (e) { }
+    throw err;
+  }
+};
+
+// Refund a booking (after paid)
+export const refundBooking = async ({ booking_id, reason = null }) => {
+  const t = await sequelize.transaction();
+  try {
+    const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!booking) { await t.rollback(); return { success: false, message: 'Booking not found' }; }
+    if (booking.status !== 'confirmed') { await t.rollback(); return { success: false, message: 'Only confirmed bookings can be refunded' }; }
+
+    // create refund record as a Payment with status 'refunded' (simple approach)
+    const refund = await Payment.create({
+      booking_id: booking.id,
+      payment_method: 'refund',
+      payment_code: `REFUND-${uuidv4()}`,
+      amount: -(booking.total_price || 0),
+      qr_url: null,
+      expire_at: null,
+      status: 'refunded',
+      transaction_ref: null,
+      response_code: null,
+      secure_hash: reason || null,
+      created_at: new Date()
+    }, { transaction: t });
+
+    // mark original payments as refunded (optional)
+    await Payment.update({ status: 'refunded' }, { where: { booking_id: booking.id, status: 'paid' }, transaction: t });
+
+    // update booking status to refunded
+    booking.status = 'refunded';
+    await booking.save({ transaction: t });
+
+    await t.commit();
+    return { success: true, booking: booking.toJSON(), refund: refund.toJSON() };
+  } catch (err) {
+    try { await t.rollback(); } catch (e) { }
+    throw err;
+  }
+};
+
+// Expire pending payments (called by cron job)
+export const expirePendingPayments = async () => {
+  try {
+    const now = new Date();
+    // Set payments with expire_at < now and status='pending' -> 'expired'
+    const [updatedPayments] = await Payment.update({ status: 'expired' }, { where: { status: 'pending', expire_at: { [Sequelize.Op.lt]: now } } });
+
+    // For each affected booking, if booking still locked, mark booking expired
+    if (updatedPayments > 0) {
+      await Booking.update({ status: 'expired' }, { where: { status: 'locked' }, transaction: null });
+    }
+    return updatedPayments;
+  } catch (err) {
+    console.error('Error expiring pending payments', err && err.stack ? err.stack : err);
+    return 0;
+  }
+};
+
 export default {
   lockSeats,
   confirmPayment,
   expireLockedBookings,
   getUserBookings,
   createSepayQR,
-  getBookingStatus
+  getBookingStatus,
+  cancelBooking,
+  refundBooking,
+  expirePendingPayments
 };
+
+
 
 
 

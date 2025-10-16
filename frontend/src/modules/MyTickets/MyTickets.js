@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { bookingAPI } from '../../services/api';
 import { 
   FaTicketAlt, 
   FaQrcode, 
@@ -18,55 +19,43 @@ const MyTickets = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  
+  // Load tickets from backend API
+  const loadTickets = async () => {
+    setLoading(true);
+    try {
+      // Get current user ID
+      const { default: authService } = await import('../../services/authService');
+      const user = await authService.getCurrentUser();
+      const userId = user?.id || user?.user_id;
+      if (!userId) throw new Error('User not found');
+      // Fetch bookings
+      const res = await bookingAPI.getUserBookings(userId);
+      const data = res.data?.bookings || res.data || [];
+      // Map bookings to tickets
+      const mapped = data.map(booking => ({
+        id: booking.id.toString(),
+        movie: booking.movie,
+        showtime: {
+          date: new Date(booking.showtime.start_time).toISOString().slice(0, 10),
+          time: new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          cinema: `Rạp ${booking.showtime.hall_id}`
+        },
+        selectedSeats: booking.seats,
+        totalPrice: booking.total_price,
+        status: booking.status,
+        created_at: booking.created_at
+      }));
+      setTickets(mapped);
+    } catch (err) {
+      console.error('Error loading tickets:', err);
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Load tickets from backend API
-    const loadTickets = async () => {
-      try {
-        // Clear old mock data
-        localStorage.removeItem('bookings');
-        
-        // Get current user ID
-        const { default: authService } = await import('../../services/authService');
-        const user = await authService.getCurrentUser();
-        
-        if (user && (user.id || user.user_id)) {
-          const userId = user.id || user.user_id;
-          const { bookingAPI } = await import('../../services/api');
-          const response = await bookingAPI.getUserBookings(userId);
-          console.log('getUserBookings response:', response);
-          
-          // Handle response format
-          const responseData = response.data || response;
-          const bookings = responseData.bookings || responseData || [];
-          
-          if (bookings && Array.isArray(bookings)) {
-            // Map backend data to frontend format
-            const mappedTickets = bookings.map(booking => ({
-              id: booking.id.toString(),
-              movie: booking.movie,
-              showtime: {
-                date: new Date(booking.showtime.start_time).toISOString().slice(0, 10),
-                time: new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                cinema: `Rạp ${booking.showtime.hall_id}`
-              },
-              selectedSeats: booking.seats,
-              totalPrice: booking.total_price,
-              status: booking.status,
-              bookingDate: booking.created_at
-            }));
-            console.log('Mapped tickets with seats:', mappedTickets.map(t => ({ id: t.id, seats: t.selectedSeats })));
-            setTickets(mappedTickets);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading tickets:', error);
-        setTickets([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadTickets();
   }, []);
 
@@ -91,16 +80,16 @@ const MyTickets = () => {
     });
   };
 
-  const handleCancelTicket = (ticketId) => {
-    if (window.confirm('Bạn có chắc chắn muốn hủy vé này?')) {
-      const updatedTickets = tickets.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status: 'cancelled' }
-          : ticket
-      );
-      
-      setTickets(updatedTickets);
+  const handleCancelTicket = async (ticketId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn hủy vé này?')) return;
+    try {
+      await bookingAPI.cancelBooking(ticketId);
       alert('Vé đã được hủy thành công');
+      // Reload tickets to reflect change
+      await loadTickets();
+    } catch (err) {
+      console.error('Cancel booking failed', err);
+      alert('Hủy vé thất bại. Vui lòng thử lại.');
     }
   };
 

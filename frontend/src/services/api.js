@@ -51,11 +51,9 @@ export const bookingAPI = {
   getSeatMap: (showtimeId) => API.get(`/seats/showtimes/${showtimeId}/seats`),
   lockSeats: (bookingData) => API.post('/bookings/lock-seat', bookingData),
   confirmPayment: (bookingId, paymentData) => API.post(`/bookings/${bookingId}/confirm-payment`, paymentData),
-  // Create a Sepay QR code for the booking. Backend should return { qr_url, expires_in, expires_at }
   createSepayQR: (bookingId) => API.post(`/bookings/${bookingId}/create-sepay-qr`),
-  // Get booking details (including booking_code and status)
+  cancelBooking: (bookingId) => API.post(`/bookings/${bookingId}/cancel`),
   getBooking: (bookingId) => API.get(`/bookings/${bookingId}`),
-  // Get booking status only
   getBookingStatus: (bookingId) => API.get(`/bookings/${bookingId}/status`),
   getUserBookings: (userId) => API.get(`/bookings/user/${userId}`),
 };

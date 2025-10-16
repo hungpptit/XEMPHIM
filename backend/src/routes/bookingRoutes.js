@@ -15,6 +15,12 @@ router.post('/:bookingId/create-sepay-qr', bookingController.createSepayQRHandle
 // Get booking status
 router.get('/:bookingId/status', bookingController.getBookingStatusHandler);
 
+// Cancel booking (user cancels before payment)
+router.post('/:bookingId/cancel', bookingController.cancelBookingHandler);
+
+// Refund booking (admin or user requests refund after paid)
+router.post('/:bookingId/refund', bookingController.refundBookingHandler);
+
 // GET user bookings
 router.get('/user/:userId', bookingController.getUserBookingsHandler);
 
