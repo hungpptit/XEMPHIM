@@ -190,7 +190,8 @@ const SeatSelection = () => {
               showtime,
               selectedSeats,
               totalPrice: getTotalPrice(),
-              bookingId: booking.id || booking.booking_id || booking.uuid
+              bookingId: booking.id || booking.booking_id || booking.uuid,
+              bookingCode: booking.booking_code || booking.bookingCode || null
             }
           });
         } else if (responseData && responseData.success === false && responseData.conflicts) {

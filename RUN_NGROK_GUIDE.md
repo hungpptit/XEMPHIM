@@ -88,7 +88,7 @@ Sau khi chỉnh `.env`, ấn “**Redeploy**” để webhook nhận giá trị 
   ```json
   {
     "transferAmount": 5000,
-    "content": "TPB;02042004666;BOOK42",
+  "content": "TPB;02042004666;BOOK42-0dff3b4c-5a5f-4c2b-878f-2918aaddba59",
     "accountNumber": "02042004666",
     "transactionDate": "2025-10-11 09:00:00",
     "referenceCode": "TEST12345"
@@ -99,10 +99,10 @@ Sau khi chỉnh `.env`, ấn “**Redeploy**” để webhook nhận giá trị 
 **Tại webhook (Railway):**
 ```
 📩 Webhook nhận được: {...}
-🔍 Phát hiện mã booking: BOOK42
+🔍 Phát hiện mã booking: BOOK42-0dff3b4c-5a5f-4c2b-878f-2918aaddba59
 💰 Số tiền: 5000
 🚀 Gửi xác nhận thanh toán tới backend: https://unsentiently-fattenable-daria.ngrok-free.dev/api/payments/confirm
-✅ Backend phản hồi [200]: { success: true, message: "Payment confirmed for BOOK42" }
+✅ Backend phản hồi [200]: { success: true, message: "Payment confirmed for BOOK42-0dff3b4c-5a5f-4c2b-878f-2918aaddba59" }
 ```
 
 **Tại backend local:**

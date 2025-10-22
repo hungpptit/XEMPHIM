@@ -277,9 +277,15 @@ export const createSepayQR = async ({ booking_id, expiresIn = 60 }) => {
     const amount = Number(booking.total_price || 0);
     let qrUrl;
     if (sepayAccount) {
-      const addInfo = encodeURIComponent(`BOOK${booking.id}`);
+      // Use combined identifier: BOOK{booking.id}_{booking_code}
+  // Use hyphen '-' as separator because some banks disallow '_'.
+  const combined = `BOOK${booking.id}-${booking.booking_code}`;
+  // Ensure the separator is preserved by percent-encoding the hyphen.
+  let addInfo = encodeURIComponent(combined);
+  addInfo = addInfo.replace(/-/g, '%2D');
       qrUrl = `https://img.vietqr.io/image/TPB-${sepayAccount}-compact2.png?amount=${amount}&addInfo=${addInfo}`;
     } else {
+      // Fallback QR data when no sepayAccount configured
       const qrData = encodeURIComponent(`PAY:${booking.booking_code};AMT:${amount}`);
       qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${qrData}`;
     }

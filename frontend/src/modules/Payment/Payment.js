@@ -7,7 +7,7 @@ import Popup from '../../components/Popup'; // Import the custom Popup component
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { movie, showtime, selectedSeats, totalPrice, bookingId } = location.state || {};
+  const { movie, showtime, selectedSeats, totalPrice, bookingId, bookingCode } = location.state || {};
 
   const [qrUrl, setQrUrl] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
@@ -143,7 +143,7 @@ const Payment = () => {
                 <div className={styles.qrInfo}>
                   <div className={styles.accountName}>Pham Tuan Hung</div>
                   <div className={styles.bookingCode}>
-                    Mã đặt vé: BOOK{bookingId}
+                    Mã đặt vé: {bookingCode ? `BOOK${bookingId}-${bookingCode}` : `BOOK${bookingId}`}
                   </div>
                 </div>
               </div>
