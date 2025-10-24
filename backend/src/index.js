@@ -8,6 +8,7 @@ import movieRoutes from './routes/movies.js';
 import seatRoutes from './routes/seatRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import paymentsRoutes from './routes/payments.js';
+import zalopayRoutes from './routes/zalopayRoutes.js';
 import { startExpireJob } from './jobs/expireBookingsJob.js';
 
 const app = express();
@@ -49,6 +50,7 @@ app.use('/api/seats', seatRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/showtimes', (req, res) => res.status(501).json({ message: 'Not implemented' }));
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/zalopay', zalopayRoutes);
 app.use('/api/users', (req, res) => res.status(501).json({ message: 'Not implemented' }));
 
 // Start server

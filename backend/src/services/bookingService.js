@@ -1,5 +1,6 @@
 import { Booking, BookingSeat, Seat, Showtime, Payment, sequelize, Sequelize } from '../models/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import zalopayService from './zalopayService.js';
 
 // Lock seats: create a booking with status='locked' and booking_seats
 export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSeconds = 120 }) => {
@@ -120,20 +121,45 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
       return { success: false, message: 'Booking expired' };
     }
 
-    // create payment record
-    const payment = await Payment.create({
-      booking_id: booking.id,
-      payment_method,
-      payment_code: uuidv4(),
-      amount: booking.total_price,
-      qr_url: null,
-      expire_at: null,
-      status: 'paid',
-      transaction_ref: payment_payload.transaction_ref || null,
-      response_code: payment_payload.response_code || null,
-      secure_hash: null,
-      created_at: now
-    }, { transaction: t });
+    // Find existing pending payment or create new one
+    let payment = await Payment.findOne({
+      where: { booking_id: booking.id, status: 'pending' },
+      order: [['created_at', 'DESC']],
+      transaction: t,
+      lock: t.LOCK.UPDATE
+    });
+
+    if (payment) {
+      // Update existing pending payment to paid
+      payment.status = 'paid';
+      payment.payment_method = payment_method;
+      // Update transaction_ref with zp_trans_id from callback (important for refunds!)
+      if (payment_payload.transaction_ref) {
+        payment.transaction_ref = payment_payload.transaction_ref;
+      }
+      // Update app_trans_id if provided (always overwrite to ensure it matches the successful transaction)
+      if (payment_payload.app_trans_id) {
+        payment.payment_code = payment_payload.app_trans_id;
+      }
+      payment.response_code = payment_payload.response_code || null;
+      payment.amount = booking.total_price;
+      await payment.save({ transaction: t });
+    } else {
+      // Create new payment record (fallback for old bookings)
+      payment = await Payment.create({
+        booking_id: booking.id,
+        payment_method,
+        payment_code: payment_payload.app_trans_id || uuidv4(),
+        amount: booking.total_price,
+        qr_url: null,
+        expire_at: null,
+        status: 'paid',
+        transaction_ref: payment_payload.transaction_ref || null,
+        response_code: payment_payload.response_code || null,
+        secure_hash: null,
+        created_at: now
+      }, { transaction: t });
+    }
 
     // update booking status
     booking.status = 'confirmed';
@@ -264,33 +290,16 @@ export const getUserBookings = async (userId) => {
   }
 };
 
-// Create a Sepay QR (mock) and store a pending Payment record with qr_url and expire_at
-// Create a Sepay QR (mock) and store or reuse a single pending Payment record
-export const createSepayQR = async ({ booking_id, expiresIn = 60 }) => {
-  // Start transaction to ensure atomicity and prevent race conditions
+// Create ZaloPay QR Dynamic Order
+export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
   const t = await sequelize.transaction();
   try {
     const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
     if (!booking) throw new Error('Booking not found');
-    // Build QR URL
-    const sepayAccount = process.env.SEPAY_ACCOUNT || '02042004666';
+    
     const amount = Number(booking.total_price || 0);
-    let qrUrl;
-    if (sepayAccount) {
-      // Use combined identifier: BOOK{booking.id}_{booking_code}
-  // Use hyphen '-' as separator because some banks disallow '_'.
-  const combined = `BOOK${booking.id}-${booking.booking_code}`;
-  // Ensure the separator is preserved by percent-encoding the hyphen.
-  let addInfo = encodeURIComponent(combined);
-  addInfo = addInfo.replace(/-/g, '%2D');
-      qrUrl = `https://img.vietqr.io/image/TPB-${sepayAccount}-compact2.png?amount=${amount}&addInfo=${addInfo}`;
-    } else {
-      // Fallback QR data when no sepayAccount configured
-      const qrData = encodeURIComponent(`PAY:${booking.booking_code};AMT:${amount}`);
-      qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${qrData}`;
-    }
-    const expireAt = new Date(Date.now() + expiresIn * 1000);
     const now = new Date();
+    
     // Lock and check for existing pending Payment
     let payment = await Payment.findOne({
       where: { booking_id: booking.id, status: 'pending' },
@@ -298,20 +307,39 @@ export const createSepayQR = async ({ booking_id, expiresIn = 60 }) => {
       transaction: t,
       lock: t.LOCK.UPDATE
     });
+    
+    // Create ZaloPay order
+    const zalopayResult = await zalopayService.createOrder({
+      booking_id: booking.id,
+      booking_code: booking.booking_code,
+      amount: amount,
+      description: `Thanh toan ve phim ${booking.booking_code}`
+    });
+    
+    if (!zalopayResult.success) {
+      await t.rollback();
+      throw new Error(`ZaloPay order creation failed: ${zalopayResult.return_message}`);
+    }
+    
+    const expireAt = new Date(Date.now() + expiresIn * 1000);
+    
     if (payment && payment.expire_at && new Date(payment.expire_at) > now) {
-      // Reuse existing
-      payment.qr_url = qrUrl;
+      // Reuse existing payment record
+      payment.qr_url = zalopayResult.order_url;
+      payment.payment_code = zalopayResult.app_trans_id;
+      payment.transaction_ref = zalopayResult.zp_trans_token;
       payment.expire_at = expireAt;
       await payment.save({ transaction: t });
     } else {
-      // Attempt to create a new pending record, catch duplicates
+      // Create new pending payment record
       try {
         payment = await Payment.create({
           booking_id: booking.id,
-          payment_method: 'sepay',
-          payment_code: uuidv4(),
+          payment_method: 'zalopay',
+          payment_code: zalopayResult.app_trans_id,
           amount: booking.total_price,
-          qr_url: qrUrl,
+          qr_url: zalopayResult.order_url,
+          transaction_ref: zalopayResult.zp_trans_token,
           expire_at: expireAt,
           status: 'pending',
           created_at: now
@@ -329,13 +357,26 @@ export const createSepayQR = async ({ booking_id, expiresIn = 60 }) => {
         }
       }
     }
+    
     await t.commit();
-    return { qr_url: qrUrl, expires_in: expiresIn, expires_at: expireAt.toISOString(), payment_id: payment.id };
+    
+    return { 
+      qr_url: zalopayResult.order_url,
+      order_token: zalopayResult.zp_trans_token,
+      app_trans_id: zalopayResult.app_trans_id,
+      expires_in: expiresIn,
+      expires_at: expireAt.toISOString(),
+      payment_id: payment.id
+    };
   } catch (err) {
     await t.rollback();
+    console.error('Error creating ZaloPay QR:', err);
     throw err;
   }
 };
+
+// Keep old function for backward compatibility (deprecated)
+export const createSepayQR = createZaloPayQR;
 
 export const getBookingStatus = async ({ booking_id }) => {
   const booking = await Booking.findByPk(booking_id, { attributes: ['id', 'status', 'booking_code'] });
@@ -366,40 +407,259 @@ export const cancelBooking = async ({ booking_id }) => {
   }
 };
 
-// Refund a booking (after paid)
-export const refundBooking = async ({ booking_id, reason = null }) => {
+// Refund a booking (after paid) - với ZaloPay integration
+export const refundBooking = async ({ booking_id, user_id, reason = null }) => {
   const t = await sequelize.transaction();
   try {
-    const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
-    if (!booking) { await t.rollback(); return { success: false, message: 'Booking not found' }; }
-    if (booking.status !== 'confirmed') { await t.rollback(); return { success: false, message: 'Only confirmed bookings can be refunded' }; }
+    // 1. Validate booking exists và thuộc về user
+    const booking = await Booking.findByPk(booking_id, { 
+      include: [
+        {
+          model: Showtime,
+          attributes: ['id', 'start_time', 'movie_id', 'hall_id']
+        },
+        {
+          model: BookingSeat,
+          include: [{
+            model: Seat,
+            attributes: ['id', 'row_name', 'seat_number']
+          }]
+        }
+      ],
+      transaction: t, 
+      lock: t.LOCK.UPDATE 
+    });
+    
+    if (!booking) { 
+      await t.rollback(); 
+      return { success: false, message: 'Booking not found' }; 
+    }
+    
+    // Check ownership
+    if (booking.user_id !== user_id) {
+      await t.rollback();
+      return { success: false, message: 'Unauthorized: This booking does not belong to you' };
+    }
+    
+    // 2. Validate booking status = 'confirmed' (đã thanh toán)
+    if (booking.status !== 'confirmed') { 
+      await t.rollback(); 
+      return { success: false, message: 'Only confirmed (paid) bookings can be refunded' }; 
+    }
 
-    // create refund record as a Payment with status 'refunded' (simple approach)
+    // 3. Check showtime exists
+    if (!booking.Showtime) {
+      await t.rollback();
+      return { success: false, message: 'Showtime not found for this booking' };
+    }
+
+    // 4. Validate thời gian: phải trước showtime ít nhất 2 tiếng (7200 seconds)
+    const showtimeStart = new Date(booking.Showtime.start_time);
+    const now = new Date();
+    const timeDiffSeconds = (showtimeStart - now) / 1000;
+    
+    if (timeDiffSeconds < 7200) {
+      await t.rollback();
+      return { 
+        success: false, 
+        message: `Cannot refund: Showtime starts in less than 2 hours. Refund must be requested at least 2 hours before showtime.`,
+        showtime_start: showtimeStart,
+        time_remaining_seconds: Math.max(0, Math.floor(timeDiffSeconds))
+      };
+    }
+
+    // 5. Find original payment (paid) - MUST have transaction_ref (zp_trans_id from callback)
+    console.log('🔍 [Refund] Looking for paid payment with transaction_ref for booking:', booking_id);
+    
+    const originalPayment = await Payment.findOne({
+      where: { 
+        booking_id: booking.id, 
+        status: 'paid',
+        transaction_ref: { [Sequelize.Op.ne]: null } // Must have zp_trans_id
+      },
+      order: [['created_at', 'DESC']], // Get LATEST paid payment with callback
+      transaction: t
+    });
+
+    console.log('🔍 [Refund] Found payment:', originalPayment ? {
+      id: originalPayment.id,
+      payment_code: originalPayment.payment_code,
+      transaction_ref: originalPayment.transaction_ref,
+      status: originalPayment.status,
+      created_at: originalPayment.created_at
+    } : null);
+
+    if (!originalPayment) {
+      await t.rollback();
+      
+      // Debug: Check if there are ANY paid payments
+      const anyPaidPayment = await Payment.findOne({
+        where: { booking_id: booking.id, status: 'paid' },
+        order: [['created_at', 'DESC']]
+      });
+      
+      console.log('⚠️ [Refund] Any paid payment (even without transaction_ref):', anyPaidPayment ? {
+        id: anyPaidPayment.id,
+        payment_code: anyPaidPayment.payment_code,
+        transaction_ref: anyPaidPayment.transaction_ref,
+        status: anyPaidPayment.status
+      } : 'NONE');
+      
+      return { 
+        success: false, 
+        message: 'No valid paid payment found for this booking. Payment may not have been completed through ZaloPay callback.' 
+      };
+    }
+
+    // 6. Check if payment was via ZaloPay (có transaction_ref = zp_trans_id)
+    const isZaloPay = originalPayment.payment_method === 'zalopay' && originalPayment.transaction_ref;
+    let zalopayRefundResult = null;
+
+    if (isZaloPay) {
+      // Validate zp_trans_id format (should be like "251024000113499")
+      const zpTransId = String(originalPayment.transaction_ref); // Convert to string in case it's number
+      const appTransId = originalPayment.payment_code; // app_trans_id used to create the order
+      
+      console.log('🔍 [Refund] Payment details:', {
+        payment_id: originalPayment.id,
+        payment_method: originalPayment.payment_method,
+        payment_code: appTransId,
+        transaction_ref: zpTransId,
+        amount: originalPayment.amount,
+        created_at: originalPayment.created_at
+      });
+      
+      if (!zpTransId || zpTransId.length < 10) {
+        await t.rollback();
+        return { 
+          success: false, 
+          message: 'Invalid ZaloPay transaction ID. This booking may not have been paid through ZaloPay properly.',
+          hint: 'Please contact support for manual refund processing.'
+        };
+      }
+
+      // IMPORTANT: Query ZaloPay using app_trans_id (not zp_trans_id) to verify transaction
+      try {
+        console.log('🔍 [Refund] Verifying transaction with ZaloPay using app_trans_id:', appTransId);
+        const queryResult = await zalopayService.queryOrder(appTransId);
+        
+        console.log('📊 [Refund] ZaloPay query result:', queryResult);
+        
+        if (queryResult.return_code !== 1) {
+          await t.rollback();
+          return {
+            success: false,
+            message: `Cannot refund: Original transaction not found or not successful in ZaloPay system.`,
+            zalopay_query: queryResult,
+            hint: 'This transaction may not have been completed successfully. Please verify payment status first.'
+          };
+        }
+        
+        // Verify zp_trans_id from query matches our stored value
+        const queryZpTransId = String(queryResult.zp_trans_id);
+        if (queryZpTransId && queryZpTransId !== zpTransId) {
+          console.warn(`⚠️ [Refund] zp_trans_id mismatch! Stored: ${zpTransId}, ZaloPay: ${queryZpTransId}`);
+          // Update our stored value to match ZaloPay's
+          console.log(`🔄 [Refund] Updating transaction_ref to: ${queryZpTransId}`);
+        }
+        
+      } catch (queryError) {
+        console.error('❌ [Refund] Error querying ZaloPay:', queryError);
+        await t.rollback();
+        return {
+          success: false,
+          message: 'Failed to verify transaction status with ZaloPay. Please try again later.',
+          error: queryError.message
+        };
+      }
+
+      // Call ZaloPay refund API using zp_trans_id
+      try {
+        console.log('💸 [Refund] Calling ZaloPay refund API with zp_trans_id:', zpTransId);
+        
+        zalopayRefundResult = await zalopayService.refundOrder({
+          zp_trans_id: zpTransId,
+          amount: booking.total_price,
+          description: reason || `Refund booking ${booking.booking_code}`,
+          booking_id: booking.id
+        });
+
+        if (!zalopayRefundResult.success) {
+          await t.rollback();
+          return { 
+            success: false, 
+            message: `ZaloPay refund failed: ${zalopayRefundResult.return_message || 'Unknown error'}`,
+            zalopay_error: {
+              return_code: zalopayRefundResult.return_code,
+              sub_return_code: zalopayRefundResult.sub_return_code,
+              sub_return_message: zalopayRefundResult.sub_return_message
+            },
+            hint: zalopayRefundResult.sub_return_code === -401 
+              ? 'Invalid transaction data. This booking may not have been paid through ZaloPay.'
+              : 'Please try again later or contact support.'
+          };
+        }
+      } catch (error) {
+        await t.rollback();
+        console.error('ZaloPay refund API error:', error);
+        return { 
+          success: false, 
+          message: `ZaloPay refund request failed: ${error.message}`,
+          error: error.message
+        };
+      }
+    } else {
+      // Non-ZaloPay payment (manual refund required)
+      console.warn(`⚠️ Booking ${booking_id} was not paid via ZaloPay. Payment method: ${originalPayment.payment_method}. Manual refund required.`);
+    }
+
+    // 7. Create refund record as Payment with status 'refunded'
     const refund = await Payment.create({
       booking_id: booking.id,
-      payment_method: 'refund',
-      payment_code: `REFUND-${uuidv4()}`,
-      amount: -(booking.total_price || 0),
+      payment_method: isZaloPay ? 'zalopay_refund' : 'refund',
+      payment_code: zalopayRefundResult?.m_refund_id || `REFUND-${uuidv4()}`,
+      amount: -(booking.total_price || 0), // Negative amount for refund
       qr_url: null,
       expire_at: null,
       status: 'refunded',
-      transaction_ref: null,
-      response_code: null,
-      secure_hash: reason || null,
+      transaction_ref: zalopayRefundResult?.refund_id ? String(zalopayRefundResult.refund_id) : null,
+      response_code: zalopayRefundResult?.return_code ? String(zalopayRefundResult.return_code) : null,
+      secure_hash: reason || 'User requested refund',
       created_at: new Date()
     }, { transaction: t });
 
-    // mark original payments as refunded (optional)
-    await Payment.update({ status: 'refunded' }, { where: { booking_id: booking.id, status: 'paid' }, transaction: t });
+    // 8. Mark original payment as refunded
+    originalPayment.status = 'refunded';
+    await originalPayment.save({ transaction: t });
 
-    // update booking status to refunded
+    // 9. Update booking status to 'refunded'
     booking.status = 'refunded';
     await booking.save({ transaction: t });
 
     await t.commit();
-    return { success: true, booking: booking.toJSON(), refund: refund.toJSON() };
+    
+    // Message based on ZaloPay refund status
+    let refundMessage = 'Booking refunded successfully.';
+    if (isZaloPay && zalopayRefundResult) {
+      if (zalopayRefundResult.return_code === 1) {
+        refundMessage = 'Hoàn tiền thành công! Tiền đã được hoàn vào tài khoản ZaloPay của bạn.';
+      } else if (zalopayRefundResult.return_code === 3) {
+        refundMessage = 'Yêu cầu hoàn tiền đã được gửi đến ZaloPay! Tiền sẽ được hoàn vào tài khoản ZaloPay của bạn trong vòng 1-3 ngày làm việc.';
+      } else {
+        refundMessage = 'Refund request sent to ZaloPay. Please check your ZaloPay account.';
+      }
+    }
+    
+    return { 
+      success: true, 
+      booking: booking.toJSON(), 
+      refund: refund.toJSON(),
+      zalopay_refund: zalopayRefundResult,
+      message: refundMessage
+    };
   } catch (err) {
     try { await t.rollback(); } catch (e) { }
+    console.error('Error refunding booking:', err);
     throw err;
   }
 };
@@ -428,6 +688,7 @@ export default {
   expireLockedBookings,
   getUserBookings,
   createSepayQR,
+  createZaloPayQR,
   getBookingStatus,
   cancelBooking,
   refundBooking,
