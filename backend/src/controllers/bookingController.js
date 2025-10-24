@@ -90,12 +90,47 @@ export const refundBookingHandler = async (req, res) => {
   try {
     const bookingId = req.params.bookingId;
     const { reason } = req.body;
-    const result = await bookingService.refundBooking({ booking_id: bookingId, reason });
-    if (!result.success) return res.status(400).json({ message: result.message });
-    res.json({ success: true, booking: result.booking, refund: result.refund });
+    
+    // Get user_id from authenticated user (assuming req.user from auth middleware)
+    // If no auth middleware, get from body (less secure, for development only)
+    const userId = req.user?.id || req.body.user_id;
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Authentication required' 
+      });
+    }
+    
+    const result = await bookingService.refundBooking({ 
+      booking_id: bookingId, 
+      user_id: userId,
+      reason 
+    });
+    
+    if (!result.success) {
+      return res.status(400).json({ 
+        success: false,
+        message: result.message,
+        showtime_start: result.showtime_start,
+        time_remaining_seconds: result.time_remaining_seconds,
+        zalopay_error: result.zalopay_error
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      booking: result.booking, 
+      refund: result.refund,
+      zalopay_refund: result.zalopay_refund,
+      message: result.message
+    });
   } catch (err) {
     console.error('Error refunding booking:', err && err.stack ? err.stack : err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ 
+      success: false,
+      message: err.message 
+    });
   }
 };
 

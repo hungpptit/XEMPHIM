@@ -63,12 +63,23 @@ const MyTickets = () => {
     const now = new Date();
     const showDateTime = new Date(`${ticket.showtime.date} ${ticket.showtime.time}`);
     
+    // Return actual booking status first
     if (ticket.status === 'cancelled') {
       return 'cancelled';
+    } else if (ticket.status === 'refunded') {
+      return 'refunded';
+    } else if (ticket.status === 'locked') {
+      return 'locked';
+    } else if (ticket.status === 'confirmed') {
+      // Check if showtime has passed
+      if (showDateTime < now) {
+        return 'expired';
+      }
+      return 'confirmed';
     } else if (showDateTime < now) {
       return 'expired';
     } else {
-      return 'confirmed';
+      return ticket.status || 'unknown';
     }
   };
 
@@ -93,22 +104,69 @@ const MyTickets = () => {
     }
   };
 
+  const handleRefundTicket = async (ticket) => {
+    const confirmMsg = `Bạn có chắc chắn muốn hoàn tiền cho vé này?\n\nPhim: ${ticket.movie.title}\nNgày chiếu: ${ticket.showtime.date} ${ticket.showtime.time}\nSố tiền: ${ticket.totalPrice.toLocaleString()}đ\n\nLưu ý: Chỉ có thể hoàn tiền nếu còn hơn 2 giờ trước giờ chiếu.`;
+    
+    if (!window.confirm(confirmMsg)) return;
+    
+    const reason = prompt('Vui lòng nhập lý do hoàn tiền (không bắt buộc):');
+    
+    try {
+      // Get current user
+      const { default: authService } = await import('../../services/authService');
+      const user = await authService.getCurrentUser();
+      const userId = user?.id || user?.user_id;
+      
+      const response = await bookingAPI.refundBooking(ticket.id, { 
+        reason: reason || 'User requested refund',
+        user_id: userId 
+      });
+      
+      const data = response.data || response;
+      
+      if (data.success) {
+        alert(`✅ Yêu cầu hoàn tiền thành công!\n\n${data.message || 'Tiền sẽ được hoàn lại trong vòng 1-3 ngày làm việc.'}`);
+        await loadTickets();
+      } else {
+        alert(`❌ Hoàn tiền thất bại!\n\n${data.message || 'Vui lòng thử lại sau.'}`);
+      }
+    } catch (err) {
+      console.error('Refund booking failed', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Đã xảy ra lỗi khi xử lý hoàn tiền';
+      alert(`❌ Hoàn tiền thất bại!\n\n${errorMsg}`);
+    }
+  };
+
   const canCancelTicket = (ticket) => {
-    const status = getTicketStatus(ticket);
-    if (status === 'cancelled' || status === 'expired') return false;
+    // Can only cancel 'locked' bookings (before payment)
+    if (ticket.status !== 'locked') return false;
     
     const now = new Date();
     const showDateTime = new Date(`${ticket.showtime.date} ${ticket.showtime.time}`);
     const timeDiff = showDateTime.getTime() - now.getTime();
     const hoursUntilShow = timeDiff / (1000 * 60 * 60);
     
-    return hoursUntilShow > 2; // Can cancel if more than 2 hours before show
+    return hoursUntilShow > 0; // Can cancel locked booking anytime before showtime
+  };
+
+  const canRefundTicket = (ticket) => {
+    // Can only refund 'confirmed' (paid) bookings
+    if (ticket.status !== 'confirmed') return false;
+    
+    const now = new Date();
+    const showDateTime = new Date(`${ticket.showtime.date} ${ticket.showtime.time}`);
+    const timeDiff = showDateTime.getTime() - now.getTime();
+    const hoursUntilShow = timeDiff / (1000 * 60 * 60);
+    
+    return hoursUntilShow > 2; // Can refund if more than 2 hours before show
   };
 
   const getStatusLabel = (status) => {
     switch (status) {
       case 'confirmed': return 'Đã xác nhận';
+      case 'locked': return 'Đang giữ chỗ';
       case 'cancelled': return 'Đã hủy';
+      case 'refunded': return 'Đã hoàn tiền';
       case 'expired': return 'Đã chiếu';
       default: return 'Không xác định';
     }
@@ -171,6 +229,12 @@ const MyTickets = () => {
               onClick={() => setFilter('cancelled')}
             >
               Đã hủy ({tickets.filter(t => getTicketStatus(t) === 'cancelled').length})
+            </button>
+            <button 
+              className={`${styles.filterTab} ${filter === 'refunded' ? styles.active : ''}`}
+              onClick={() => setFilter('refunded')}
+            >
+              Đã hoàn tiền ({tickets.filter(t => getTicketStatus(t) === 'refunded').length})
             </button>
           </div>
         )}
@@ -288,6 +352,16 @@ const MyTickets = () => {
                           >
                             <FaTimes />
                             Hủy vé
+                          </button>
+                        )}
+                        
+                        {canRefundTicket(ticket) && (
+                          <button 
+                            className={styles.refundBtn}
+                            onClick={() => handleRefundTicket(ticket)}
+                          >
+                            <FaTimes />
+                            Hoàn tiền
                           </button>
                         )}
                       </div>
