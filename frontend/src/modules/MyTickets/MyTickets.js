@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { QRCodeCanvas } from 'qrcode.react'; 
 import { useNavigate } from 'react-router-dom';
 import { bookingAPI } from '../../services/api';
 import { 
@@ -44,7 +45,10 @@ const MyTickets = () => {
         selectedSeats: booking.seats,
         totalPrice: booking.total_price,
         status: booking.status,
-        created_at: booking.created_at
+        created_at: booking.created_at,
+        qrData: booking.qr_data,
+        qrToken: booking.qr_token,
+        checkedIn: booking.checked_in
       }));
       setTickets(mapped);
     } catch (err) {
@@ -172,11 +176,26 @@ const MyTickets = () => {
     }
   };
 
-  const renderQRCode = (ticketId) => {
-    // Simple QR code representation
+  const renderQRCode = (ticket) => {
+    if (!ticket.qrData) {
+      return (
+        <div className={styles.qrCodePlaceholder}>
+          <FaQrcode className={styles.qrIcon} />
+          <p>Chưa có mã QR</p>
+        </div>
+      );
+    }
+
     return (
       <div className={styles.qrCode}>
-        <FaQrcode />
+        <QRCodeCanvas
+          value={ticket.qrData}
+          size={140}
+          bgColor="#ffffff"
+          fgColor="#000000"
+          level="H"
+          includeMargin={true}
+        />
       </div>
     );
   };
@@ -369,7 +388,7 @@ const MyTickets = () => {
 
                     {status === 'confirmed' && (
                       <div className={styles.qrSection}>
-                        {renderQRCode(ticket.id)}
+                        {renderQRCode(ticket)}
                         <div className={styles.qrLabel}>
                           Quét mã QR này tại rạp để vào xem phim
                         </div>

@@ -1,6 +1,9 @@
 import { Booking, BookingSeat, Seat, Showtime, Payment, sequelize, Sequelize } from '../models/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import zalopayService from './zalopayService.js';
+import QRCode from 'qrcode';
+import nodemailer from 'nodemailer';
+import path from 'path';
 
 // Lock seats: create a booking with status='locked' and booking_seats
 export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSeconds = 120 }) => {
@@ -99,82 +102,158 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
 };
 
 // Confirm payment: convert locked booking to booked and create payment record
-export const confirmPayment = async ({ booking_id, payment_method = 'unknown', payment_payload = {} }) => {
-  const t = await sequelize.transaction();
-  let rolledBack = false;
-  try {
-    const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
-    if (!booking) {
-      if (!rolledBack) { await t.rollback(); rolledBack = true; }
-      return { success: false, message: 'Booking not found' };
-    }
+  export const confirmPayment = async ({ booking_id, payment_method = 'unknown', payment_payload = {} }) => {
+    const t = await sequelize.transaction();
+    let rolledBack = false;
+    try {
+      const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
+      if (!booking) {
+        if (!rolledBack) { await t.rollback(); rolledBack = true; }
+        return { success: false, message: 'Booking not found' };
+      }
 
-    const now = new Date();
-    if (booking.status !== 'locked') {
-      if (!rolledBack) { await t.rollback(); rolledBack = true; }
-      return { success: false, message: 'Booking not in locked state' };
-    }
-    if (booking.expire_at && new Date(booking.expire_at) <= now) {
-      booking.status = 'expired';
+      const now = new Date();
+      if (booking.status !== 'locked') {
+        if (!rolledBack) { await t.rollback(); rolledBack = true; }
+        return { success: false, message: 'Booking not in locked state' };
+      }
+      if (booking.expire_at && new Date(booking.expire_at) <= now) {
+        booking.status = 'expired';
+        await booking.save({ transaction: t });
+        await t.commit();
+        return { success: false, message: 'Booking expired' };
+      }
+
+      // Find existing pending payment or create new one
+      let payment = await Payment.findOne({
+        where: { booking_id: booking.id, status: 'pending' },
+        order: [['created_at', 'DESC']],
+        transaction: t,
+        lock: t.LOCK.UPDATE
+      });
+
+      if (payment) {
+        // Update existing pending payment to paid
+        payment.status = 'paid';
+        payment.payment_method = payment_method;
+        // Update transaction_ref with zp_trans_id from callback (important for refunds!)
+        if (payment_payload.transaction_ref) {
+          payment.transaction_ref = payment_payload.transaction_ref;
+        }
+        // Update app_trans_id if provided (always overwrite to ensure it matches the successful transaction)
+        if (payment_payload.app_trans_id) {
+          payment.payment_code = payment_payload.app_trans_id;
+        }
+        payment.response_code = payment_payload.response_code || null;
+        payment.amount = booking.total_price;
+        await payment.save({ transaction: t });
+      } else {
+        // Create new payment record (fallback for old bookings)
+        payment = await Payment.create({
+          booking_id: booking.id,
+          payment_method,
+          payment_code: payment_payload.app_trans_id || uuidv4(),
+          amount: booking.total_price,
+          qr_url: null,
+          expire_at: null,
+          status: 'paid',
+          transaction_ref: payment_payload.transaction_ref || null,
+          response_code: payment_payload.response_code || null,
+          secure_hash: null,
+          created_at: now
+        }, { transaction: t });
+      }
+
+      // update booking status
+      booking.status = 'confirmed';
       await booking.save({ transaction: t });
+
+      // --- New: generate QR data, save to booking.qr_data and send email ---
+      // --- Generate QR data and send ticket email ---
+      try {
+        if (!booking.qr_token) booking.qr_token = uuidv4();
+
+        const qrJson = JSON.stringify({ booking_id: booking.id, token: booking.qr_token });
+        booking.qr_data = qrJson;
+        await booking.save({ transaction: t }); // save 1 lần duy nhất
+
+        // ✅ Tạo QR code dạng buffer (thay vì base64)
+        const qrBuffer = await QRCode.toBuffer(qrJson, { errorCorrectionLevel: 'H' });
+
+        // ✅ Lấy thông tin vé
+        const user = await booking.getUser({ transaction: t });
+        const showtime = await booking.getShowtime({ transaction: t });
+        const movie = await showtime.getMovie({ transaction: t });
+        const seats = await BookingSeat.findAll({
+          where: { booking_id: booking.id },
+          include: [{ model: Seat }],
+          transaction: t
+        });
+        const seatList = seats.map(s => `${s.Seat.row_name}${s.Seat.seat_number}`).join(', ');
+
+        const formattedTime = new Date(showtime.start_time)
+          .toLocaleString('vi-VN', { dateStyle: 'full', timeStyle: 'short' });
+        const formattedPrice = Number(booking.total_price).toLocaleString('vi-VN') + ' ₫';
+
+        // ✅ HTML mail có ảnh QR inline (cid)
+        const mailHtml = `
+          <h2>🎟 Vé xem phim - ${movie.title}</h2>
+          <img src="${movie.poster_url}" alt="Poster phim" width="200" style="border-radius:10px; margin-bottom:10px;">
+          
+          <p><strong>Phim:</strong> ${movie.title}</p>
+          <p><strong>Suất chiếu:</strong> ${formattedTime}</p>
+          <p><strong>Rạp:</strong> ${showtime.hall_id}</p>
+          <p><strong>Ghế:</strong> ${seatList}</p>
+          <p><strong>Tổng tiền:</strong> ${formattedPrice}</p>
+          <p><strong>Mã vé:</strong> ${booking.booking_code}</p>
+          
+          <p><img src="cid:ticket_qr_${booking.id}" alt="QR code" width="180" height="180"/></p>
+          <p><i>Vui lòng xuất trình mã QR này tại quầy soát vé.</i></p>
+        `;
+
+        // ✅ Gửi mail qua Gmail
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          }
+        });
+
+        const mailOptions = {
+          from: process.env.EMAIL_FROM || `"XemPhim PTIT" <${process.env.EMAIL_USER}>`,
+          to: user?.email || process.env.DEV_MAIL_TO || 'user@example.com',
+          subject: `🎟 Vé xem phim - ${movie.title}`,
+          html: mailHtml,
+          attachments: [
+            {
+              filename: 'qrcode.png',
+              content: qrBuffer,
+              cid: `ticket_qr_${booking.id}` // 👈 phải trùng với src="cid:..."
+            }
+          ]
+        };
+
+        transporter.sendMail(mailOptions)
+          .then(info => console.log(`📧 [Email] Ticket sent to ${user?.email}:`, info.response))
+          .catch(err => console.error('❌ [Email] Send failed:', err.message));
+
+      } catch (emailErr) {
+        console.error('❌ [Booking] QR/email error:', emailErr.message);
+        // Không rollback nếu lỗi mail
+      }
+
+      // --- End QR + email block ---
       await t.commit();
-      return { success: false, message: 'Booking expired' };
-    }
-
-    // Find existing pending payment or create new one
-    let payment = await Payment.findOne({
-      where: { booking_id: booking.id, status: 'pending' },
-      order: [['created_at', 'DESC']],
-      transaction: t,
-      lock: t.LOCK.UPDATE
-    });
-
-    if (payment) {
-      // Update existing pending payment to paid
-      payment.status = 'paid';
-      payment.payment_method = payment_method;
-      // Update transaction_ref with zp_trans_id from callback (important for refunds!)
-      if (payment_payload.transaction_ref) {
-        payment.transaction_ref = payment_payload.transaction_ref;
+      return { success: true, booking: booking.toJSON(), payment: payment.toJSON() };
+    } catch (err) {
+      if (!rolledBack) {
+        try { await t.rollback(); } catch (e) { /* ignore rollback error */ }
+        rolledBack = true;
       }
-      // Update app_trans_id if provided (always overwrite to ensure it matches the successful transaction)
-      if (payment_payload.app_trans_id) {
-        payment.payment_code = payment_payload.app_trans_id;
-      }
-      payment.response_code = payment_payload.response_code || null;
-      payment.amount = booking.total_price;
-      await payment.save({ transaction: t });
-    } else {
-      // Create new payment record (fallback for old bookings)
-      payment = await Payment.create({
-        booking_id: booking.id,
-        payment_method,
-        payment_code: payment_payload.app_trans_id || uuidv4(),
-        amount: booking.total_price,
-        qr_url: null,
-        expire_at: null,
-        status: 'paid',
-        transaction_ref: payment_payload.transaction_ref || null,
-        response_code: payment_payload.response_code || null,
-        secure_hash: null,
-        created_at: now
-      }, { transaction: t });
+      throw err;
     }
-
-    // update booking status
-    booking.status = 'confirmed';
-    await booking.save({ transaction: t });
-
-    await t.commit();
-    return { success: true, booking: booking.toJSON(), payment: payment.toJSON() };
-  } catch (err) {
-    if (!rolledBack) {
-      try { await t.rollback(); } catch (e) { /* ignore rollback error */ }
-      rolledBack = true;
-    }
-    throw err;
-  }
-};
+  };
 
 // Expire locked bookings whose expire_at < now
 export const expireLockedBookings = async () => {
@@ -220,7 +299,7 @@ export const getUserBookings = async (userId) => {
           attributes: ['id', 'seat_id', 'price']
         }
       ],
-      attributes: ['id', 'booking_code', 'total_price', 'status', 'created_at', 'expire_at'],
+      attributes: ['id', 'booking_code', 'total_price', 'status', 'created_at', 'expire_at','qr_token','qr_data','checked_in'],
       order: [['created_at', 'DESC']]
     });
 
@@ -239,7 +318,7 @@ export const getUserBookings = async (userId) => {
     const movieMap = movies.reduce((acc, movie) => {
       acc[movie.id] = {
         id: movie.id,
-        title: movie.name,      // Map name to title for frontend
+        title: movie.title,      // Map name to title for frontend
         poster: movie.poster_url, // Map poster_url to poster
         duration: movie.duration_minutes // Map duration_minutes to duration
       };
@@ -256,6 +335,9 @@ export const getUserBookings = async (userId) => {
       status: booking.status,
       created_at: booking.created_at,
       expire_at: booking.expire_at,
+      qr_token: booking.qr_token || null,
+      qr_data: booking.qr_data || null,
+      checked_in: booking.checked_in || false,
       movie: booking.Showtime?.movie_id && movieMap[booking.Showtime.movie_id] ? {
         id: movieMap[booking.Showtime.movie_id].id,
         title: movieMap[booking.Showtime.movie_id].title,

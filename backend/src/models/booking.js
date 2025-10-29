@@ -14,7 +14,6 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
     booking_code: {
-      // UUID strings can be 36 chars; make field larger to be safe
       type: DataTypes.STRING(100),
       allowNull: false
     },
@@ -32,6 +31,24 @@ export default (sequelize, DataTypes) => {
     },
     created_at: {
       type: DataTypes.DATE
+    },
+
+    // 🔹 Các cột mới để lưu mã QR
+    qr_token: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Mã token bảo mật để xác thực QR'
+    },
+    qr_data: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Nội dung JSON dùng để sinh QR'
+    },
+    checked_in: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      comment: 'Đánh dấu vé đã được quét check-in'
     }
   }, {
     tableName: 'bookings',

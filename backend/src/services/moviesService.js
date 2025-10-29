@@ -2,7 +2,14 @@ import { Movie, Genre } from '../models/index.js';
 
 // 🟢 Lấy tất cả phim
 export const listMovies = async () => {
-  return Movie.findAll({
+  // Lazy import để tránh circular dependency
+  const { Sequelize } = await import('sequelize');
+  const { Showtime } = await import('../models/index.js');
+  const Op = Sequelize.Op;
+  const now = new Date();
+
+  // Lấy tất cả phim
+  const movies = await Movie.findAll({
     attributes: [
       'id',
       'title',
@@ -17,6 +24,28 @@ export const listMovies = async () => {
       'status'
     ]
   });
+
+  // Lọc ra những phim còn có showtime trong tương lai
+  const moviesWithFutureShowtimes = [];
+  
+  for (const movie of movies) {
+    // Kiểm tra xem phim có showtime nào trong tương lai không
+    const futureShowtimeCount = await Showtime.count({
+      where: {
+        movie_id: movie.id,
+        start_time: {
+          [Op.gt]: now
+        }
+      }
+    });
+
+    // Chỉ thêm phim nếu còn showtime trong tương lai
+    if (futureShowtimeCount > 0) {
+      moviesWithFutureShowtimes.push(movie);
+    }
+  }
+
+  return moviesWithFutureShowtimes;
 };
 
 // 🔵 Lấy phim theo ID
@@ -98,9 +127,20 @@ export const deleteMovie = async (id) => {
 // 🔔 Lấy danh sách showtimes cho 1 movie
 export const getShowtimesForMovie = async (movieId) => {
   // lazy import to avoid circular
+  const { Sequelize } = await import('sequelize');
   const { Showtime } = await import('../models/index.js');
+  const Op = Sequelize.Op;
+  
+  // Chỉ lấy showtimes chưa diễn ra (start_time > now)
+  const now = new Date();
+  
   return Showtime.findAll({
-    where: { movie_id: movieId },
+    where: { 
+      movie_id: movieId,
+      start_time: {
+        [Op.gt]: now  // Greater than now
+      }
+    },
     attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price'],
     order: [['start_time', 'ASC']]
   });
