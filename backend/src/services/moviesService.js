@@ -25,10 +25,16 @@ export const listMovies = async () => {
     ]
   });
 
-  // Lọc ra những phim còn có showtime trong tương lai
+  // Lọc ra những phim còn có showtime trong tương lai (hoặc phim sắp chiếu)
   const moviesWithFutureShowtimes = [];
   
   for (const movie of movies) {
+    // Nếu phim ở trạng thái sắp chiếu, hiển thị luôn không cần có showtimes
+    if (movie.status === 'coming_soon') {
+      moviesWithFutureShowtimes.push(movie);
+      continue;
+    }
+
     // Kiểm tra xem phim có showtime nào trong tương lai không
     const futureShowtimeCount = await Showtime.count({
       where: {

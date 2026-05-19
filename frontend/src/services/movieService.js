@@ -1,4 +1,4 @@
-import axios from 'axios';
+import API from './api';
 
 function toEmbedYoutube(url) {
   if (!url) return null;
@@ -51,13 +51,13 @@ function mapMovie(m) {
 }
 
 export async function listMovies() {
-  const res = await axios.get('/api/movies', { withCredentials: true });
+  const res = await API.get('/movies', { withCredentials: true });
   const raw = res.data && res.data.movies ? res.data.movies : [];
   return raw.map(mapMovie);
 }
 
 export async function getMovie(id) {
-  const res = await axios.get(`/api/movies/${id}`, { withCredentials: true });
+  const res = await API.get(`/movies/${id}`, { withCredentials: true });
   const raw = res.data && res.data.movie ? res.data.movie : null;
   return mapMovie(raw);
 }
