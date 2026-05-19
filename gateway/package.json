@@ -1,0 +1,20 @@
+{
+  "name": "xemphim-gateway",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "API Gateway for XEMPHIM microservices",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-http-proxy": "^2.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

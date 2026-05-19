@@ -206,23 +206,124 @@ Sử dụng RabbitMQ hoặc Kafka để:
 | Linh hoạt | Khó debug |
 | Hiệu năng cao | Quản lý khó |
 
----
 
-# 🚀 5. Công nghệ đề xuất
+# 🧠 5. Design Patterns áp dụng
 
-- Backend: NodeJS / Spring Boot  
-- API Gateway: Nginx / Spring Cloud Gateway  
-- Cache: Redis  
-- Message Queue: RabbitMQ / Kafka  
-- Database: MySQL / PostgreSQL  
+Trong hệ thống, một số mẫu thiết kế phần mềm (Design Patterns) được áp dụng nhằm tăng tính linh hoạt, dễ mở rộng và dễ bảo trì.
 
 ---
 
-# 🏁 6. Kết luận
+## 5.1 Singleton Pattern
 
-Hệ thống đặt vé xem phim được xây dựng theo kiến trúc Microservices giúp:
-- Đảm bảo khả năng mở rộng
-- Xử lý tốt lượng lớn người dùng
-- Đáp ứng yêu cầu nghiệp vụ phức tạp
+### Mục đích:
+Đảm bảo một class chỉ có một instance duy nhất.
 
-Đây là một bài toán thực tế điển hình để áp dụng các nguyên lý và mẫu thiết kế trong môn Thiết kế Kiến trúc Phần mềm.
+### Áp dụng:
+- Kết nối Database
+- Kết nối Redis
+
+### Lợi ích:
+- Tránh tạo nhiều kết nối không cần thiết
+- Tiết kiệm tài nguyên hệ thống
+
+---
+
+## 5.2 Factory Pattern
+
+### Mục đích:
+Tạo đối tượng mà không cần chỉ rõ class cụ thể.
+
+### Áp dụng:
+- Tạo các đối tượng như Booking, User, Payment
+- Tách logic khởi tạo object khỏi business logic
+
+### Lợi ích:
+- Dễ mở rộng
+- Giảm phụ thuộc giữa các module
+
+---
+
+## 5.3 SOLID Principles
+
+### Bao gồm:
+
+- S (Single Responsibility): mỗi service chỉ có một nhiệm vụ  
+- O (Open/Closed): dễ mở rộng, không sửa code cũ  
+- L (Liskov Substitution): thay thế object mà không lỗi  
+- I (Interface Segregation): interface nhỏ, rõ ràng  
+- D (Dependency Inversion): phụ thuộc abstraction thay vì implementation  
+
+### Áp dụng:
+- Thiết kế các Microservices độc lập
+- Tách rõ các layer (Controller, Service, Repository)
+
+---
+
+## 5.4 API Gateway Pattern
+
+### Mục đích:
+Cung cấp một điểm truy cập duy nhất cho hệ thống.
+
+### Áp dụng:
+- Routing request
+- Authentication
+- Rate limiting
+
+---
+
+## 5.5 Cache Aside Pattern
+
+### Mục đích:
+Tối ưu truy xuất dữ liệu bằng cache.
+
+### Cách hoạt động:
+1. Kiểm tra cache  
+2. Nếu không có → query DB  
+3. Lưu vào cache  
+
+### Áp dụng:
+- Danh sách phim
+- Lịch chiếu
+
+---
+
+## 5.6 Distributed Lock (Redis)
+
+### Mục đích:
+Giải quyết vấn đề concurrency (trùng ghế).
+
+### Áp dụng:
+- Lock ghế khi user chọn
+
+### Lợi ích:
+- Tránh double booking
+- Đảm bảo tính nhất quán dữ liệu
+
+---
+---
+
+# 🚀 6. Công nghệ đề xuất
+
+Hệ thống sử dụng các công nghệ hiện đại nhằm đáp ứng yêu cầu về hiệu năng, khả năng mở rộng và tính linh hoạt:
+
+- Backend: NodeJS / Spring Boot (xây dựng các Microservices)  
+- API Gateway: Nginx / Spring Cloud Gateway (định tuyến và kiểm soát truy cập)  
+- Cache: Redis (tăng tốc truy xuất và xử lý lock ghế)  
+- Message Queue: RabbitMQ / Kafka (xử lý bất đồng bộ)  
+- Database: MySQL / PostgreSQL (lưu trữ dữ liệu chính)  
+
+---
+
+# 🏁 7. Kết luận
+
+Hệ thống được thiết kế theo hướng phân tán với kiến trúc Microservices, trong đó mỗi thành phần đảm nhiệm một vai trò riêng biệt và giao tiếp thông qua API.
+
+Kiến trúc này cho phép:
+- Tách biệt rõ ràng giữa các domain nghiệp vụ  
+- Dễ dàng mở rộng từng thành phần độc lập  
+- Tăng khả năng chịu tải thông qua load balancing  
+- Tối ưu hiệu năng nhờ caching và xử lý bất đồng bộ  
+
+Đặc biệt, bài toán đặt vé xem phim yêu cầu xử lý concurrency (nhiều người chọn cùng một ghế) đã được giải quyết thông qua cơ chế lock sử dụng Redis, đảm bảo tính nhất quán dữ liệu.
+
+Qua đề tài này, nhóm có thể vận dụng các nguyên lý thiết kế kiến trúc phần mềm, các design pattern và kỹ thuật triển khai hệ thống phân tán trong một bài toán thực tế.
