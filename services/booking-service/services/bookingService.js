@@ -1,4 +1,4 @@
-import { Booking, BookingSeat, Seat, Showtime, Payment, sequelize, Sequelize } from '../models/index.js';
+import { Booking, BookingSeat, Seat, Showtime, Movie, Payment, sequelize, Sequelize } from '../models/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import Redis from 'ioredis';
 import amqp from 'amqplib';

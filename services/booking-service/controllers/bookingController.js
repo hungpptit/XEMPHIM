@@ -3,7 +3,7 @@ import bookingService from '../services/bookingService.js';
 export const lockSeatHandler = async (req, res) => {
   try {
     const { user_id, showtime_id, seat_ids } = req.body;
-    const result = await bookingService.lockSeats({ user_id, showtime_id, seat_ids, holdSeconds: 120 });
+    const result = await bookingService.lockSeats({ user_id, showtime_id, seat_ids, holdSeconds: 300 });
     if (!result.success) {
       return res.status(409).json({ 
         success: false, 
