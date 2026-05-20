@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSpinner, FaSyncAlt } from 'react-icons/fa';
+import { QRCodeSVG } from 'qrcode.react';
 import styles from './Payment.module.css';
 import Popup from '../../components/Popup'; // Import the custom Popup component
 
@@ -77,17 +78,18 @@ const Payment = () => {
       const { bookingAPI } = await import('../../services/api');
       const res = await bookingAPI.createSepayQR(bookingId);
       const data = res.data || res;
-      setQrUrl(data.qr_url || data.qrUrl || null);
+      setQrUrl(data.qr_url || data.qrUrl || data.order_url || null);
       if (data.expires_at) {
         setExpiresAt(new Date(data.expires_at));
       } else if (data.expires_in) {
         setExpiresAt(new Date(Date.now() + Number(data.expires_in) * 1000));
       } else {
-        setExpiresAt(new Date(Date.now() + 60 * 1000));
+        // ZaloPay default: 300 seconds (5 minutes)
+        setExpiresAt(new Date(Date.now() + 300 * 1000));
       }
       setPolling(true);
     } catch (err) {
-      console.error('Error creating Sepay QR:', err);
+      console.error('Error creating payment QR:', err);
       alert('Không thể tạo mã QR. Vui lòng thử lại sau.');
     } finally {
       setLoadingQr(false);
@@ -126,8 +128,8 @@ const Payment = () => {
       </button>
 
       <div className={styles.header}>
-        <h1 className={styles.title}>Thanh toán bằng Sepay</h1>
-        <p className={styles.subtitle}>Quét mã QR trong 60 giây để thanh toán</p>
+        <h1 className={styles.title}>Thanh toán bằng ZaloPay</h1>
+        <p className={styles.subtitle}>Quét mã QR trong 5 phút để thanh toán</p>
       </div>
 
       <div className={styles.content}>
@@ -139,9 +141,14 @@ const Payment = () => {
               <div className={styles.loadingBox}><FaSpinner className="loading" /> Đang tạo mã QR...</div>
             ) : qrUrl ? (
               <div className={`${styles.qrCard} ${secondsLeft <= 0 ? styles.qrExpired : ''}`}>
-                <img src={qrUrl} alt="Sepay QR" className={`${styles.qrImage} ${secondsLeft <= 0 ? styles.qrImageExpired : ''}`} />
+                <QRCodeSVG 
+                  value={qrUrl} 
+                  size={256} 
+                  level="H"
+                  className={`${styles.qrImage} ${secondsLeft <= 0 ? styles.qrImageExpired : ''}`}
+                />
                 <div className={styles.qrInfo}>
-                  <div className={styles.accountName}>Pham Tuan Hung</div>
+                  <div className={styles.accountName}>ZaloPay</div>
                   <div className={styles.bookingCode}>
                     Mã đặt vé: {bookingCode ? `BOOK${bookingId}-${bookingCode}` : `BOOK${bookingId}`}
                   </div>
@@ -163,9 +170,9 @@ const Payment = () => {
 
           <div className={styles.instructions}>
             <div><strong>Hướng dẫn thanh toán:</strong></div>
-            <p>1. Mở app ngân hàng và quét mã QR</p>
-            <p>2. Kiểm tra số tiền và nội dung chuyển khoản</p>
-            <p>3. Xác nhận thanh toán</p>
+            <p>1. Mở app ZaloPay và quét mã QR</p>
+            <p>2. Kiểm tra số tiền và nội dung thanh toán</p>
+            <p>3. Xác nhận thanh toán bằng mật khẩu hoặc sinh trắc học</p>
             <p>4. Hệ thống sẽ tự động xác nhận vé của bạn</p>
           </div>
         </div>

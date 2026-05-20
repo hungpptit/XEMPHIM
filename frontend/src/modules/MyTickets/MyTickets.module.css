@@ -80,8 +80,18 @@
   color: var(--color-white);
 }
 
+.ticketStatus.locked {
+  background: #f59e0b;
+  color: var(--color-white);
+}
+
 .ticketStatus.cancelled {
   background: var(--seat-occupied);
+  color: var(--color-white);
+}
+
+.ticketStatus.refunded {
+  background: #8b5cf6;
   color: var(--color-white);
 }
 
@@ -259,6 +269,26 @@
 }
 
 .cancelBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  background: #6b7280;
+  box-shadow: none;
+}
+
+.refundBtn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: var(--color-white);
+  border: 2px solid transparent;
+}
+
+.refundBtn:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
+
+.refundBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;

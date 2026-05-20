@@ -1,0 +1,21 @@
+{
+  "name": "xemphim-microservices",
+  "version": "1.0.0",
+  "description": "XEMPHIM Movie Booking System - Microservices Monorepo",
+  "scripts": {
+    "install-all": "npm install && npm install --prefix gateway && npm install --prefix services/user-service && npm install --prefix services/movie-service && npm install --prefix services/seat-service && npm install --prefix services/booking-service && npm install --prefix services/payment-service && npm install --prefix services/notification-service && npm install --prefix frontend",
+    "dev-gateway": "npm run dev --prefix gateway",
+    "dev-user": "npm run dev --prefix services/user-service",
+    "dev-movie": "npm run dev --prefix services/movie-service",
+    "dev-seat": "npm run dev --prefix services/seat-service",
+    "dev-booking": "npm run dev --prefix services/booking-service",
+    "dev-payment": "npm run dev --prefix services/payment-service",
+    "dev-notification": "npm run dev --prefix services/notification-service",
+    "dev-frontend": "npm run start --prefix frontend",
+    "dev-services": "concurrently \"npm run dev-user\" \"npm run dev-movie\" \"npm run dev-seat\" \"npm run dev-booking\" \"npm run dev-payment\" \"npm run dev-notification\"",
+    "dev-all": "concurrently --kill-others \"npm run dev-gateway\" \"npm run dev-user\" \"npm run dev-movie\" \"npm run dev-seat\" \"npm run dev-booking\" \"npm run dev-payment\" \"npm run dev-notification\" \"npm run dev-frontend\""
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

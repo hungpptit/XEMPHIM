@@ -1,0 +1,265 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "XEMPHIM Microservices API Documentation",
+    "description": "Tài liệu API tích hợp hệ thống đặt vé xem phim online XEMPHIM qua API Gateway.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "API Gateway Server"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Đăng ký tài khoản người dùng mới",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["name", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Đăng ký thành công" },
+          "400": { "description": "Email đã tồn tại hoặc dữ liệu không hợp lệ" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Đăng nhập và nhận Session Cookie",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Đăng nhập thành công, token được lưu vào HttpOnly Cookie access_token" },
+          "401": { "description": "Sai email hoặc mật khẩu" }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Lấy thông tin tài khoản người dùng hiện tại",
+        "responses": {
+          "200": { "description": "Thông tin tài khoản" },
+          "401": { "description": "Chưa đăng nhập / Token không hợp lệ" }
+        }
+      }
+    },
+    "/movies": {
+      "get": {
+        "tags": ["Movies"],
+        "summary": "Lấy danh sách phim đang chiếu hoặc sắp chiếu (Có hỗ trợ Cache Redis)",
+        "responses": {
+          "200": { "description": "Danh sách phim" }
+        }
+      }
+    },
+    "/movies/{id}": {
+      "get": {
+        "tags": ["Movies"],
+        "summary": "Lấy thông tin chi tiết của một bộ phim",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Chi tiết phim" },
+          "404": { "description": "Không tìm thấy phim" }
+        }
+      }
+    },
+    "/movies/{id}/showtimes": {
+      "get": {
+        "tags": ["Movies"],
+        "summary": "Lấy lịch chiếu của bộ phim cụ thể (Có hỗ trợ Cache Redis)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lịch chiếu phim" }
+        }
+      }
+    },
+    "/seats/showtimes/{showtimeId}/seats": {
+      "get": {
+        "tags": ["Seats"],
+        "summary": "Lấy danh sách sơ đồ ghế của suất chiếu (Kiểm tra ghế trống/đã đặt/đang khóa)",
+        "parameters": [
+          {
+            "name": "showtimeId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Sơ đồ ghế" }
+        }
+      }
+    },
+    "/bookings/lock-seat": {
+      "post": {
+        "tags": ["Bookings"],
+        "summary": "Khóa ghế giữ chỗ tạm thời (Redis Lock trong 120s)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "showtimeId": { "type": "integer" },
+                  "seatIds": {
+                    "type": "array",
+                    "items": { "type": "integer" }
+                  }
+                },
+                "required": ["showtimeId", "seatIds"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Khóa ghế thành công và tạo booking tạm thời" },
+          "409": { "description": "Ghế đã bị khóa hoặc đã được người khác đặt" }
+        }
+      }
+    },
+    "/bookings/{bookingId}/status": {
+      "get": {
+        "tags": ["Bookings"],
+        "summary": "Lấy trạng thái của vé đặt",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Trạng thái booking" }
+        }
+      }
+    },
+    "/bookings/{bookingId}/cancel": {
+      "post": {
+        "tags": ["Bookings"],
+        "summary": "Hủy giữ ghế trước khi thanh toán",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Hủy thành công" }
+        }
+      }
+    },
+    "/bookings/{bookingId}/refund": {
+      "post": {
+        "tags": ["Bookings"],
+        "summary": "Hoàn tiền vé (Admin/User yêu cầu)",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Gửi yêu cầu hoàn tiền thành công" }
+        }
+      }
+    },
+    "/payments/confirm": {
+      "post": {
+        "tags": ["Payments Webhook"],
+        "summary": "Sepay Webhook Callback nhận tín hiệu chuyển khoản ngân hàng",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bookingCode": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "referenceCode": { "type": "string" },
+                  "accountNumber": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Xác nhận và kích hoạt vé thành công" }
+        }
+      }
+    },
+    "/zalopay/callback": {
+      "post": {
+        "tags": ["Payments Webhook"],
+        "summary": "ZaloPay Webhook Callback (nhận tín hiệu từ sandbox webhook)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": { "type": "string", "description": "Chuỗi JSON string chứa thông tin gd" },
+                  "mac": { "type": "string", "description": "Chữ ký bảo mật xác thực nguồn gốc" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Phản hồi xác thực mã thành công" }
+        }
+      }
+    }
+  }
+}
