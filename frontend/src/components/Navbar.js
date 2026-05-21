@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaSearch, FaBars, FaUser } from 'react-icons/fa';
+import { FaSearch, FaBars, FaUser, FaChevronDown } from 'react-icons/fa';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(null);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false); // Mặc định luôn là false (đóng)
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -32,7 +33,6 @@ const Navbar = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Implement search functionality
     console.log('Searching for:', searchQuery);
   };
 
@@ -41,6 +41,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     await authService.logout();
     setUser(null);
+    setAdminMenuOpen(false);
     navigate('/');
   };
 
@@ -52,57 +53,86 @@ const Navbar = () => {
         </Link>
         
         <ul className={styles.navLinks}>
-          <li>
-            <Link 
-              to="/" 
-              className={`${styles.navLink} ${isActiveLink('/')}`}
-            >
-              Trang chủ
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/movies" 
-              className={`${styles.navLink} ${isActiveLink('/movies')}`}
-            >
-              Phim
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/my-tickets" 
-              className={`${styles.navLink} ${isActiveLink('/my-tickets')}`}
-            >
-              Vé của tôi
-            </Link>
-          </li>
+          {user?.role !== 'admin' && (
+            <>
+              <li>
+                <Link to="/" className={`${styles.navLink} ${isActiveLink('/')}`}>
+                  Trang chủ
+                </Link>
+              </li>
+              <li>
+                <Link to="/movies" className={`${styles.navLink} ${isActiveLink('/movies')}`}>
+                  Phim
+                </Link>
+              </li>
+              <li>
+                <Link to="/my-tickets" className={`${styles.navLink} ${isActiveLink('/my-tickets')}`}>
+                  Vé của tôi
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
 
         <div className={styles.rightSection}>
-          <form onSubmit={handleSearch} className={styles.searchBox}>
-            <input
-              type="text"
-              placeholder="Tìm kiếm phim..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={styles.searchInput}
-            />
-            <FaSearch className={styles.searchIcon} />
-          </form>
+          {user?.role !== 'admin' && (
+            <form onSubmit={handleSearch} className={styles.searchBox}>
+              <input
+                type="text"
+                placeholder="Tìm kiếm phim..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+              <FaSearch className={styles.searchIcon} />
+            </form>
+          )}
 
           <div className={styles.userSection}>
             {user ? (
-              <div className={styles.userInfo}>
-                <div className={styles.avatar}>
-                  <FaUser />
-                </div>
-                <Link to="/profile" className={styles.userNameLink}>Hi, {user.full_name || user.fullName || user.email}</Link>
-              </div>
+              <>
+                {user?.role === 'admin' ? (
+                  <div className={styles.adminMenuContainer}>
+                    {/* Bấm vào vùng chứa thông tin Admin Real Test để bật/tắt menu */}
+                    <button
+                      className={styles.adminProfileBtn}
+                      onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                      title="Menu Quản Trị"
+                    >
+                      <div className={styles.adminProfile}>
+                        <div className={styles.avatarArea}>
+                          {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'A'}
+                        </div>
+                        <div className={styles.profileInfo}>
+                          <span className={styles.profileName}>{user.full_name || 'Admin Real Test'}</span>
+                          <span className={styles.profileRole}>
+                            System Manager <FaChevronDown style={{ fontSize: '0.8em', marginLeft: '2px' }} />
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Kiểm tra class styles.show động để ẩn/hiện menu chuẩn xác */}
+                    <div className={`${styles.adminDropdown} ${adminMenuOpen ? styles.show : ''}`}>
+                      <button 
+                        onClick={handleLogout}
+                        className={styles.adminDropdownItem}
+                      >
+                        🚪 Đăng Xuất
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.userInfo}>
+                    <div className={styles.avatar}>
+                      <FaUser />
+                    </div>
+                    <Link to="/profile" className={styles.userNameLink}>Hi, {user.full_name || user.fullName || user.email}</Link>
+                  </div>
+                )}
+              </>
             ) : (
-              <button 
-                onClick={handleLogin}
-                className={styles.loginBtn}
-              >
+              <button onClick={handleLogin} className={styles.loginBtn}>
                 Đăng nhập
               </button>
             )}

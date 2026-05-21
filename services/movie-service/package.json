@@ -13,9 +13,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "ioredis": "^5.5.0",
     "mssql": "^12.0.0",
     "sequelize": "^6.37.7",
     "tedious": "^19.0.0",
-    "ioredis": "^5.5.0"
+    "xemphim-microservices": "file:../.."
   }
 }

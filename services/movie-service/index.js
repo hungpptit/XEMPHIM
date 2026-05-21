@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import movieRoutes from './routes/movies.js';
+import adminRoutes from './routes/adminRoutes.js';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/movies', movieRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/showtimes', (req, res) => {
   res.status(501).json({ message: 'Not implemented at root level. Use /api/movies/:id/showtimes instead.' });
 });

@@ -15,8 +15,13 @@ export default function Login(){
     setError('');
     setLoading(true);
     try{
-      await authService.login({ email, password });
-      navigate('/');
+      const { user } = await authService.login({ email, password });
+      // Nếu user là admin, điều hướng sang /admin, ngược lại về /
+      if(user?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }catch(err){
       setError(err.message || 'Đăng nhập thất bại');
     }finally{
