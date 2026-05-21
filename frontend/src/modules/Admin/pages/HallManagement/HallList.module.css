@@ -5,40 +5,6 @@
   min-height: 100%;
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  background: rgba(26, 26, 26, 0.5);
-  padding: 12px 16px;
-  border-radius: var(--border-radius-small);
-  border: 1px solid rgba(255, 215, 0, 0.15);
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
-}
-
-.breadcrumb button {
-  background: none;
-  border: none;
-  color: var(--color-gold);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 13px;
-  transition: var(--transition);
-  text-decoration: none;
-}
-
-.breadcrumb button:hover {
-  opacity: 0.8;
-}
-
-.breadcrumb span {
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  font-size: 13px;
-}
-
 .header {
   display: flex;
   justify-content: space-between;
@@ -229,9 +195,156 @@
 }
 
 .hallsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  /* Single centered content area for the table */
+  display: block;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Table Styling */
+.table {
+  width: 90%;
+  max-width: 1100px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  background: rgba(26, 26, 26, 0.5);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.table thead {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(255, 215, 0, 0.05));
+  border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+}
+
+.table thead th {
+  padding: 16px;
+  text-align: left;
+  color: var(--color-gold);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-right: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.table thead th:last-child {
+  border-right: none;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+  transition: var(--transition);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.table tbody tr.inactive {
+  opacity: 0.6;
+}
+
+.table tbody td {
+  padding: 14px 16px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+
+.hallName {
+  font-weight: 600;
+  color: var(--color-gold);
+}
+
+.cinemaName {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.seatCount {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge-standard {
+  background: rgba(100, 150, 200, 0.2);
+  color: #7dd3d3;
+  border: 1px solid rgba(125, 211, 211, 0.3);
+}
+
+.badge-imax {
+  background: rgba(255, 100, 100, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.badge-3d {
+  background: rgba(100, 200, 100, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.badge-premium {
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--color-gold);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.status-active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.status-inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btnEdit,
+.btnDelete {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: var(--transition);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btnEdit:hover {
+  color: var(--color-gold);
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.btnDelete:hover {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
 }
 
 .empty {
@@ -253,92 +366,6 @@
   transition: var(--transition);
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
-}
-
-.hallCard:hover {
-  box-shadow: 0 12px 32px rgba(255, 215, 0, 0.2);
-  transform: translateY(-4px);
-  border-color: rgba(255, 215, 0, 0.3);
-}
-
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.15);
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), transparent);
-}
-
-.cardHeader h3 {
-  margin: 0;
-  color: var(--color-gold);
-  font-size: 16px;
-  flex: 1;
-  font-weight: 600;
-}
-
-.cardActions {
-  display: flex;
-  gap: 8px;
-}
-
-.btnEdit,
-.btnDelete {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 4px;
-  transition: var(--transition);
-  color: var(--color-text-secondary);
-}
-
-.btnEdit:hover {
-  color: var(--color-gold);
-  background: rgba(255, 215, 0, 0.1);
-}
-
-.btnDelete:hover {
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
-}
-
-.cardBody {
-  padding: 16px;
-}
-
-.stat {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
-}
-
-.stat:last-child {
-  border-bottom: none;
-}
-
-.label {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.value {
-  font-size: 16px;
-  color: var(--color-gold);
-  font-weight: 700;
-}
-
-.cardFooter {
-  padding: 12px 16px;
-  border-top: 1px solid rgba(255, 215, 0, 0.15);
-  background: rgba(255, 215, 0, 0.05);
 }
 
 .btnManageSeats {

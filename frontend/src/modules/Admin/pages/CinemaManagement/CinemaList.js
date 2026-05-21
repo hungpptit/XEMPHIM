@@ -1,33 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
+import CinemaForm from '../../components/CinemaForm';
 import styles from './CinemaList.module.css';
+import { FaPlus, FaEdit, FaTrash, FaBuilding, FaExclamationTriangle } from 'react-icons/fa';
 
 export default function CinemaManagement() {
   const [cinemas, setCinemas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    location: '',
-    hotline: ''
-  });
+  const [editingCinema, setEditingCinema] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
     loadCinemas();
   }, []);
 
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(''), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const loadCinemas = async () => {
     try {
       setLoading(true);
-      const response = await adminService.getCinemas();
-      setCinemas(response.data?.data || []);
       setError('');
+      const response = await adminService.cinema.list();
+      setCinemas(response.data || []);
     } catch (err) {
       console.error('Error loading cinemas:', err);
-      setError('Lỗi tải danh sách rạp: ' + (err.response?.data?.error || err.message));
+      const errorMsg = err.error || err.message || 'Lỗi khi tải danh sách rạp';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

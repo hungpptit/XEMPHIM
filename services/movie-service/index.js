@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import movieRoutes from './routes/movies.js';
 import adminRoutes from './routes/adminRoutes.js';
+import * as models from './models/index.js';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -18,6 +19,9 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+// Make Sequelize models available to controllers via req.app.locals.models
+app.locals.models = models;
+
 // Debug logging middleware
 app.use((req, res, next) => {
   console.log(`[Movie Service] ${req.method} ${req.path}`);
@@ -31,6 +35,19 @@ app.use('/api/showtimes', (req, res) => {
   res.status(501).json({ message: 'Not implemented at root level. Use /api/movies/:id/showtimes instead.' });
 });
 
-app.listen(port, () => {
-  console.log(`🎬 Movie Catalog Service listening on port ${port}`);
-});
+// Initialize database and start server
+(async () => {
+  try {
+    console.log('[DB] Starting database sync...');
+    await models.sequelize.sync({ alter: false, logging: (sql) => console.log('[SQL]', sql) });
+    console.log('✅ Database synced successfully');
+    console.log('[DB] Available models:', Object.keys(models).filter(k => k !== 'sequelize' && k !== 'Sequelize'));
+  } catch (error) {
+    console.error('❌ Database sync failed:', error.message);
+    console.error('❌ Full error:', error);
+  }
+
+  app.listen(port, () => {
+    console.log(`🎬 Movie Catalog Service listening on port ${port}`);
+  });
+})();

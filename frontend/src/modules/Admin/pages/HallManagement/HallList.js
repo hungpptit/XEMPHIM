@@ -9,8 +9,8 @@ export default function HallManagement() {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    rows: '',
-    seatsPerRow: ''
+    cinema_name: '',
+    total_seats: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -23,9 +23,11 @@ export default function HallManagement() {
     try {
       setLoading(true);
       setError('');
-      setHalls([]);
+      const response = await adminService.hall.list();
+      setHalls(response.data?.data || response.data || []);
     } catch (err) {
       console.error('Error loading halls:', err);
+      setError('Lỗi tải danh sách phòng: ' + (err.response?.data?.error || err.message));
       setHalls([]);
     } finally {
       setLoading(false);
@@ -45,22 +47,30 @@ export default function HallManagement() {
     setError('');
     setSuccess('');
 
-    if (!formData.name || !formData.rows || !formData.seatsPerRow) {
-      setError('Vui lòng nhập đầy đủ thông tin');
+    if (!formData.name) {
+      setError('Vui lòng nhập tên phòng');
       return;
     }
 
-    const rows = parseInt(formData.rows);
-    const seatsPerRow = parseInt(formData.seatsPerRow);
-
-    if (rows <= 0 || seatsPerRow <= 0) {
-      setError('Số hàng và số ghế phải lớn hơn 0');
-      return;
-    }
+    const totalSeatsNum = formData.total_seats ? parseInt(formData.total_seats, 10) : null;
 
     try {
-      setSuccess('Tạo phòng chiếu mới thành công!');
-      setFormData({ name: '', rows: '', seatsPerRow: '' });
+      let data;
+      if (editingId) {
+        data = { name: formData.name };
+        await adminService.hall.update(editingId, data);
+        setSuccess('Cập nhật phòng chiếu thành công!');
+      } else {
+        data = {
+          name: formData.name,
+          cinema_name: formData.cinema_name || undefined,
+          total_seats: totalSeatsNum
+        };
+        await adminService.hall.create(data);
+        setSuccess('Tạo phòng chiếu mới thành công!');
+      }
+      
+      setFormData({ name: '', cinema_name: '', total_seats: '' });
       setEditingId(null);
       setShowForm(false);
       loadHalls();
@@ -70,14 +80,11 @@ export default function HallManagement() {
   };
 
   const handleEdit = (hall) => {
-    const totalSeats = hall.total_seats || 0;
-    const estimatedRows = Math.ceil(Math.sqrt(totalSeats));
-    const estimatedSeatsPerRow = Math.ceil(totalSeats / estimatedRows);
-
+    // Only allow editing the name
     setFormData({
       name: hall.name || '',
-      rows: estimatedRows,
-      seatsPerRow: estimatedSeatsPerRow
+      cinema_name: hall.cinema_name || '',
+      total_seats: hall.total_seats || ''
     });
     setEditingId(hall.id);
     setShowForm(true);
@@ -86,6 +93,7 @@ export default function HallManagement() {
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc muốn xoá phòng chiếu này?')) {
       try {
+        await adminService.hall.delete(id);
         setSuccess('Xoá phòng chiếu thành công!');
         loadHalls();
       } catch (err) {
@@ -97,7 +105,7 @@ export default function HallManagement() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', rows: '', seatsPerRow: '' });
+    setFormData({ name: '', cinema_name: '', total_seats: '' });
     setError('');
   };
 
@@ -138,41 +146,40 @@ export default function HallManagement() {
               />
             </div>
 
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>Số Hàng Ghế:</label>
-                <input
-                  type="number"
-                  name="rows"
-                  value={formData.rows}
-                  onChange={handleInputChange}
-                  placeholder="VD: 10"
-                  min="1"
-                  required
-                />
-              </div>
+            {/* When editing, only allow changing the name. For creation, show extra fields. */}
+            {!editingId && (
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Tên Rạp (tùy chọn):</label>
+                  <input
+                    type="text"
+                    name="cinema_name"
+                    value={formData.cinema_name}
+                    onChange={handleInputChange}
+                    placeholder="VD: Cineplex A"
+                  />
+                </div>
 
-              <div className={styles.formGroup}>
-                <label>Ghế Mỗi Hàng:</label>
-                <input
-                  type="number"
-                  name="seatsPerRow"
-                  value={formData.seatsPerRow}
-                  onChange={handleInputChange}
-                  placeholder="VD: 16"
-                  min="1"
-                  required
-                />
+                <div className={styles.formGroup}>
+                  <label>Tổng Ghế (tùy chọn):</label>
+                  <input
+                    type="number"
+                    name="total_seats"
+                    value={formData.total_seats}
+                    onChange={handleInputChange}
+                    placeholder="VD: 120"
+                    min="0"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className={styles.totalSeats}>
-              Tổng ghế: <strong>
-                {formData.rows && formData.seatsPerRow 
-                  ? parseInt(formData.rows) * parseInt(formData.seatsPerRow) 
-                  : 0}
-              </strong>
-            </div>
+            {/* show read-only total when creating with total_seats provided; hide when editing */}
+            {!editingId && formData.total_seats && (
+              <div className={styles.totalSeats}>
+                Tổng ghế: <strong>{parseInt(formData.total_seats, 10) || 0}</strong>
+              </div>
+            )}
 
             <div className={styles.formActions}>
               <button type="submit" className={styles.btnSubmit}>
@@ -187,9 +194,49 @@ export default function HallManagement() {
       )}
 
       <div className={styles.hallsGrid}>
-        <div className={styles.empty}>
-          Chưa có phòng chiếu nào. Hãy thêm phòng mới bằng nút "+ Thêm Phòng Mới"
-        </div>
+        {halls.length === 0 ? (
+          <div className={styles.empty}>
+            Chưa có phòng chiếu nào. Hãy thêm phòng mới bằng nút "+ Thêm Phòng Mới"
+          </div>
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Tên Phòng</th>
+                <th>Tên Rạp</th>
+                <th>Tổng Ghế</th>
+                <th>Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {halls.map((hall, index) => (
+                <tr key={hall.id}>
+                  <td>{index + 1}</td>
+                  <td className={styles.hallName}>{hall.name}</td>
+                  <td className={styles.cinemaName}>{hall.cinema_name || '-'}</td>
+                  <td className={styles.seatCount}>{hall.total_seats || 0} ghế</td>
+                  <td className={styles.actions}>
+                    <button 
+                      className={styles.btnEdit}
+                      onClick={() => handleEdit(hall)}
+                      title="Chỉnh sửa"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      className={styles.btnDelete}
+                      onClick={() => handleDelete(hall.id)}
+                      title="Xóa"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

@@ -1,25 +1,67 @@
-import api from '../../../services/api';
+import axios from 'axios';
 
-export const adminService = {
-  // ============= CINEMA APIs =============
-  
-  getCinemas: () => api.get('/api/admin/cinemas'),
-  
-  getCinemaById: (id) => api.get(`/api/admin/cinemas/${id}`),
-  
-  createCinema: (data) => api.post('/api/admin/cinemas', data),
-  
-  updateCinema: (id, data) => api.put(`/api/admin/cinemas/${id}`, data),
-  
-  deleteCinema: (id) => api.delete(`/api/admin/cinemas/${id}`),
-  
-  // ============= HALL APIs =============
-  
-  getHallsByCinema: (cinemaId) => api.get(`/api/admin/cinemas/${cinemaId}/halls`),
-  
-  createHall: (cinemaId, data) => api.post(`/api/admin/cinemas/${cinemaId}/halls`, data),
-  
-  updateHall: (hallId, data) => api.put(`/api/admin/halls/${hallId}`, data),
-  
-  deleteHall: (hallId) => api.delete(`/api/admin/halls/${hallId}`)
+/**
+ * Admin API - Go through the API Gateway so auth cookies/headers are injected
+ */
+const adminAPI = axios.create({
+  baseURL: 'http://localhost:8080',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // Send httpOnly cookies automatically
+});
+
+// Add auth interceptor
+adminAPI.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Admin Service - Hall and Seat Management
+ * Các API endpoints để quản lý phòng chiếu và ghế
+ */
+
+// ============= HALL Management =============
+const hallAPI = {
+  list: () => adminAPI.get('/api/admin/halls'),
+  getById: (hallId) => adminAPI.get(`/api/admin/halls/${hallId}`),
+  getDetail: (hallId) => adminAPI.get(`/api/admin/halls/${hallId}/detail`),
+  create: (data) => adminAPI.post('/api/admin/halls', data),
+  update: (hallId, data) => adminAPI.put(`/api/admin/halls/${hallId}`, data),
+  delete: (hallId) => adminAPI.delete(`/api/admin/halls/${hallId}`)
 };
+
+// ============= SEAT Management =============
+const seatAPI = {
+  create: (data) => adminAPI.post('/api/admin/seats', data),
+  getByHall: (hallId) => adminAPI.get(`/api/admin/halls/${hallId}/seats`),
+  getLayout: (hallId) => adminAPI.get(`/api/admin/halls/${hallId}/seats/layout`),
+  update: (seatId, data) => adminAPI.put(`/api/admin/seats/${seatId}`, data),
+  updateType: (hallId, data) => adminAPI.put(`/api/admin/halls/${hallId}/seats/type`, data),
+  delete: (seatId) => adminAPI.delete(`/api/admin/seats/${seatId}`)
+};
+
+// Combine all services
+export const adminService = {
+  hall: hallAPI,
+  seat: seatAPI,
+  
+  // Legacy support for existing code
+  createHall: (data) => hallAPI.create(data),
+  updateHall: (hallId, data) => hallAPI.update(hallId, data),
+  deleteHall: (hallId) => hallAPI.delete(hallId),
+  getHallDetail: (hallId) => hallAPI.getDetail(hallId),
+  
+  getSeatsByHall: (hallId) => seatAPI.getByHall(hallId),
+  getSeatLayout: (hallId) => seatAPI.getLayout(hallId)
+};
+
+export default adminService;
