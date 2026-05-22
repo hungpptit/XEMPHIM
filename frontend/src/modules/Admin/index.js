@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import HallManagement from './pages/HallManagement/HallList';
 import styles from './AdminPanel.module.css';
 import { FaChair, FaHome, FaFilm, FaTicketAlt, FaUserShield, FaChevronRight } from 'react-icons/fa';
 
 export default function AdminPanel() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getTabFromPath = (path) => path.startsWith('/admin/halls') ? 'halls' : 'overview';
+
   // Tab mặc định hiển thị Tổng Quan
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
 
   // Quản lý các chỉ số thống kê bằng state (Đã xóa totalCinemas)
   const [stats, setStats] = useState({
@@ -27,6 +33,18 @@ export default function AdminPanel() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    setActiveTab(getTabFromPath(location.pathname));
+  }, [location.pathname]);
+
+  const goOverview = () => {
+    navigate('/admin');
+  };
+
+  const goHalls = () => {
+    navigate('/admin/halls');
+  };
+
   const getRoleText = () => {
     return 'Bảng Điều Khiển Quản Trị';
   };
@@ -39,7 +57,7 @@ export default function AdminPanel() {
           <li className={styles.navItem}>
             <button
               className={`${styles.navBtn} ${activeTab === 'overview' ? styles.active : ''}`}
-              onClick={() => setActiveTab('overview')}
+              onClick={goOverview}
             >
               <FaHome className={styles.navIcon} />
               <span>Tổng Quan</span>
@@ -48,7 +66,7 @@ export default function AdminPanel() {
           <li className={styles.navItem}>
             <button
               className={`${styles.navBtn} ${activeTab === 'halls' ? styles.active : ''}`}
-              onClick={() => setActiveTab('halls')}
+              onClick={goHalls}
             >
               <FaChair className={styles.navIcon} />
               <span>Quản Lý Phòng Chiếu</span>
@@ -137,7 +155,7 @@ export default function AdminPanel() {
                 <div className={styles.dashboardSection}>
                   <h3>Lối Tắt Hành Động nhanh</h3>
                   <div className={styles.shortcutGrid}>
-                    <button onClick={() => setActiveTab('halls')} className={styles.shortcutBtn}>
+                    <button onClick={goHalls} className={styles.shortcutBtn}>
                       <span>Đi tới cấu hình sơ đồ phòng ghế</span> <FaChevronRight />
                     </button>
                   </div>

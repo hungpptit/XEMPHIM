@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 import Home from './modules/Home/Home';
 import MovieDetail from './modules/MovieDetail/MovieDetail';
 import SeatSelection from './modules/SeatSelection/SeatSelection';
@@ -27,11 +28,25 @@ function App() {
             <Route path="/movies/:id/seat-selection" element={<SeatSelection />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/my-tickets" element={<MyTickets />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              }
+            />
             <Route path="/profile" element={<Profile />} />
             <Route 
-              path="/admin" 
+              path="/admin/*" 
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminPanel />
