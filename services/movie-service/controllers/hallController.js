@@ -5,12 +5,12 @@
 
 export const createHall = async (req, res) => {
   try {
-    const { name, rows, seatsPerRow, hallType, description } = req.body;
+    const { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id } = req.body;
     const { CinemaHall, Seat } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
     const hall = await hallService.createHall(CinemaHall, Seat, {
-      name, rows, seatsPerRow, hallType, description
+      name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id
     });
 
     res.status(201).json({
@@ -29,15 +29,10 @@ export const createHall = async (req, res) => {
 
 export const getAllHalls = async (req, res) => {
   try {
-    const { CinemaHall } = req.app.locals.models;
-    console.log('[Hall Controller] CinemaHall model:', CinemaHall ? 'OK' : 'NOT FOUND');
-    if (!CinemaHall) {
-      console.log('[Hall Controller] Available models:', Object.keys(req.app.locals.models || {}));
-      throw new Error('CinemaHall model not found in app.locals.models');
-    }
+    const { CinemaHall, Cinema } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
-    const halls = await hallService.listHalls(CinemaHall);
+    const halls = await hallService.listHalls(CinemaHall, Cinema);
 
     res.json({
       success: true,
@@ -46,11 +41,9 @@ export const getAllHalls = async (req, res) => {
     });
   } catch (error) {
     console.error('[Hall Controller] Error getting all halls:', error.message);
-    console.error('[Hall Controller] Full error:', error);
     res.status(500).json({
       success: false,
-      error: error.message,
-      details: error.stack
+      error: error.message
     });
   }
 };
@@ -58,10 +51,10 @@ export const getAllHalls = async (req, res) => {
 export const getHallById = async (req, res) => {
   try {
     const { hallId } = req.params;
-    const { CinemaHall } = req.app.locals.models;
+    const { CinemaHall, Cinema } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
-    const hall = await hallService.getHallById(CinemaHall, hallId);
+    const hall = await hallService.getHallById(CinemaHall, Cinema, hallId);
 
     res.json({
       success: true,
@@ -80,10 +73,10 @@ export const getHallById = async (req, res) => {
 export const getHallDetail = async (req, res) => {
   try {
     const { hallId } = req.params;
-    const { CinemaHall, Seat } = req.app.locals.models;
+    const { CinemaHall, Seat, Cinema } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
-    const detail = await hallService.getHallDetail(CinemaHall, Seat, { hallId });
+    const detail = await hallService.getHallDetail(CinemaHall, Seat, Cinema, { hallId });
 
     res.json({
       success: true,
@@ -99,14 +92,36 @@ export const getHallDetail = async (req, res) => {
   }
 };
 
+export const getHallsByCinema = async (req, res) => {
+  try {
+    const { cinemaId } = req.params;
+    const { CinemaHall } = req.app.locals.models;
+    
+    const hallService = await import('../services/hallService.js');
+    const halls = await hallService.getHallsByCinema(CinemaHall, cinemaId);
+
+    res.json({
+      success: true,
+      data: halls,
+      total: halls.length
+    });
+  } catch (error) {
+    console.error('[Hall Controller] Error getting halls by cinema:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 export const updateHall = async (req, res) => {
   try {
     const { hallId } = req.params;
     const updates = req.body;
-    const { CinemaHall } = req.app.locals.models;
+    const { CinemaHall, Cinema } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
-    const hall = await hallService.updateHall(CinemaHall, hallId, updates);
+    const hall = await hallService.updateHall(CinemaHall, Cinema, hallId, updates);
 
     res.json({
       success: true,

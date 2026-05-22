@@ -9,6 +9,7 @@ import CinemaHallModel from './cinema_hall.js';
 import MovieModel from './movie.js';
 import UserModel from './user.js';
 import PaymentModel from './payment.js';
+import CinemaModel from './cinema.js';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 if (!process.env.DB_NAME) {
@@ -41,8 +42,12 @@ const CinemaHall = CinemaHallModel(sequelize, DataTypes);
 const Movie = MovieModel(sequelize, DataTypes);
 const User = UserModel(sequelize, DataTypes);
 const Payment = PaymentModel(sequelize, DataTypes);
+const Cinema = CinemaModel(sequelize, DataTypes);
 
 // Associations
+Cinema.hasMany(CinemaHall, { foreignKey: 'cinema_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+CinemaHall.belongsTo(Cinema, { foreignKey: 'cinema_id' });
+
 Booking.hasMany(BookingSeat, { foreignKey: 'booking_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 BookingSeat.belongsTo(Booking, { foreignKey: 'booking_id' });
 
@@ -74,5 +79,6 @@ export {
   CinemaHall,
   Movie,
   User,
-  Payment
+  Payment,
+  Cinema
 };

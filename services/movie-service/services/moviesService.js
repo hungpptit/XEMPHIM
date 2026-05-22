@@ -220,7 +220,7 @@ export const getShowtimesForMovie = async (movieId) => {
   }
 
   const { Sequelize } = await import('sequelize');
-  const { Showtime } = await import('../models/index.js');
+  const { Showtime, CinemaHall, Cinema } = await import('../models/index.js');
   const Op = Sequelize.Op;
   
   const now = new Date();
@@ -233,6 +233,18 @@ export const getShowtimesForMovie = async (movieId) => {
       }
     },
     attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price'],
+    include: [
+      {
+        model: CinemaHall,
+        attributes: ['id', 'name', 'cinema_id'],
+        include: [
+          {
+            model: Cinema,
+            attributes: ['id', 'name', 'address', 'city']
+          }
+        ]
+      }
+    ],
     order: [['start_time', 'ASC']]
   });
 

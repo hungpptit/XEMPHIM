@@ -3,77 +3,59 @@
  * Quản lý các phòng chiếu
  */
 
-export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, hallType, description }) => {
-  // Support two creation modes:
-  // 1) Full mode: provide rows and seatsPerRow to create seats layout
-  // 2) Minimal mode: provide total_seats and optional cinema_name to create a simple hall record
+export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id }) => {
   try {
-    if (rows && seatsPerRow) {
-      const rowsNum = parseInt(rows);
-      const seatsPerRowNum = parseInt(seatsPerRow);
-
-      if (rowsNum <= 0 || rowsNum > 30) {
-        throw new Error('Số hàng phải từ 1 đến 30');
-      }
-
-      if (seatsPerRowNum <= 0 || seatsPerRowNum > 50) {
-        throw new Error('Số ghế mỗi hàng phải từ 1 đến 50');
-      }
-
-      const totalSeats = rowsNum * seatsPerRowNum;
-
-      // Create hall with detailed schema (if DB supports)
-      const hall = await CinemaHall.create({
-        name: name.trim(),
-        rows: rowsNum,
-        seats_per_row: seatsPerRowNum,
-        total_seats: totalSeats,
-        hall_type: hallType || 'Standard',
-        description: description?.trim()
-      });
-
-      // Auto-generate seats for this hall when Seat model exists
-      if (Seat) {
-        const seatsToCreate = [];
-        const rows_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-        for (let i = 0; i < rowsNum; i++) {
-          const rowLetter = rows_letters[i];
-          for (let j = 1; j <= seatsPerRowNum; j++) {
-            seatsToCreate.push({
-              hall_id: hall.id,
-              row_name: rowLetter,
-              seat_number: j,
-              seat_type: 'Standard',
-              price_modifier: 0
-            });
-          }
-        }
-
-        await Seat.bulkCreate(seatsToCreate);
-      }
-
-      return hall;
+    const targetCinemaId = cinema_id || cinemaId;
+    if (!targetCinemaId) {
+      throw new Error('cinema_id (hoặc cinemaId) là bắt buộc');
     }
 
-    // Minimal mode: require name and total_seats
-    if (!name) throw new Error('Tên phòng là bắt buộc');
-    // allow total_seats to be provided as number or string
-    const totalSeats = updatesToInt({ total_seats: undefined }) || null;
-    // create basic hall record using columns available in DB
-    const createPayload = {
-      name: name.trim(),
-      total_seats: totalSeats
-    };
-    // allow optional cinema_name if provided in the payload; caller can pass it in place of hallType/description
-    // in our API we accept cinema_name via body.cinema_name
-    // The calling code should pass cinema_name in the object if needed.
-    // (Above function signature doesn't include cinema_name param explicitly; read from arguments)
-    // To support this, we check arguments object
-    const args = arguments[2] || {};
-    if (args.cinema_name) createPayload.cinema_name = args.cinema_name;
+    if (!name) {
+      throw new Error('Tên phòng là bắt buộc');
+    }
 
-    const hall = await CinemaHall.create(createPayload);
+    const rowsNum = parseInt(rows, 10);
+    const seatsPerRowNum = parseInt(seatsPerRow, 10);
+
+    if (isNaN(rowsNum) || rowsNum <= 0 || rowsNum > 30) {
+      throw new Error('Số hàng phải từ 1 đến 30');
+    }
+
+    if (isNaN(seatsPerRowNum) || seatsPerRowNum <= 0 || seatsPerRowNum > 50) {
+      throw new Error('Số ghế mỗi hàng phải từ 1 đến 50');
+    }
+
+    const totalSeats = rowsNum * seatsPerRowNum;
+
+    // Create basic hall record matching database schema (id, name, total_seats, cinema_id)
+    const hall = await CinemaHall.create({
+      name: name.trim(),
+      total_seats: totalSeats,
+      cinema_id: targetCinemaId
+    });
+
+    // Auto-generate seats for this hall
+    if (Seat) {
+      const seatsToCreate = [];
+      const rows_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+      for (let i = 0; i < rowsNum; i++) {
+        const rowLetter = rows_letters[i];
+        for (let j = 1; j <= seatsPerRowNum; j++) {
+          seatsToCreate.push({
+            hall_id: hall.id,
+            row_name: rowLetter,
+            seat_number: j,
+            seat_type: 'Standard',
+            price_modifier: 0,
+            is_active: true
+          });
+        }
+      }
+
+      await Seat.bulkCreate(seatsToCreate);
+    }
+
     return hall;
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
@@ -83,79 +65,102 @@ export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, ha
   }
 };
 
-// helper to parse int from possible inputs (kept minimal)
-function updatesToInt(obj) {
+export const listHalls = async (CinemaHall, Cinema) => {
   try {
-    if (obj && obj.total_seats !== undefined) {
-      const v = parseInt(obj.total_seats, 10);
-      return Number.isNaN(v) ? null : v;
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
-
-export const listHalls = async (CinemaHall) => {
-  try {
-    // Return minimal fields (id, name, cinema_name, total_seats) matching current DB schema
     const halls = await CinemaHall.findAll({
-      attributes: ['id', 'name', 'cinema_name', 'total_seats'],
-      // DB doesn't have created_at column in current schema; order by id instead
+      attributes: ['id', 'name', 'cinema_id', 'total_seats'],
+      include: [
+        {
+          model: Cinema,
+          attributes: ['name']
+        }
+      ],
       order: [['id', 'DESC']]
     });
 
-    return halls;
+    return halls.map(hall => {
+      const hallJson = hall.toJSON();
+      hallJson.cinema_name = hallJson.Cinema?.name || '';
+      delete hallJson.Cinema;
+      return hallJson;
+    });
   } catch (error) {
-    console.error('[hallService] listHalls error details:', error);
-    if (error.original?.errors) {
-      console.error('[hallService] Database errors:', error.original.errors.map(e => ({
-        number: e.number,
-        message: e.message,
-        state: e.state
-      })));
-    }
-    console.error('[hallService] Query:', error.sql);
-    throw new Error('Lỗi khi lấy danh sách phòng: ' + (error.original?.message || error.message));
+    throw new Error('Lỗi khi lấy danh sách phòng: ' + error.message);
   }
 };
 
-export const getHallById = async (CinemaHall, hallId) => {
+export const getHallById = async (CinemaHall, Cinema, hallId) => {
   if (!hallId) {
     throw new Error('Hall ID là bắt buộc');
   }
 
   try {
-    // Select only columns that exist in the current DB schema to avoid invalid column errors
     const hall = await CinemaHall.findByPk(hallId, {
-      attributes: ['id', 'name', 'cinema_name', 'total_seats']
+      attributes: ['id', 'name', 'cinema_id', 'total_seats'],
+      include: [
+        {
+          model: Cinema,
+          attributes: ['name']
+        }
+      ]
     });
     if (!hall) {
       throw new Error('Phòng chiếu không tồn tại');
     }
-    return hall;
+    const hallJson = hall.toJSON();
+    hallJson.cinema_name = hallJson.Cinema?.name || '';
+    delete hallJson.Cinema;
+    return hallJson;
   } catch (error) {
     if (error.message === 'Phòng chiếu không tồn tại') throw error;
     throw new Error('Lỗi khi lấy thông tin phòng: ' + error.message);
   }
 };
 
-export const updateHall = async (CinemaHall, hallId, updates) => {
-  const hall = await getHallById(CinemaHall, hallId);
+export const getHallsByCinema = async (CinemaHall, cinemaId) => {
+  if (!cinemaId) {
+    throw new Error('ID rạp là bắt buộc');
+  }
 
-  // Current DB only contains minimal columns; allow updating only these
-  const allowedUpdates = ['name', 'cinema_name', 'total_seats'];
+  try {
+    const halls = await CinemaHall.findAll({
+      where: { cinema_id: cinemaId },
+      order: [['id', 'DESC']]
+    });
+    return halls;
+  } catch (error) {
+    throw new Error('Lỗi khi lấy danh sách phòng của rạp: ' + error.message);
+  }
+};
+
+export const updateHall = async (CinemaHall, Cinema, hallId, updates) => {
+  const hall = await CinemaHall.findByPk(hallId);
+  if (!hall) {
+    throw new Error('Phòng chiếu không tồn tại');
+  }
+
+  const allowedUpdates = ['name', 'cinema_id', 'cinemaId', 'total_seats'];
   const updateData = {};
 
   allowedUpdates.forEach(field => {
     if (updates[field] !== undefined) {
-      updateData[field] = typeof updates[field] === 'string' ? updates[field].trim() : updates[field];
+      const dbField = field === 'cinemaId' ? 'cinema_id' : field;
+      updateData[dbField] = typeof updates[field] === 'string' ? updates[field].trim() : updates[field];
     }
   });
 
   try {
     await hall.update(updateData);
-    return hall;
+    
+    // Fetch updated hall with Cinema relation for backward compatibility
+    const updatedHall = await CinemaHall.findByPk(hallId, {
+      attributes: ['id', 'name', 'cinema_id', 'total_seats'],
+      include: [{ model: Cinema, attributes: ['name'] }]
+    });
+    const hallJson = updatedHall.toJSON();
+    hallJson.cinema_name = hallJson.Cinema?.name || '';
+    delete hallJson.Cinema;
+    return hallJson;
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       throw new Error(`Lỗi dữ liệu: ${error.errors.map(e => e.message).join(', ')}`);
@@ -165,7 +170,10 @@ export const updateHall = async (CinemaHall, hallId, updates) => {
 };
 
 export const deleteHall = async (CinemaHall, Seat, Showtime, hallId) => {
-  const hall = await getHallById(CinemaHall, hallId);
+  const hall = await CinemaHall.findByPk(hallId);
+  if (!hall) {
+    throw new Error('Phòng chiếu không tồn tại');
+  }
 
   // Check if hall has active showtimes
   const showtimeCount = await Showtime.count({ where: { hall_id: hallId } });
@@ -185,8 +193,14 @@ export const deleteHall = async (CinemaHall, Seat, Showtime, hallId) => {
   }
 };
 
-export const getHallDetail = async (CinemaHall, Seat, { hallId }) => {
-  const hall = await getHallById(CinemaHall, hallId);
+export const getHallDetail = async (CinemaHall, Seat, Cinema, { hallId }) => {
+  const hall = await CinemaHall.findByPk(hallId, {
+    attributes: ['id', 'name', 'cinema_id', 'total_seats'],
+    include: [{ model: Cinema, attributes: ['name'] }]
+  });
+  if (!hall) {
+    throw new Error('Phòng chiếu không tồn tại');
+  }
 
   try {
     const seats = await Seat.findAll({
@@ -194,17 +208,24 @@ export const getHallDetail = async (CinemaHall, Seat, { hallId }) => {
       order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
     });
 
+    // Dynamically calculate rows and seats_per_row from seats
+    const rowNames = [...new Set(seats.map(s => s.row_name))].sort();
+    const rows = rowNames.length;
+    const seatsPerRow = seats.reduce((max, s) => s.seat_number > max ? s.seat_number : max, 0);
+
     return {
       id: hall.id,
       name: hall.name,
-      rows: hall.rows,
-      seats_per_row: hall.seats_per_row,
+      cinema_id: hall.cinema_id,
+      cinema_name: hall.Cinema?.name || '',
+      rows: rows,
+      seats_per_row: seatsPerRow,
       total_seats: hall.total_seats,
-      hall_type: hall.hall_type,
-      description: hall.description,
-      is_active: hall.is_active,
+      hall_type: 'Standard',
+      description: '',
+      is_active: true,
       seats: seats,
-      seatLayout: generateSeatLayout(seats, hall.rows, hall.seats_per_row)
+      seatLayout: generateSeatLayout(seats, rows, seatsPerRow, rowNames)
     };
   } catch (error) {
     throw new Error('Lỗi khi lấy chi tiết phòng: ' + error.message);
@@ -212,9 +233,9 @@ export const getHallDetail = async (CinemaHall, Seat, { hallId }) => {
 };
 
 // Helper function to generate seat layout
-const generateSeatLayout = (seats, rows, seatsPerRow) => {
+const generateSeatLayout = (seats, rows, seatsPerRow, rowNames) => {
   const layout = {};
-  const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const rowLetters = rowNames.length > 0 ? rowNames : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   for (let i = 0; i < rows; i++) {
     const rowLetter = rowLetters[i];
@@ -225,7 +246,8 @@ const generateSeatLayout = (seats, rows, seatsPerRow) => {
         id: seat?.id,
         number: j,
         type: seat?.seat_type || 'Standard',
-        modifier: seat?.price_modifier || 0
+        modifier: seat?.price_modifier || 0,
+        is_active: seat?.is_active ?? true
       });
     }
   }

@@ -171,6 +171,17 @@
   cursor: not-allowed;
 }
 
+.seat.locked, .legendSeat.locked {
+  background: #f97316 !important;
+  color: var(--color-white) !important;
+  cursor: not-allowed !important;
+}
+
+.seat.locked:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .seat.vip {
   border: 2px solid var(--color-gold);
   background: #7c3aed;
@@ -197,6 +208,7 @@
   color: var(--color-white) !important;
   cursor: not-allowed !important;
 }
+
 
 .aisle {
   width: 25px;

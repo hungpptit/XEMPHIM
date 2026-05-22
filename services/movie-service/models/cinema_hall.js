@@ -3,17 +3,24 @@ export default (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
       allowNull: false
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false
     },
-    cinema_name: {
-      type: DataTypes.STRING
-    },
     total_seats: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    cinema_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'cinemas',
+        key: 'id'
+      }
     }
   }, {
     tableName: 'cinema_halls',

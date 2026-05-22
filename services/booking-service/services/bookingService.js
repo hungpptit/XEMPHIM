@@ -1,4 +1,4 @@
-import { Booking, BookingSeat, Seat, Showtime, Movie, Payment, sequelize, Sequelize } from '../models/index.js';
+import { Booking, BookingSeat, Seat, Showtime, Movie, Payment, sequelize, Sequelize, CinemaHall, Cinema } from '../models/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import Redis from 'ioredis';
 import amqp from 'amqplib';
@@ -318,7 +318,19 @@ export const getUserBookings = async (userId) => {
       include: [
         {
           model: Showtime,
-          attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price']
+          attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price'],
+          include: [
+            {
+              model: CinemaHall,
+              attributes: ['id', 'name', 'cinema_id'],
+              include: [
+                {
+                  model: Cinema,
+                  attributes: ['id', 'name', 'address', 'city']
+                }
+              ]
+            }
+          ]
         },
         {
           model: BookingSeat,
@@ -506,7 +518,7 @@ export const cancelBooking = async ({ booking_id }) => {
     await releaseSeatLocks(booking.showtime_id, seatIds);
 
     await Payment.update(
-      { status: 'cancelled' },
+      { status: 'void' },
       { where: { booking_id: booking.id, status: 'pending' }, transaction: t }
     );
     await t.commit();
@@ -648,11 +660,50 @@ export const refundBooking = async ({ booking_id, user_id, reason = null }) => {
 export const expirePendingPayments = async () => {
   try {
     const now = new Date();
-    const [updatedPayments] = await Payment.update({ status: 'expired' }, { where: { status: 'pending', expire_at: { [Sequelize.Op.lt]: now } } });
-    if (updatedPayments > 0) {
-      await Booking.update({ status: 'expired' }, { where: { status: 'locked' } });
+    // 1. Find pending payments that have expired
+    const expiredPayments = await Payment.findAll({
+      where: {
+        status: 'pending',
+        expire_at: { [Sequelize.Op.lt]: now }
+      }
+    });
+
+    if (expiredPayments.length === 0) return 0;
+
+    const bookingIds = expiredPayments.map(p => p.booking_id);
+    const paymentIds = expiredPayments.map(p => p.id);
+
+    // 2. Mark payments as expired
+    await Payment.update(
+      { status: 'expired' },
+      { where: { id: paymentIds } }
+    );
+
+    // 3. Find the bookings associated with these expired payments that are still locked
+    const bookingsToExpire = await Booking.findAll({
+      where: {
+        id: bookingIds,
+        status: 'locked'
+      },
+      include: [{ model: BookingSeat, attributes: ['seat_id'] }]
+    });
+
+    // 4. Release Redis seat locks for each booking
+    for (const b of bookingsToExpire) {
+      const seatIds = b.BookingSeats?.map(x => x.seat_id) || [];
+      await releaseSeatLocks(b.showtime_id, seatIds);
     }
-    return updatedPayments;
+
+    // 5. Mark bookings as expired
+    if (bookingsToExpire.length > 0) {
+      const idsToUpdate = bookingsToExpire.map(b => b.id);
+      await Booking.update(
+        { status: 'expired' },
+        { where: { id: idsToUpdate } }
+      );
+    }
+
+    return expiredPayments.length;
   } catch (err) {
     console.error('Error expiring pending payments', err && err.stack ? err.stack : err);
     return 0;

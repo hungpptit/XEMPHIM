@@ -5,7 +5,8 @@ import {
   FaClock, 
   FaMapMarkerAlt, 
   FaCalendar,
-  FaUsers
+  FaUsers,
+  FaLock
 } from 'react-icons/fa';
 import styles from './SeatSelection.module.css';
 import seatService from '../../services/seatService';
@@ -66,37 +67,65 @@ const SeatSelection = () => {
       return;
     }
 
-    // Call backend API to get seat map for this showtime
-    (async () => {
+    let active = true;
+    const showtimeId = showtime?.id || id;
+
+    const fetchSeatMap = async (isInitial = false) => {
       try {
-        setLoading(true);
-        const showtimeId = showtime?.id || id;
-        console.log('Loading seat map for showtime:', showtimeId); // Debug log
-        
-        // Use bookingAPI instead of seatService
+        if (isInitial) setLoading(true);
         const { bookingAPI } = await import('../../services/api');
         const response = await bookingAPI.getSeatMap(showtimeId);
-        console.log('Seat map response:', response); // Debug log
         
-        // Handle response format
+        if (!active) return;
+        
         const seatData = response.data || response;
         if (seatData && seatData.seatMap) {
-          setSeatMap(mapBackendSeatMap(seatData));
+          const newMap = mapBackendSeatMap(seatData);
+          setSeatMap(newMap);
+
+          // Auto-remove any selected seats that are now occupied or locked by someone else
+          setSelectedSeats(prev => {
+            const stillAvailable = prev.filter(selectedSeat => {
+              for (const row of newMap) {
+                const found = row.find(s => s.id === selectedSeat.id);
+                if (found && (found.status === 'occupied' || found.status === 'locked')) {
+                  return false;
+                }
+              }
+              return true;
+            });
+            if (stillAvailable.length !== prev.length) {
+              return stillAvailable;
+            }
+            return prev;
+          });
         } else {
-          console.warn('No seat map data, using mock fallback');
-          setSeatMap(generateSeatMap());
+          if (isInitial) setSeatMap(generateSeatMap());
         }
       } catch (err) {
         console.error('Error fetching seat map', err);
-        setSeatMap(generateSeatMap());
+        if (isInitial) setSeatMap(generateSeatMap());
       } finally {
-        setLoading(false);
+        if (isInitial && active) setLoading(false);
       }
-    })();
-  }, [movie, showtime, navigate]);
+    };
+
+    // Initial fetch
+    fetchSeatMap(true);
+
+    // Poll every 3 seconds for real-time updates
+    const interval = setInterval(() => {
+      fetchSeatMap(false);
+    }, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [movie, showtime, navigate, id]);
 
   const handleSeatClick = (seat) => {
-    if (seat.status === 'occupied') return;
+    if (seat.status === 'occupied' || seat.status === 'locked') return;
 
     const seatId = seat.id;
     const isSelected = selectedSeats.find(s => s.id === seatId);
@@ -196,11 +225,23 @@ const SeatSelection = () => {
           });
         } else if (responseData && responseData.success === false && responseData.conflicts) {
           // conflict: some seats already taken
-          alert(`Ghế đã bị người khác giữ: ${res.conflicts.join(', ')}. Vui lòng chọn ghế khác.`);
+          const conflictNames = responseData.conflicts.map(cid => {
+            for (const row of seatMap) {
+              const found = row.find(s => Number(s.id) === Number(cid));
+              if (found) return found.displayName;
+            }
+            return `Mã ghế ${cid}`;
+          });
+          
+          alert(`Ghế đã bị người khác chọn/khóa chờ thanh toán: ${conflictNames.join(', ')}. Vui lòng chọn ghế khác.`);
+          
           // refresh seat map
           const showtimeId = showtime?.id || id;
-          const fresh = await seatService.getSeatMap(showtimeId);
-          if (fresh && fresh.seatMap) setSeatMap(mapBackendSeatMap(fresh));
+          const freshRes = await bookingAPI.getSeatMap(showtimeId);
+          const freshData = freshRes.data || freshRes;
+          if (freshData && freshData.seatMap) {
+            setSeatMap(mapBackendSeatMap(freshData));
+          }
         } else {
           // unexpected response format
           console.warn('Unexpected lockSeat response format:', res);
@@ -208,7 +249,34 @@ const SeatSelection = () => {
         }
       } catch (err) {
         console.error('Error locking seats', err);
-        alert('Không thể giữ ghế, thử lại sau');
+        
+        const responseData = err.response?.data;
+        if (responseData && responseData.success === false && responseData.conflicts) {
+          const conflictNames = responseData.conflicts.map(cid => {
+            for (const row of seatMap) {
+              const found = row.find(s => Number(s.id) === Number(cid));
+              if (found) return found.displayName;
+            }
+            return `Mã ghế ${cid}`;
+          });
+          
+          alert(`Ghế đã bị người khác chọn/khóa chờ thanh toán: ${conflictNames.join(', ')}. Vui lòng chọn ghế khác.`);
+          
+          // refresh seat map
+          try {
+            const showtimeId = showtime?.id || id;
+            const { bookingAPI } = await import('../../services/api');
+            const freshRes = await bookingAPI.getSeatMap(showtimeId);
+            const freshData = freshRes.data || freshRes;
+            if (freshData && freshData.seatMap) {
+              setSeatMap(mapBackendSeatMap(freshData));
+            }
+          } catch (refreshErr) {
+            console.error('Error refreshing seat map after conflict', refreshErr);
+          }
+        } else {
+          alert('Không thể giữ ghế, thử lại sau');
+        }
       }
     })();
   };
@@ -219,6 +287,8 @@ const SeatSelection = () => {
     
     if (seat.status === 'occupied') {
       seatClass += styles.occupied;
+    } else if (seat.status === 'locked') {
+      seatClass += styles.locked;
     } else if (isSelected) {
       seatClass += styles.selected;
     } else {
@@ -229,9 +299,11 @@ const SeatSelection = () => {
       seatClass += ` ${styles.vip}`;
     }
 
-    // Hiển thị icon cho ghế VIP
+    // Hiển thị icon cho ghế VIP hoặc ghế đang bị khóa
     let seatContent = '';
-    if (seat.type === 'vip') {
+    if (seat.status === 'locked') {
+      seatContent = <FaLock style={{ fontSize: '10px' }} />;
+    } else if (seat.type === 'vip') {
       if (seat.status === 'occupied') {
         seatContent = '❌';
       } else if (isSelected) {
@@ -244,8 +316,10 @@ const SeatSelection = () => {
         key={seat.id}
         className={seatClass}
         onClick={() => handleSeatClick(seat)}
-        disabled={seat.status === 'occupied'}
-        title={`Ghế ${seat.displayName || seat.id} - ${seat.type === 'vip' ? 'VIP' : 'Thường'} - ${seat.price.toLocaleString()}đ`}
+        disabled={seat.status === 'occupied' || seat.status === 'locked'}
+        title={seat.status === 'locked' 
+          ? `Ghế ${seat.displayName || seat.id} - Đang khóa/chờ thanh toán` 
+          : `Ghế ${seat.displayName || seat.id} - ${seat.type === 'vip' ? 'VIP' : 'Thường'} - ${seat.price.toLocaleString()}đ`}
       >
         {seatContent}
       </button>
@@ -383,6 +457,12 @@ const SeatSelection = () => {
             <div className={styles.legendItem}>
               <div className={`${styles.legendSeat} ${styles.occupied}`}></div>
               <span>🔴 Ghế đã đặt</span>
+            </div>
+            <div className={styles.legendItem}>
+              <div className={`${styles.legendSeat} ${styles.locked}`}>
+                <FaLock style={{ fontSize: '9px' }} />
+              </div>
+              <span>🟠 Chờ thanh toán</span>
             </div>
             <div className={styles.legendItem}>
               <div className={`${styles.legendSeat} ${styles.vip} ${styles.available}`}></div>

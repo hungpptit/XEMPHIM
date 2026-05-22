@@ -24,10 +24,16 @@ adminAPI.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/**
- * Admin Service - Hall and Seat Management
- * Các API endpoints để quản lý phòng chiếu và ghế
- */
+// ============= CINEMA Management =============
+const cinemaAPI = {
+  list: () => adminAPI.get('/api/admin/cinemas'),
+  getById: (cinemaId) => adminAPI.get(`/api/admin/cinemas/${cinemaId}`),
+  create: (data) => adminAPI.post('/api/admin/cinemas', data),
+  update: (cinemaId, data) => adminAPI.put(`/api/admin/cinemas/${cinemaId}`, data),
+  delete: (cinemaId) => adminAPI.delete(`/api/admin/cinemas/${cinemaId}`),
+  getHalls: (cinemaId) => adminAPI.get(`/api/admin/cinemas/${cinemaId}/halls`),
+  getOverview: () => adminAPI.get('/api/admin/cinemas/stats/overview')
+};
 
 // ============= HALL Management =============
 const hallAPI = {
@@ -51,6 +57,7 @@ const seatAPI = {
 
 // Combine all services
 export const adminService = {
+  cinema: cinemaAPI,
   hall: hallAPI,
   seat: seatAPI,
   

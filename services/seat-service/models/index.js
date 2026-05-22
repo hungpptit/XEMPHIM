@@ -6,6 +6,7 @@ import CinemaHallModel from './cinema_hall.js';
 import ShowtimeModel from './showtime.js';
 import BookingModel from './booking.js';
 import BookingSeatModel from './booking_seat.js';
+import CinemaModel from './cinema.js';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 if (!process.env.DB_NAME) {
@@ -35,8 +36,12 @@ const CinemaHall = CinemaHallModel(sequelize, DataTypes);
 const Showtime = ShowtimeModel(sequelize, DataTypes);
 const Booking = BookingModel(sequelize, DataTypes);
 const BookingSeat = BookingSeatModel(sequelize, DataTypes);
+const Cinema = CinemaModel(sequelize, DataTypes);
 
 // Associations
+Cinema.hasMany(CinemaHall, { foreignKey: 'cinema_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+CinemaHall.belongsTo(Cinema, { foreignKey: 'cinema_id' });
+
 CinemaHall.hasMany(Seat, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 Seat.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
 
@@ -49,6 +54,9 @@ BookingSeat.belongsTo(Seat, { foreignKey: 'seat_id' });
 Showtime.hasMany(Booking, { foreignKey: 'showtime_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 Booking.belongsTo(Showtime, { foreignKey: 'showtime_id' });
 
+Showtime.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
+CinemaHall.hasMany(Showtime, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+
 export {
   sequelize,
   Sequelize,
@@ -56,5 +64,6 @@ export {
   CinemaHall,
   Showtime,
   Booking,
-  BookingSeat
+  BookingSeat,
+  Cinema
 };

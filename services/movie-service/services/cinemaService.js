@@ -3,19 +3,17 @@
  * Quản lý các rạp chiếu phim
  */
 
-export const createCinema = async (Cinema, { name, location, hotline, email, address }) => {
-  if (!name || !location) {
-    throw new Error('Tên rạp và địa chỉ là bắt buộc');
+export const createCinema = async (Cinema, { name, address, city, status }) => {
+  if (!name || !address || !city) {
+    throw new Error('Tên rạp, địa chỉ và thành phố là bắt buộc');
   }
 
   try {
     const cinema = await Cinema.create({
       name: name.trim(),
-      location: location.trim(),
-      hotline: hotline?.trim(),
-      email: email?.trim(),
-      address: address?.trim(),
-      is_active: true
+      address: address.trim(),
+      city: city.trim(),
+      status: status || 'Active'
     });
 
     return cinema;
@@ -30,7 +28,6 @@ export const createCinema = async (Cinema, { name, location, hotline, email, add
 export const listCinemas = async (Cinema) => {
   try {
     const cinemas = await Cinema.findAll({
-      where: { is_active: true },
       order: [['created_at', 'DESC']]
     });
     return cinemas;
@@ -59,7 +56,7 @@ export const getCinemaById = async (Cinema, cinemaId) => {
 export const updateCinema = async (Cinema, cinemaId, updates) => {
   const cinema = await getCinemaById(Cinema, cinemaId);
 
-  const allowedUpdates = ['name', 'location', 'hotline', 'email', 'address', 'is_active'];
+  const allowedUpdates = ['name', 'address', 'city', 'status'];
   const updateData = {};
 
   allowedUpdates.forEach(field => {
@@ -99,7 +96,7 @@ export const deleteCinema = async (Cinema, CinemaHall, Showtime, cinemaId) => {
 export const getCinemaStats = async (Cinema, CinemaHall, Seat) => {
   try {
     const totalCinemas = await Cinema.count();
-    const activeCinemas = await Cinema.count({ where: { is_active: true } });
+    const activeCinemas = await Cinema.count({ where: { status: 'Active' } });
     const totalHalls = await CinemaHall.count();
     const totalSeats = await Seat.count();
 

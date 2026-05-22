@@ -381,3 +381,82 @@
     left: 15px;
   }
 }
+
+.filterSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  margin: 30px auto;
+  max-width: 900px;
+  background: rgba(26, 26, 26, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 22px 35px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.filterGroup label {
+  font-weight: 600;
+  color: var(--color-gold);
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #121212 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ffd700' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") no-repeat calc(100% - 15px) center;
+  color: var(--color-text-primary);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  padding: 12px 40px 12px 20px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  min-width: 220px;
+  max-width: 420px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.filterSelect:focus, .filterSelect:hover {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.35);
+  transform: translateY(-1px);
+  background-color: #1a1a1a;
+}
+
+.filterSelect option {
+  background-color: #121212;
+  color: var(--color-text-primary);
+  padding: 10px;
+}
+
+.noShowtimes {
+  text-align: center;
+  padding: 40px 20px;
+  background: rgba(26, 26, 26, 0.3);
+  border-radius: var(--border-radius);
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  border: 1px dashed rgba(255, 215, 0, 0.15);
+  max-width: 900px;
+  margin: 0 auto;
+}

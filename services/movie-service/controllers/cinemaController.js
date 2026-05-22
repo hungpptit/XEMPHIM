@@ -5,12 +5,12 @@
 
 export const createCinema = async (req, res) => {
   try {
-    const { name, location, hotline, email, address } = req.body;
-    const { Cinema, CinemaHall, Seat } = req.app.locals.models;
+    const { name, address, city, status } = req.body;
+    const { Cinema } = req.app.locals.models;
     
     const cinemaService = await import('../services/cinemaService.js');
     const cinema = await cinemaService.createCinema(Cinema, {
-      name, location, hotline, email, address
+      name, address, city, status
     });
 
     res.status(201).json({

@@ -8,7 +8,30 @@ import Popup from '../../components/Popup'; // Import the custom Popup component
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { movie, showtime, selectedSeats, totalPrice, bookingId, bookingCode } = location.state || {};
+
+  // Try to load state from location.state, fallback to sessionStorage
+  const [paymentData, setPaymentData] = useState(() => {
+    if (location.state && location.state.bookingId) {
+      try {
+        sessionStorage.setItem('current_payment', JSON.stringify(location.state));
+      } catch (e) {
+        console.error('Failed to save payment state to sessionStorage:', e);
+      }
+      return location.state;
+    } else {
+      try {
+        const saved = sessionStorage.getItem('current_payment');
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Failed to load payment state from sessionStorage:', e);
+      }
+    }
+    return {};
+  });
+
+  const { movie, showtime, selectedSeats, totalPrice, bookingId, bookingCode } = paymentData;
 
   const [qrUrl, setQrUrl] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
@@ -18,6 +41,27 @@ const Payment = () => {
   const [showPopup, setShowPopup] = useState(false); // State to manage popup visibility
   const [popupActions, setPopupActions] = useState({}); // State to manage popup actions
   const pollRef = useRef(null);
+  const isConfirmedRef = useRef(false);
+  const cancelRequestedRef = useRef(false);
+
+  const cancelPendingBooking = async () => {
+    if (!bookingId || isConfirmedRef.current || cancelRequestedRef.current) {
+      return;
+    }
+
+    cancelRequestedRef.current = true;
+    try {
+      sessionStorage.removeItem('current_payment');
+    } catch (e) {}
+
+    try {
+      const { bookingAPI } = await import('../../services/api');
+      await bookingAPI.cancelBooking(bookingId);
+    } catch (err) {
+      cancelRequestedRef.current = false;
+      throw err;
+    }
+  };
 
   useEffect(() => {
     if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0 || !bookingId) {
@@ -31,10 +75,17 @@ const Payment = () => {
     const iv = setInterval(() => {
       const s = Math.max(0, Math.floor((new Date(expiresAt) - new Date()) / 1000));
       setSecondsLeft(s);
-      if (s <= 0) clearInterval(iv);
+      if (s <= 0) {
+        clearInterval(iv);
+        if (bookingId && !isConfirmedRef.current) {
+          cancelPendingBooking().catch(err => {
+            console.warn('Failed to cancel expired booking:', err);
+          });
+        }
+      }
     }, 300);
     return () => clearInterval(iv);
-  }, [expiresAt]);
+  }, [expiresAt, bookingId]);
 
   useEffect(() => {
     if (!polling || !bookingId) return;
@@ -45,6 +96,10 @@ const Payment = () => {
           const res = await bookingAPI.getBookingStatus(bookingId);
           const status = res.data?.status || res.status || (res.data && res.data.status) || null;
           if (status === 'confirmed') {
+            isConfirmedRef.current = true;
+            try {
+              sessionStorage.removeItem('current_payment');
+            } catch (e) {}
             clearInterval(pollRef.current);
             setPolling(false);
 
@@ -61,6 +116,14 @@ const Payment = () => {
             };
 
             setPopupActions({ handleConfirm });
+          } else if (status === 'expired' || status === 'cancelled') {
+            clearInterval(pollRef.current);
+            setPolling(false);
+            try {
+              sessionStorage.removeItem('current_payment');
+            } catch (e) {}
+            alert('Giao dịch đã hết hạn hoặc bị hủy. Vui lòng thực hiện chọn lại ghế.');
+            navigate(-1);
           }
         } catch (e) {
           // ignore transient errors
@@ -102,11 +165,53 @@ const Payment = () => {
     createQr();
   };
 
+  const handleBack = async () => {
+    if (bookingId && !isConfirmedRef.current) {
+      try {
+        await cancelPendingBooking();
+      } catch (err) {
+        console.error('Failed to cancel booking on back click:', err);
+      }
+    }
+    navigate(-1);
+  };
+
   useEffect(() => {
     createQr();
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+
+    const handleBeforeUnload = (e) => {
+      if (bookingId && !isConfirmedRef.current) {
+        const token = localStorage.getItem('token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        fetch(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {
+          method: 'POST',
+          headers,
+          keepalive: true
+        }).catch(err => console.error('Beacon cancel failed:', err));
+      }
+    };
+
+    const handlePopState = () => {
+      if (bookingId && !isConfirmedRef.current) {
+        cancelPendingBooking().catch(err => {
+          console.warn('Failed to cancel booking on browser back:', err);
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [bookingId]);
 
   if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0 || !bookingId) {
     return (
@@ -123,7 +228,7 @@ const Payment = () => {
 
   return (
     <div className={styles.payment}>
-      <button className={styles.backBtn} onClick={() => navigate(-1)}>
+      <button className={styles.backBtn} onClick={handleBack}>
         <FaArrowLeft />
       </button>
 

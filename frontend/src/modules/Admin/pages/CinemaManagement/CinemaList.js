@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
-import CinemaForm from '../../components/CinemaForm';
 import styles from './CinemaList.module.css';
-import { FaPlus, FaEdit, FaTrash, FaBuilding, FaExclamationTriangle } from 'react-icons/fa';
 
 export default function CinemaManagement() {
   const [cinemas, setCinemas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingCinema, setEditingCinema] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [deleting, setDeleting] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    address: '',
+    city: '',
+    status: 'Active'
+  });
 
   useEffect(() => {
     loadCinemas();
@@ -32,7 +35,7 @@ export default function CinemaManagement() {
       setCinemas(response.data || []);
     } catch (err) {
       console.error('Error loading cinemas:', err);
-      const errorMsg = err.error || err.message || 'Lỗi khi tải danh sách rạp';
+      const errorMsg = err.response?.data?.error || err.message || 'Lỗi khi tải danh sách rạp';
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -52,20 +55,20 @@ export default function CinemaManagement() {
     setError('');
     setSuccess('');
 
-    if (!formData.name || !formData.location) {
-      setError('Vui lòng nhập tên rạp và địa chỉ');
+    if (!formData.name || !formData.address || !formData.city) {
+      setError('Vui lòng nhập tên rạp, địa chỉ và thành phố');
       return;
     }
 
     try {
       if (editingId) {
-        await adminService.updateCinema(editingId, formData);
+        await adminService.cinema.update(editingId, formData);
         setSuccess('Cập nhật rạp thành công!');
       } else {
-        await adminService.createCinema(formData);
+        await adminService.cinema.create(formData);
         setSuccess('Tạo rạp mới thành công!');
       }
-      setFormData({ name: '', location: '', hotline: '' });
+      setFormData({ name: '', address: '', city: '', status: 'Active' });
       setEditingId(null);
       setShowForm(false);
       loadCinemas();
@@ -77,8 +80,9 @@ export default function CinemaManagement() {
   const handleEdit = (cinema) => {
     setFormData({
       name: cinema.name || '',
-      location: cinema.cinema_name || '',
-      hotline: cinema.hotline || ''
+      address: cinema.address || '',
+      city: cinema.city || '',
+      status: cinema.status || 'Active'
     });
     setEditingId(cinema.id);
     setShowForm(true);
@@ -87,7 +91,7 @@ export default function CinemaManagement() {
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc muốn xoá rạp này?')) {
       try {
-        await adminService.deleteCinema(id);
+        await adminService.cinema.delete(id);
         setSuccess('Xoá rạp thành công!');
         loadCinemas();
       } catch (err) {
@@ -99,7 +103,7 @@ export default function CinemaManagement() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', location: '', hotline: '' });
+    setFormData({ name: '', address: '', city: '', status: 'Active' });
     setError('');
   };
 
@@ -137,26 +141,39 @@ export default function CinemaManagement() {
             </div>
 
             <div className={styles.formGroup}>
-              <label>Địa Chỉ:</label>
+              <label>Thành Phố:</label>
               <input
                 type="text"
-                name="location"
-                value={formData.location}
+                name="city"
+                value={formData.city}
                 onChange={handleInputChange}
-                placeholder="VD: 72 Lê Thánh Tôn, Quận 1, TP.HCM"
+                placeholder="VD: Hồ Chí Minh"
                 required
               />
             </div>
 
             <div className={styles.formGroup}>
-              <label>Hotline:</label>
+              <label>Địa Chỉ:</label>
               <input
-                type="tel"
-                name="hotline"
-                value={formData.hotline}
+                type="text"
+                name="address"
+                value={formData.address}
                 onChange={handleInputChange}
-                placeholder="VD: 028 6291 2000"
+                placeholder="VD: 72 Lê Thánh Tôn, Quận 1"
+                required
               />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Trạng Thái:</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+              >
+                <option value="Active">Hoạt động</option>
+                <option value="Inactive">Tạm dừng</option>
+              </select>
             </div>
 
             <div className={styles.formActions}>
@@ -201,9 +218,8 @@ export default function CinemaManagement() {
                 </div>
 
                 <div className={styles.cardBody}>
-                  <p className={styles.location}>📍 {cinema.cinema_name}</p>
-                  {cinema.hotline && <p className={styles.hotline}>📞 {cinema.hotline}</p>}
-                  <p className={styles.seats}>🎟️ Tổng ghế: {cinema.total_seats || 0}</p>
+                  <p className={styles.location}>📍 {cinema.address}, {cinema.city}</p>
+                  <p className={styles.status}>🏷️ Trạng thái: {cinema.status === 'Active' ? 'Hoạt động' : 'Tạm dừng'}</p>
                 </div>
 
                 <div className={styles.cardFooter}>

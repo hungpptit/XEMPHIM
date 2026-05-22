@@ -11,6 +11,9 @@ export default (sequelize, DataTypes) => {
     },
     poster_url: {
       type: DataTypes.STRING
+    },
+    age_rating: {
+      type: DataTypes.STRING(50)
     }
   }, {
     tableName: 'movies',

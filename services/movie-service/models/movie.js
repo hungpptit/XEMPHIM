@@ -42,6 +42,9 @@ export default (sequelize, DataTypes) => {
     },
     updated_at: {
       type: DataTypes.DATE
+    },
+    age_rating: {
+      type: DataTypes.STRING(50)
     }
   }, {
     tableName: 'movies',
