@@ -23,7 +23,8 @@ export const login = async (email, password) => {
       id: user.id,
       email: user.email,
       full_name: user.full_name,
-      phone_number: user.phone_number
+      phone_number: user.phone_number,
+      role: user.role
     }
   };
 };
@@ -54,7 +55,8 @@ export const register = async ({ full_name, email, password, phone }) => {
       id: user.id,
       email: user.email,
       full_name: user.full_name,
-      phone_number: user.phone_number
+      phone_number: user.phone_number,
+      role: user.role
     }
   };
 };
@@ -71,7 +73,8 @@ export const userFromToken = async (token) => {
       id: user.id,
       email: user.email,
       full_name: user.full_name,
-      phone_number: user.phone_number
+      phone_number: user.phone_number,
+      role: user.role
     };
   } catch (err) {
     return null;

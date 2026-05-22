@@ -8,7 +8,11 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    res.cookie('access_token', result.token, { httpOnly: true, sameSite: 'Lax' });
+    res.cookie('access_token', result.token, {
+      httpOnly: true,
+      sameSite: 'Lax',
+      path: '/'
+    });
     res.json({ user: result.user });
   } catch (err) {
     console.error('Login error:', err);
@@ -34,7 +38,11 @@ export const register = async (req, res) => {
       phone
     });
 
-    res.cookie('access_token', result.token, { httpOnly: true, sameSite: 'Lax' });
+    res.cookie('access_token', result.token, {
+      httpOnly: true,
+      sameSite: 'Lax',
+      path: '/'
+    });
     res.status(201).json({ user: result.user });
   } catch (err) {
     console.error('Register error:', err);
@@ -65,6 +73,6 @@ export const me = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-  res.clearCookie('access_token');
+  res.clearCookie('access_token', { path: '/' });
   res.json({ ok: true });
 };

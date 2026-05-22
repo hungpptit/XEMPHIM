@@ -1,0 +1,272 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  margin-bottom: 30px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.title svg {
+  color: #3498db;
+  font-size: 1.4rem;
+}
+
+.info {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+}
+
+.content {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Legend */
+.legend {
+  margin-bottom: 30px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.legend h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
+.legendItems {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #34495e;
+}
+
+.colorBox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Seat Layout */
+.seatLayout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 30px 0;
+  padding: 24px;
+  background: linear-gradient(to bottom, #ecf0f1 0%, #f8f9fa 100%);
+  border-radius: 8px;
+}
+
+.screen {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e74c3c;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 16px 32px;
+  border-bottom: 4px solid #e74c3c;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+}
+
+.rowLabel {
+  font-weight: 600;
+  color: #2c3e50;
+  width: 24px;
+  text-align: center;
+}
+
+.seats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.seat {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.seat:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Update Panel */
+.updatePanel {
+  margin-top: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.updatePanel h4 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #2c3e50;
+}
+
+.updateForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #34495e;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.formGroup small {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  margin-top: 4px;
+}
+
+.select,
+.input {
+  padding: 10px 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.select:focus,
+.input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.btnUpdate {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btnUpdate:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+}
+
+.btnUpdate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.noData {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 40px 20px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .updateForm {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .btnUpdate {
+    grid-column: 1 / -1;
+  }
+
+  .seats {
+    gap: 6px;
+  }
+
+  .seat {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .updateForm {
+    grid-template-columns: 1fr;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .legendItems {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
+    gap: 8px;
+  }
+
+  .seats {
+    gap: 4px;
+  }
+
+  .seat {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+}
