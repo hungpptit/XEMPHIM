@@ -55,11 +55,22 @@ const seatAPI = {
   delete: (seatId) => adminAPI.delete(`/api/admin/seats/${seatId}`)
 };
 
+// ============= MOVIE Management =============
+// Use the public /api/movies endpoints implemented in movie-service
+const movieAPI = {
+  list: (params = {}) => adminAPI.get('/api/movies', { params }),
+  getById: (movieId) => adminAPI.get(`/api/movies/${movieId}`),
+  create: (data) => adminAPI.post('/api/movies', data),
+  update: (movieId, data) => adminAPI.put(`/api/movies/${movieId}`, data),
+  delete: (movieId) => adminAPI.delete(`/api/movies/${movieId}`)
+};
+
 // Combine all services
 export const adminService = {
   cinema: cinemaAPI,
   hall: hallAPI,
   seat: seatAPI,
+  movie: movieAPI,
   
   // Legacy support for existing code
   createHall: (data) => hallAPI.create(data),

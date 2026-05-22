@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import HallManagement from './pages/HallManagement/HallList';
+import MovieManagement from './pages/MovieManagement/MovieList';
 import styles from './AdminPanel.module.css';
 import { FaChair, FaHome, FaFilm, FaTicketAlt, FaUserShield, FaChevronRight } from 'react-icons/fa';
 
@@ -70,6 +71,15 @@ export default function AdminPanel() {
             >
               <FaChair className={styles.navIcon} />
               <span>Quản Lý Phòng Chiếu</span>
+            </button>
+          </li>
+          <li className={styles.navItem}>
+            <button
+              className={`${styles.navBtn} ${activeTab === 'movies' ? styles.active : ''}`}
+              onClick={() => setActiveTab('movies')}
+            >
+              <FaFilm className={styles.navIcon} />
+              <span>Quản Lý Phim</span>
             </button>
           </li>
         </ul>
@@ -165,6 +175,7 @@ export default function AdminPanel() {
           )}
           
           {activeTab === 'halls' && <HallManagement />}
+          {activeTab === 'movies' && <MovieManagement />}
         </div>
       </div>
     </div>

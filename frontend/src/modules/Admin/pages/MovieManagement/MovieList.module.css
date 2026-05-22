@@ -1,0 +1,348 @@
+.container {
+  padding: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background: rgba(26, 26, 26, 0.5);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.btnAdd {
+  background: linear-gradient(135deg, var(--color-gold), #FFB700);
+  color: var(--bg-primary);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formContainer {
+  background: rgba(26, 26, 26, 0.5);
+  padding: 24px;
+  border-radius: var(--border-radius);
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup.full {
+  grid-column: 1 / -1;
+}
+
+.formGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formGroup input {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: var(--border-radius-small);
+  font-size: 14px;
+  font-family: inherit;
+  background: rgba(26, 26, 26, 0.8);
+  color: var(--color-text-primary);
+  transition: var(--transition);
+}
+
+.formGroup input::placeholder {
+  color: rgba(192, 192, 192, 0.5);
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  background: rgba(26, 26, 26, 0.9);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.formGroup select,
+.formGroup textarea {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: var(--border-radius-small);
+  font-size: 14px;
+  font-family: inherit;
+  background: rgba(26, 26, 26, 0.8);
+  color: var(--color-text-primary);
+  transition: var(--transition);
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.06);
+  border-color: rgba(255,215,0,0.18);
+}
+
+.posterPreview {
+  margin-left: 12px;
+  margin-top: 0;
+  width: 220px;
+  height: 120px;
+  border-radius: 6px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.06);
+  align-self: center;
+}
+
+.mediaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.mediaInputs {
+  flex: 1;
+}
+
+.mediaRow .mediaInputs input,
+.mediaRow .mediaInputs input[type="text"],
+.mediaRow .mediaInputs input[type="url"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .mediaRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .posterPreview {
+    width: 100%;
+    height: auto;
+    margin-left: 0;
+    align-self: center;
+  }
+}
+
+.formRowInline {
+  margin-top: 8px;
+}
+
+.checkboxLabel {
+  color: #ddd;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+.btnSubmit,
+.btnCancel {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--border-radius-small);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btnSubmit {
+  background: linear-gradient(135deg, var(--color-gold), #FFB700);
+  color: var(--bg-primary);
+}
+
+.btnSubmit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+}
+
+.btnCancel {
+  background: rgba(192, 192, 192, 0.15);
+  color: var(--color-text-secondary);
+  border: 1px solid rgba(192, 192, 192, 0.3);
+}
+
+.btnCancel:hover {
+  background: rgba(192, 192, 192, 0.25);
+  color: var(--color-text-primary);
+}
+
+.tableWrap {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.paginationBar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 0;
+}
+
+.pageBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pageInfo {
+  color: #ddd;
+  margin: 0 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+}
+
+.table th {
+  background: rgba(255, 215, 0, 0.12);
+  padding: 10px;
+  text-align: left;
+}
+
+.table td {
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  vertical-align: middle;
+}
+
+.title {
+  width: 555px;
+  /* min-width: 500px;
+  max-width: 500px; */
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+
+  line-height: 1.5;
+}
+
+.thumb {
+  width: 64px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.noThumb {
+  width: 64px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  border-radius: 6px;
+  color: #777;
+}
+
+.table td.actions {
+  /* display: flex; */
+  align-items: center;
+  vertical-align: middle;
+  justify-content: center;
+  gap: 16px;
+}
+
+.table td.actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  line-height: 1;
+  font-size: 16px;
+}
+
+.table td.actions .btnEdit,
+.table td.actions .btnDelete {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table td.actions .btnEdit {
+  transform: translateY(1px);
+}
+
+.loading {
+  color: #fff;
+}
+
+.empty {
+  color: #ccc;
+  padding: 12px;
+}
+
+.errorAlert {
+  background: #ffdddd;
+  color: #900;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.successAlert {
+  background: #ddffdf;
+  color: #065;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-weight: 600;
+}

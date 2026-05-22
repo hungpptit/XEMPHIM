@@ -2,8 +2,25 @@ import * as moviesService from '../services/moviesService.js';
 
 export const list = async (req, res) => {
   try {
-    const movies = await moviesService.listMovies();
-    res.json({ movies });
+    // Support query params: ?all=1 to return all movies (no showtime filtering)
+    // or pagination ?page=1&limit=10
+    const { all, page, limit } = req.query;
+    const options = {};
+    if (all === '1' || all === 'true') options.all = true;
+    if (page) options.page = parseInt(page, 10);
+    if (limit) options.limit = parseInt(limit, 10);
+
+    const result = await moviesService.listMovies(options);
+
+    if (options.page && options.limit) {
+      // result expected to be { rows, count }
+      const rows = result.rows || [];
+      const total = result.count || 0;
+      return res.json({ movies: rows, total });
+    }
+
+    // non-paginated: may return array
+    return res.json({ movies: result });
   } catch (err) {
     console.error('Error listing movies:', err);
     res.status(500).json({ message: 'Internal server error' });
