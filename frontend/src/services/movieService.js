@@ -46,7 +46,7 @@ function mapMovie(m) {
     director: m.director || null,
     cast: Array.isArray(m.cast) ? m.cast : (m.cast || []),
     status,
-    isAvailable: ['now_showing', 'active', 'available'].includes(status)
+    isAvailable: status === 'now_showing'
   };
 }
 
