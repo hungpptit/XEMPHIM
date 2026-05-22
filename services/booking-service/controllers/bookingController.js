@@ -51,13 +51,13 @@ export const getUserBookingsHandler = async (req, res) => {
   }
 };
 
-export const createSepayQRHandler = async (req, res) => {
+export const createZaloPayQRHandler = async (req, res) => {
   try {
     const bookingId = req.params.bookingId;
-    const result = await bookingService.createSepayQR({ booking_id: bookingId, expiresIn: 60 });
+    const result = await bookingService.createZaloPayQR({ booking_id: bookingId, expiresIn: 180 });
     res.json(result);
   } catch (err) {
-    console.error('Error creating Sepay QR:', err && err.stack ? err.stack : err);
+    console.error('Error creating ZaloPay QR:', err && err.stack ? err.stack : err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -135,7 +135,7 @@ export default {
   lockSeatHandler,
   confirmPaymentHandler,
   getUserBookingsHandler,
-  createSepayQRHandler,
+  createZaloPayQRHandler,
   getBookingStatusHandler,
   cancelBookingHandler,
   refundBookingHandler

@@ -406,23 +406,30 @@ export const getUserBookings = async (userId) => {
 };
 
 // Create ZaloPay QR Order (integrates with Payment Service HTTP REST call)
+// Lưu ý: return_code: 1 từ ZaloPay = tạo ORDER thành công (không phải thanh toán thành công)
+// Mỗi lần gọi (kể cả refresh) sẽ tạo 1 app_trans_id mới — đây là bình thường.
 export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
   const t = await sequelize.transaction();
   try {
     const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
     if (!booking) throw new Error('Booking not found');
-    
+
+    // Không tạo QR nếu booking đã hết hạn hoặc đã bị cancel/confirmed
+    if (booking.status === 'expired' || booking.status === 'cancelled') {
+      await t.rollback();
+      throw new Error(`Booking is ${booking.status}, cannot create new QR`);
+    }
+
     const amount = Number(booking.total_price || 0);
     const now = new Date();
-    
-    let payment = await Payment.findOne({
-      where: { booking_id: booking.id, status: 'pending' },
-      order: [['created_at', 'DESC']],
-      transaction: t,
-      lock: t.LOCK.UPDATE
-    });
-    
-    // Call external Payment Service to create order
+
+    // Void các payment pending cũ nếu có (để tránh rác trong DB khi refresh nhiều lần)
+    await Payment.update(
+      { status: 'void' },
+      { where: { booking_id: booking.id, status: 'pending' }, transaction: t }
+    );
+
+    // Call external Payment Service to create NEW ZaloPay order
     let zalopayResult;
     try {
       const response = await axios.post(`${PAYMENT_SERVICE}/api/payments/orders`, {
@@ -432,53 +439,49 @@ export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
         description: `Thanh toan ve phim ${booking.booking_code}`
       });
       zalopayResult = response.data;
+      // return_code: 1 từ ZaloPay = tạo order thành công (KHÔNG phải đã thanh toán)
+      console.log(`ℹ️ [ZaloPay] Order created (return_code=1 means order created, not paid). app_trans_id: ${zalopayResult.app_trans_id}`);
     } catch (apiErr) {
       console.error('❌ Failed calling payment service orders API:', apiErr.message);
       throw new Error(`Payment Gateway Service offline: ${apiErr.message}`);
     }
-    
+
     if (!zalopayResult.success) {
       await t.rollback();
       throw new Error(`ZaloPay order creation failed: ${zalopayResult.return_message}`);
     }
-    
+
     const expireAt = new Date(Date.now() + expiresIn * 1000);
-    
-    if (payment && payment.expire_at && new Date(payment.expire_at) > now) {
-      payment.qr_url = zalopayResult.order_url;
-      payment.payment_code = zalopayResult.app_trans_id;
-      payment.transaction_ref = zalopayResult.zp_trans_token;
-      payment.expire_at = expireAt;
-      await payment.save({ transaction: t });
-    } else {
-      try {
-        payment = await Payment.create({
-          booking_id: booking.id,
-          payment_method: 'zalopay',
-          payment_code: zalopayResult.app_trans_id,
-          amount: booking.total_price,
-          qr_url: zalopayResult.order_url,
-          transaction_ref: zalopayResult.zp_trans_token,
-          expire_at: expireAt,
-          status: 'pending',
-          created_at: now
-        }, { transaction: t });
-      } catch (err) {
-        if (err.name === 'SequelizeUniqueConstraintError') {
-          payment = await Payment.findOne({
-            where: { booking_id: booking.id, status: 'pending' },
-            order: [['created_at', 'DESC']],
-            transaction: t
-          });
-        } else {
-          throw err;
-        }
+
+    // Tạo payment record mới cho order này
+    let payment;
+    try {
+      payment = await Payment.create({
+        booking_id: booking.id,
+        payment_method: 'zalopay',
+        payment_code: zalopayResult.app_trans_id,
+        amount: booking.total_price,
+        qr_url: zalopayResult.order_url,
+        transaction_ref: zalopayResult.zp_trans_token,
+        expire_at: expireAt,
+        status: 'pending',
+        created_at: now
+      }, { transaction: t });
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        payment = await Payment.findOne({
+          where: { booking_id: booking.id, status: 'pending' },
+          order: [['created_at', 'DESC']],
+          transaction: t
+        });
+      } else {
+        throw err;
       }
     }
-    
+
     await t.commit();
-    
-    return { 
+
+    return {
       qr_url: zalopayResult.order_url,
       order_token: zalopayResult.zp_trans_token,
       app_trans_id: zalopayResult.app_trans_id,
@@ -487,13 +490,12 @@ export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
       payment_id: payment.id
     };
   } catch (err) {
-    await t.rollback();
+    try { await t.rollback(); } catch (e) {}
     console.error('Error creating ZaloPay QR:', err);
     throw err;
   }
 };
 
-export const createSepayQR = createZaloPayQR;
 
 export const getBookingStatus = async ({ booking_id }) => {
   const booking = await Booking.findByPk(booking_id, { attributes: ['id', 'status', 'booking_code'] });
@@ -715,7 +717,6 @@ export default {
   confirmPayment,
   expireLockedBookings,
   getUserBookings,
-  createSepayQR,
   createZaloPayQR,
   getBookingStatus,
   cancelBooking,

@@ -1,4 +1,61 @@
-import { Seat, CinemaHall, Showtime, Booking, BookingSeat, Sequelize, Cinema } from '../models/index.js';
+import { Seat, CinemaHall, Showtime, Booking, BookingSeat, Cinema } from '../models/index.js';
+import Redis from 'ioredis';
+
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+
+async function getRedisLockedSeatIds(showtimeId) {
+  if (!redis) return new Set();
+
+  const lockedSeatIds = new Set();
+  const pattern = `lock:showtime:${showtimeId}:seat:*`;
+
+  try {
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 500);
+      cursor = nextCursor;
+      for (const key of keys) {
+        const seatId = Number(key.split(':').pop());
+        if (!Number.isNaN(seatId)) {
+          lockedSeatIds.add(seatId);
+        }
+      }
+    } while (cursor !== '0');
+  } catch (err) {
+    console.error('Error reading Redis seat locks:', err && err.stack ? err.stack : err);
+  }
+
+  return lockedSeatIds;
+}
+
+async function getDbLockedSeatIds(showtimeId) {
+  const lockedBookingSeats = await BookingSeat.findAll({
+    include: [
+      {
+        model: Booking,
+        where: {
+          showtime_id: showtimeId,
+          status: 'locked'
+        },
+        attributes: ['id', 'expire_at']
+      }
+    ],
+    attributes: ['seat_id']
+  });
+
+  const now = new Date();
+  const lockedSeatIds = new Set();
+
+  for (const row of lockedBookingSeats) {
+    const booking = row.Booking;
+    if (!booking) continue;
+    if (!booking.expire_at || new Date(booking.expire_at) > now) {
+      lockedSeatIds.add(row.seat_id);
+    }
+  }
+
+  return lockedSeatIds;
+}
 
 export const listSeats = async () => {
   const seats = await Seat.findAll({
@@ -111,33 +168,25 @@ export const getSeatMapForShowtime = async (showtimeId) => {
     order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
   });
 
-  const seatIds = seats.map(s => s.id);
-  let bookingSeatRows = [];
-  if (seatIds.length > 0) {
-    bookingSeatRows = await BookingSeat.findAll({
-      where: { seat_id: seatIds },
-      include: [
-        {
-          model: Booking,
-          where: {
-            showtime_id: showtimeId,
-            status: { [Sequelize.Op.notIn]: ['cancelled', 'expired'] }
-          },
-          attributes: ['id', 'status', 'expire_at']
-        }
-      ],
-      attributes: ['seat_id']
-    });
+  let lockedSeatIds = await getRedisLockedSeatIds(showtimeId);
+  if (lockedSeatIds.size === 0) {
+    lockedSeatIds = await getDbLockedSeatIds(showtimeId);
   }
+  const confirmedBookingSeatRows = await BookingSeat.findAll({
+    include: [
+      {
+        model: Booking,
+        where: {
+          showtime_id: showtimeId,
+          status: 'confirmed'
+        },
+        attributes: ['id']
+      }
+    ],
+    attributes: ['seat_id']
+  });
 
-  const seatBookingMap = new Map();
-  for (const row of bookingSeatRows) {
-    const sid = row.seat_id;
-    const b = row.Booking;
-    if (!b) continue;
-    if (!seatBookingMap.has(sid)) seatBookingMap.set(sid, []);
-    seatBookingMap.get(sid).push({ status: b.status, expire_at: b.expire_at });
-  }
+  const confirmedSeatIds = new Set(confirmedBookingSeatRows.map(row => row.seat_id));
 
   const seatMap = [];
   let current = null;
@@ -147,18 +196,10 @@ export const getSeatMapForShowtime = async (showtimeId) => {
     if (s.is_active === false) {
       status = 'inactive';
     } else {
-      const bookingsForSeat = seatBookingMap.get(s.id) || [];
-      const now = new Date();
-      for (const bk of bookingsForSeat) {
-        if (bk.status === 'confirmed') {
-          status = 'occupied';
-          break;
-        }
-        if (bk.status === 'locked') {
-          if (!bk.expire_at || new Date(bk.expire_at) > now) {
-            status = 'locked';
-          }
-        }
+      if (lockedSeatIds.has(s.id)) {
+        status = 'locked';
+      } else if (confirmedSeatIds.has(s.id)) {
+        status = 'occupied';
       }
     }
 
