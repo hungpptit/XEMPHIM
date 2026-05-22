@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import styles from './CinemaList.module.css';
 
 export default function CinemaManagement() {
+  const navigate = useNavigate();
   const [cinemas, setCinemas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -32,11 +34,18 @@ export default function CinemaManagement() {
       setLoading(true);
       setError('');
       const response = await adminService.cinema.list();
-      setCinemas(response.data || []);
+      const payload = response?.data;
+      const cinemaList = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+      setCinemas(cinemaList);
     } catch (err) {
       console.error('Error loading cinemas:', err);
       const errorMsg = err.response?.data?.error || err.message || 'Lỗi khi tải danh sách rạp';
       setError(errorMsg);
+      setCinemas([]);
     } finally {
       setLoading(false);
     }
@@ -225,7 +234,7 @@ export default function CinemaManagement() {
                 <div className={styles.cardFooter}>
                   <button
                     className={styles.btnManageHalls}
-                    onClick={() => window.location.href = `/admin/halls/${cinema.id}`}
+                    onClick={() => navigate(`/admin/halls/${cinema.id}`)}
                   >
                     🎭 Quản Lý Phòng Chiếu
                   </button>

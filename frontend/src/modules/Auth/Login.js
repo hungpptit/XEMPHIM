@@ -18,9 +18,9 @@ export default function Login(){
       const { user } = await authService.login({ email, password });
       // Nếu user là admin, điều hướng sang /admin, ngược lại về /
       if(user?.role === 'admin') {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/');
+        navigate('/', { replace: true });
       }
     }catch(err){
       setError(err.message || 'Đăng nhập thất bại');

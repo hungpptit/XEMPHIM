@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import styles from './HallList.module.css';
 
 export default function HallManagement() {
-  const { cinemaId } = useParams();
+  const params = useParams();
+  const location = useLocation();
+  const cinemaId = useMemo(() => {
+    if (params.cinemaId) return params.cinemaId;
+    const match = location.pathname.match(/^\/admin\/halls\/(\d+)$/);
+    return match?.[1] || '';
+  }, [params.cinemaId, location.pathname]);
   
   const [halls, setHalls] = useState([]);
   const [cinemas, setCinemas] = useState([]);
@@ -37,6 +43,34 @@ export default function HallManagement() {
     }
   }, [cinemaId]);
 
+  useEffect(() => {
+    if (!showForm) {
+      return undefined;
+    }
+
+    // Add one local history state so browser Back closes the form first.
+    window.history.pushState({ hallFormOpen: true }, '', window.location.href);
+
+    const handlePopState = () => {
+      setShowForm(false);
+      setEditingId(null);
+      setFormData({
+        name: '',
+        cinemaId: cinemaId || '',
+        rows: '10',
+        seatsPerRow: '12',
+        hallType: 'Standard',
+        description: ''
+      });
+      setError('');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [showForm, cinemaId]);
+
   const loadCinemaName = async () => {
     try {
       const response = await adminService.cinema.getById(cinemaId);
@@ -52,9 +86,16 @@ export default function HallManagement() {
   const loadCinemas = async () => {
     try {
       const response = await adminService.cinema.list();
-      setCinemas(response.data || []);
+      const payload = response?.data;
+      const cinemaList = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+      setCinemas(cinemaList);
     } catch (err) {
       console.error('Error loading cinemas:', err);
+      setCinemas([]);
     }
   };
 
@@ -179,7 +220,7 @@ export default function HallManagement() {
   };
 
   const getCinemaNameById = (id) => {
-    const cinema = cinemas.find(c => c.id === id);
+    const cinema = cinemas.find(c => Number(c.id) === Number(id));
     return cinema ? cinema.name : '-';
   };
 
