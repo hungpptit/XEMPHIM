@@ -31,9 +31,9 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/movies', movieRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/showtimes', (req, res) => {
-  res.status(501).json({ message: 'Not implemented at root level. Use /api/movies/:id/showtimes instead.' });
-});
+import showtimeRoutes from './routes/showtimeRoutes.js';
+
+app.use('/api/showtimes', showtimeRoutes);
 
 // Initialize database and start server
 (async () => {
