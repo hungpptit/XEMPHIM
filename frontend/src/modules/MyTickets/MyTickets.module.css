@@ -244,16 +244,36 @@
 }
 
 .detailBtn {
-  background: linear-gradient(135deg, transparent, rgba(255, 215, 0, 0.05));
-  color: var(--color-gold);
-  border: 2px solid var(--color-gold);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.16), rgba(255, 179, 0, 0.08));
+  color: #ffe9a3;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 0 8px 18px rgba(255, 215, 0, 0.12);
+  border-radius: 999px;
+  padding: 12px 18px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .detailBtn:hover {
   background: linear-gradient(135deg, var(--color-gold), #ffb300);
   color: var(--bg-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 10px 24px rgba(255, 215, 0, 0.28);
+}
+
+.detailBtn svg {
+  font-size: 13px;
+}
+
+.detailBtn svg:first-child {
+  margin-right: 2px;
+}
+
+.detailChevron {
+  margin-left: 2px;
+  opacity: 0.85;
 }
 
 .cancelBtn {

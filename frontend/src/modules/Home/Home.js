@@ -4,11 +4,13 @@ import { FaPlay, FaTicketAlt, FaShieldAlt, FaMobile } from 'react-icons/fa';
 import MovieCard from '../../components/MovieCard';
 import axios from 'axios';
 import { listMovies } from '../../services/movieService';
+import authService from '../../services/authService';
 import styles from './Home.module.css';
 
 const Home = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const PAGE_SIZE = 10;
   const [nowPage, setNowPage] = useState(1);
   const [comingPage, setComingPage] = useState(1);
@@ -26,8 +28,29 @@ const Home = () => {
         if (mounted) setLoading(false);
       }
     };
+    
+    const checkUser = async () => {
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (mounted) setUser(currentUser);
+      } catch (err) {
+        console.error('Failed to check user', err);
+      }
+    };
+
     load();
-    return () => { mounted = false; };
+    checkUser();
+
+    const onAuth = async () => {
+      const u = await authService.getCurrentUser();
+      if (mounted) setUser(u);
+    };
+    window.addEventListener('authChanged', onAuth);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('authChanged', onAuth);
+    };
   }, []);
 
   const nowShowingMovies = movies.filter(movie => movie.isAvailable);
@@ -98,10 +121,17 @@ const Home = () => {
               <FaPlay />
               Xem phim ngay
             </Link>
-            <Link to="/my-tickets" className={`${styles.heroBtn} ${styles.heroBtnSecondary}`}>
-              <FaTicketAlt />
-              Vé của tôi
-            </Link>
+            {user?.role === 'admin' ? (
+              <Link to="/admin" className={`${styles.heroBtn} ${styles.heroBtnAdmin}`}>
+                <FaShieldAlt />
+                Vào trang quản trị
+              </Link>
+            ) : (
+              <Link to="/my-tickets" className={`${styles.heroBtn} ${styles.heroBtnSecondary}`}>
+                <FaTicketAlt />
+                Vé của tôi
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -120,9 +150,6 @@ const Home = () => {
             <span>Trang {nowPageClamped} / {nowTotalPages}</span>
             <button disabled={nowPageClamped >= nowTotalPages} onClick={() => goToNowPage(nowPageClamped + 1)}>Next</button>
           </div>
-          <Link to="/movies" className={styles.viewAllBtn}>
-            Xem tất cả phim
-          </Link>
         </section>
 
         {/* Coming Soon Section */}

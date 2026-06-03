@@ -4,6 +4,8 @@ import { FaArrowLeft, FaSpinner, FaSyncAlt } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
 import styles from './Payment.module.css';
 import Popup from '../../components/Popup'; // Import the custom Popup component
+// Module-level variable to prevent React Strict Mode double-render from canceling booking
+let activeBookingId = null;
 
 const Payment = () => {
   const location = useLocation();
@@ -212,22 +214,36 @@ const Payment = () => {
   // Không dùng popstate vì React Router intercept navigation trước,
   // có thể cleanup listener đã chạy trước khi popstate handler kịp fire.
   useEffect(() => {
+    activeBookingId = bookingId;
+    return () => {
+      // Set to null to indicate this instance is unmounting
+      if (activeBookingId === bookingId) {
+        activeBookingId = null;
+      }
+    };
+  }, [bookingId]);
+
+  useEffect(() => {
     return () => {
       // Chạy khi unmount: browser back, navigate(), timer hết hạn, v.v.
       // Không chạy khi: đã confirm (isConfirmedRef=true) hoặc đã cancel rồi (cancelRequestedRef=true)
       if (!isConfirmedRef.current && !cancelRequestedRef.current && bookingId) {
-        cancelRequestedRef.current = true;
-        try { sessionStorage.removeItem('current_payment'); } catch (e) {}
-        const token = localStorage.getItem('token');
-        // fetch + keepalive: request tồn tại sau khi component unmount
-        fetch(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          keepalive: true
-        }).catch(() => {});
+        // Defer execution to avoid canceling on React Strict Mode double-mount/unmount
+        setTimeout(() => {
+          if (activeBookingId !== bookingId && !isConfirmedRef.current) {
+            cancelRequestedRef.current = true;
+            try { sessionStorage.removeItem('current_payment'); } catch (e) {}
+            // fetch + keepalive: request tồn tại sau khi component unmount
+            fetch(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              keepalive: true
+            }).catch(() => {});
+          }
+        }, 100);
       }
     };
   }, [bookingId]);
@@ -240,12 +256,11 @@ const Payment = () => {
     const handleBeforeUnload = () => {
       if (bookingId && !isConfirmedRef.current && !cancelRequestedRef.current) {
         cancelRequestedRef.current = true;
-        const token = localStorage.getItem('token');
         fetch(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {
           method: 'POST',
+          credentials: 'include',
           headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            'Content-Type': 'application/json'
           },
           keepalive: true
         }).catch(() => {});

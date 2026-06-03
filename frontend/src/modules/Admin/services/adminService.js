@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 /**
- * Admin API - Go through the API Gateway so auth cookies/headers are injected
+ * Admin API - Go through the API Gateway using cookie-based auth
  */
 const adminAPI = axios.create({
   baseURL: 'http://localhost:8080',
@@ -11,18 +11,6 @@ const adminAPI = axios.create({
   },
   withCredentials: true, // Send httpOnly cookies automatically
 });
-
-// Add auth interceptor
-adminAPI.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // ============= CINEMA Management =============
 const cinemaAPI = {
