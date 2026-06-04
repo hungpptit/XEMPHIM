@@ -1,10 +1,9 @@
-// update auth logic
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import styles from './Profile.module.css';
 
-export default function Profile(){
+export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +12,7 @@ export default function Profile(){
     let mounted = true;
     (async () => {
       const u = await authService.getCurrentUser();
-      if(mounted) setUser(u);
+      if (mounted) setUser(u);
       setLoading(false);
     })();
     return () => { mounted = false; };
@@ -24,8 +23,8 @@ export default function Profile(){
     navigate('/');
   };
 
-  if(loading) return <div className={styles.container}>Đang tải...</div>;
-  if(!user) return <div className={styles.container}>Bạn chưa đăng nhập.</div>;
+  if (loading) return <div className={styles.container}>Đang tải...</div>;
+  if (!user) return <div className={styles.container}>Bạn chưa đăng nhập.</div>;
 
   return (
     <div className={styles.container}>

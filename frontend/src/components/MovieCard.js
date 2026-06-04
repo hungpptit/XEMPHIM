@@ -1,4 +1,3 @@
-// it works dont touch
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlay, FaStar, FaClock, FaCalendar } from 'react-icons/fa';
@@ -28,17 +27,17 @@ const MovieCard = ({ movie }) => {
   };
 
   return (
-    <div 
+    <div
       className={`${styles.movieCard} ${!movie.isAvailable ? styles.disabled : ''}`}
       onClick={handleCardClick}
     >
       <div className={styles.posterContainer}>
-        <img 
-          src={movie.poster || '/api/placeholder/300/400'} 
+        <img
+          src={movie.poster || '/api/placeholder/300/400'}
           alt={movie.title}
           className={styles.poster}
         />
-        
+
         <div className={styles.overlay}>
           <button className={styles.playButton} onClick={handleTrailerPlay}>
             <FaPlay className={styles.playIcon} />
@@ -63,7 +62,7 @@ const MovieCard = ({ movie }) => {
 
       <div className={styles.content}>
         <h3 className={styles.title}>{movie.title}</h3>
-        
+
         <div className={styles.info}>
           <div className={styles.duration}>
             <FaClock />

@@ -1,12 +1,11 @@
-// it works dont touch
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { 
-  FaClock, 
-  FaCalendar, 
-  FaStar, 
-  FaPlay, 
-  FaTicketAlt, 
+import {
+  FaClock,
+  FaCalendar,
+  FaStar,
+  FaPlay,
+  FaTicketAlt,
   FaArrowLeft,
   FaMapMarkerAlt,
   FaUsers,
@@ -92,12 +91,12 @@ const MovieDetail = () => {
   // Fetch seat availability counts for all loaded showtimes
   useEffect(() => {
     if (rawShowtimes.length === 0) return;
-    
+
     let active = true;
     const fetchAllSeatCounts = async () => {
       try {
         const { bookingAPI } = await import('../../services/api');
-        
+
         // Fetch in parallel for all showtimes
         const promises = rawShowtimes.map(async (st) => {
           try {
@@ -151,7 +150,7 @@ const MovieDetail = () => {
     const filteredRows = rawShowtimes.filter(st => {
       const cinema = st.CinemaHall?.Cinema;
       if (!cinema) return true; // Show fallback showtimes without cinema details just in case
-      
+
       if (selectedCity && cinema.city !== selectedCity) {
         return false;
       }
@@ -164,9 +163,9 @@ const MovieDetail = () => {
     // 2. Group by date
     const grouped = {};
     filteredRows.forEach(st => {
-      const date = new Date(st.start_time).toISOString().slice(0,10);
-      if (!grouped[date]) grouped[date] = { date, dateLabel: date === new Date().toISOString().slice(0,10) ? 'Hôm nay' : date, times: [] };
-      
+      const date = new Date(st.start_time).toISOString().slice(0, 10);
+      if (!grouped[date]) grouped[date] = { date, dateLabel: date === new Date().toISOString().slice(0, 10) ? 'Hôm nay' : date, times: [] };
+
       const count = seatCounts[st.id];
       grouped[date].times.push({
         id: st.id,
@@ -220,8 +219,8 @@ const MovieDetail = () => {
     const stars = [];
     for (let i = 0; i < 5; i++) {
       stars.push(
-        <FaStar 
-          key={i} 
+        <FaStar
+          key={i}
           color={i < fullStars ? '#FFD700' : '#404040'}
         />
       );
@@ -233,10 +232,10 @@ const MovieDetail = () => {
     return (
       <div className={styles.movieDetail}>
         <div className="container">
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
             height: '50vh',
             flexDirection: 'column',
             gap: '20px'
@@ -264,7 +263,7 @@ const MovieDetail = () => {
 
   return (
     <div className={styles.movieDetail}>
-      <button 
+      <button
         className={styles.backBtn}
         onClick={() => navigate(-1)}
       >
@@ -272,21 +271,21 @@ const MovieDetail = () => {
       </button>
 
       {/* Movie Hero Section */}
-      <section 
+      <section
         className={styles.movieHero}
         style={{ backgroundImage: `url(${movie.backdrop})` }}
       >
         <div className={styles.heroContent}>
           <div className={styles.movieInfo}>
-            <img 
-              src={movie.poster} 
+            <img
+              src={movie.poster}
               alt={movie.title}
               className={styles.moviePoster}
             />
-            
+
             <div className={styles.movieDetails}>
               <h1 className={styles.movieTitle}>{movie.title}</h1>
-              
+
               <div className={styles.movieMeta}>
                 <div className={styles.metaItem}>
                   <FaClock className={styles.metaIcon} />
@@ -318,7 +317,7 @@ const MovieDetail = () => {
 
               <div className={styles.movieActions}>
                 {movie.isAvailable && (
-                  <Link 
+                  <Link
                     to="#showtimes"
                     className={`${styles.actionBtn} ${styles.bookBtn}`}
                     onClick={(e) => {
@@ -330,7 +329,7 @@ const MovieDetail = () => {
                     Đặt vé ngay
                   </Link>
                 )}
-                <button 
+                <button
                   className={`${styles.actionBtn} ${styles.trailerBtn}`}
                   onClick={handleTrailerPlay}
                 >
@@ -344,7 +343,7 @@ const MovieDetail = () => {
       </section>
 
       {/* Trailer Section */}
-  <section id="trailer" className={styles.trailerSection}>
+      <section id="trailer" className={styles.trailerSection}>
         <div className="container">
           <h2 className={styles.sectionTitle}>Trailer</h2>
           <div className={styles.trailerContainer}>
@@ -422,7 +421,7 @@ const MovieDetail = () => {
                       <FaCalendar />
                       {day.dateLabel} ({day.date})
                     </div>
-                    
+
                     <div className={styles.timesGrid}>
                       {day.times.map((slot, slotIndex) => (
                         <div

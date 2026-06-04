@@ -1,13 +1,12 @@
-// fix ticket rendering bug
 import React, { useState, useEffect } from 'react';
-import { QRCodeCanvas } from 'qrcode.react'; 
+import { QRCodeCanvas } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
 import { bookingAPI } from '../../services/api';
-import { 
-  FaTicketAlt, 
-  FaQrcode, 
-  FaClock, 
-  FaMapMarkerAlt, 
+import {
+  FaTicketAlt,
+  FaQrcode,
+  FaClock,
+  FaMapMarkerAlt,
   FaCalendar,
   FaUsers,
   FaEye,
@@ -22,7 +21,7 @@ const MyTickets = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  
+
   // Load tickets from backend API
   const loadTickets = async () => {
     setLoading(true);
@@ -70,7 +69,7 @@ const MyTickets = () => {
   const getTicketStatus = (ticket) => {
     const now = new Date();
     const showDateTime = new Date(`${ticket.showtime.date} ${ticket.showtime.time}`);
-    
+
     // Return actual booking status first
     if (ticket.status === 'cancelled') {
       return 'cancelled';
@@ -114,24 +113,24 @@ const MyTickets = () => {
 
   const handleRefundTicket = async (ticket) => {
     const confirmMsg = `Bạn có chắc chắn muốn hoàn tiền cho vé này?\n\nPhim: ${ticket.movie.title}\nNgày chiếu: ${ticket.showtime.date} ${ticket.showtime.time}\nSố tiền: ${ticket.totalPrice.toLocaleString()}đ\n\nLưu ý: Chỉ có thể hoàn tiền nếu còn hơn 2 giờ trước giờ chiếu.`;
-    
+
     if (!window.confirm(confirmMsg)) return;
-    
+
     const reason = prompt('Vui lòng nhập lý do hoàn tiền (không bắt buộc):');
-    
+
     try {
       // Get current user
       const { default: authService } = await import('../../services/authService');
       const user = await authService.getCurrentUser();
       const userId = user?.id || user?.user_id;
-      
-      const response = await bookingAPI.refundBooking(ticket.id, { 
+
+      const response = await bookingAPI.refundBooking(ticket.id, {
         reason: reason || 'User requested refund',
-        user_id: userId 
+        user_id: userId
       });
-      
+
       const data = response.data || response;
-      
+
       if (data.success) {
         alert(`✅ Yêu cầu hoàn tiền thành công!\n\n${data.message || 'Tiền sẽ được hoàn lại trong vòng 1-3 ngày làm việc.'}`);
         await loadTickets();
@@ -148,24 +147,24 @@ const MyTickets = () => {
   const canCancelTicket = (ticket) => {
     // Can only cancel 'locked' bookings (before payment)
     if (ticket.status !== 'locked') return false;
-    
+
     const now = new Date();
     const showDateTime = new Date(`${ticket.showtime.date} ${ticket.showtime.time}`);
     const timeDiff = showDateTime.getTime() - now.getTime();
     const hoursUntilShow = timeDiff / (1000 * 60 * 60);
-    
+
     return hoursUntilShow > 0; // Can cancel locked booking anytime before showtime
   };
 
   const canRefundTicket = (ticket) => {
     // Can only refund 'confirmed' (paid) bookings
     if (ticket.status !== 'confirmed') return false;
-    
+
     const now = new Date();
     const showDateTime = new Date(`${ticket.showtime.date} ${ticket.showtime.time}`);
     const timeDiff = showDateTime.getTime() - now.getTime();
     const hoursUntilShow = timeDiff / (1000 * 60 * 60);
-    
+
     return hoursUntilShow > 2; // Can refund if more than 2 hours before show
   };
 
@@ -229,31 +228,31 @@ const MyTickets = () => {
       <div className={styles.content}>
         {tickets.length > 0 && (
           <div className={styles.filterTabs}>
-            <button 
+            <button
               className={`${styles.filterTab} ${filter === 'all' ? styles.active : ''}`}
               onClick={() => setFilter('all')}
             >
               Tất cả ({tickets.length})
             </button>
-            <button 
+            <button
               className={`${styles.filterTab} ${filter === 'confirmed' ? styles.active : ''}`}
               onClick={() => setFilter('confirmed')}
             >
               Còn hiệu lực ({tickets.filter(t => getTicketStatus(t) === 'confirmed').length})
             </button>
-            <button 
+            <button
               className={`${styles.filterTab} ${filter === 'expired' ? styles.active : ''}`}
               onClick={() => setFilter('expired')}
             >
               Đã chiếu ({tickets.filter(t => getTicketStatus(t) === 'expired').length})
             </button>
-            <button 
+            <button
               className={`${styles.filterTab} ${filter === 'cancelled' ? styles.active : ''}`}
               onClick={() => setFilter('cancelled')}
             >
               Đã hủy ({tickets.filter(t => getTicketStatus(t) === 'cancelled').length})
             </button>
-            <button 
+            <button
               className={`${styles.filterTab} ${filter === 'refunded' ? styles.active : ''}`}
               onClick={() => setFilter('refunded')}
             >
@@ -269,13 +268,13 @@ const MyTickets = () => {
               {tickets.length === 0 ? 'Chưa có vé nào' : 'Không có vé nào phù hợp'}
             </h2>
             <p className={styles.emptyDesc}>
-              {tickets.length === 0 
+              {tickets.length === 0
                 ? 'Bạn chưa đặt vé nào. Hãy khám phá các bộ phim hấp dẫn và đặt vé ngay!'
                 : 'Không tìm thấy vé nào phù hợp với bộ lọc hiện tại.'
               }
             </p>
             {tickets.length === 0 && (
-              <button 
+              <button
                 className={styles.browseBtn}
                 onClick={() => navigate('/')}
               >
@@ -288,7 +287,7 @@ const MyTickets = () => {
           <div className={styles.ticketsGrid}>
             {filteredTickets.map((ticket) => {
               const status = getTicketStatus(ticket);
-              
+
               return (
                 <div key={ticket.id} className={styles.ticketCard}>
                   <div className={styles.ticketHeader}>
@@ -301,7 +300,7 @@ const MyTickets = () => {
                   </div>
 
                   <div className={styles.ticketBody}>
-                    <img 
+                    <img
                       src={ticket.movie.poster}
                       alt={ticket.movie.title}
                       className={styles.moviePoster}
@@ -309,7 +308,7 @@ const MyTickets = () => {
 
                     <div className={styles.ticketInfo}>
                       <h3 className={styles.movieTitle}>{ticket.movie.title}</h3>
-                      
+
                       <div className={styles.infoGrid}>
                         <div className={styles.infoItem}>
                           <div className={styles.infoLabel}>Ngày chiếu</div>
@@ -318,7 +317,7 @@ const MyTickets = () => {
                             {ticket.showtime.date}
                           </div>
                         </div>
-                        
+
                         <div className={styles.infoItem}>
                           <div className={styles.infoLabel}>Giờ chiếu</div>
                           <div className={styles.infoValue}>
@@ -326,7 +325,7 @@ const MyTickets = () => {
                             {ticket.showtime.time}
                           </div>
                         </div>
-                        
+
                         <div className={styles.infoItem}>
                           <div className={styles.infoLabel}>Rạp</div>
                           <div className={styles.infoValue}>
@@ -334,7 +333,7 @@ const MyTickets = () => {
                             {ticket.showtime.cinema}
                           </div>
                         </div>
-                        
+
                         <div className={styles.infoItem}>
                           <div className={styles.infoLabel}>Số ghế</div>
                           <div className={styles.infoValue}>
@@ -360,7 +359,7 @@ const MyTickets = () => {
                       </div>
 
                       <div className={styles.ticketActions}>
-                        <button 
+                        <button
                           className={styles.detailBtn}
                           onClick={() => navigate(`/movies/${ticket.movie.id}`)}
                         >
@@ -368,9 +367,9 @@ const MyTickets = () => {
                           <span>Chi tiết phim</span>
                           <FaChevronRight className={styles.detailChevron} />
                         </button>
-                        
+
                         {canCancelTicket(ticket) && (
-                          <button 
+                          <button
                             className={styles.cancelBtn}
                             onClick={() => handleCancelTicket(ticket.id)}
                           >
@@ -378,9 +377,9 @@ const MyTickets = () => {
                             Hủy vé
                           </button>
                         )}
-                        
+
                         {canRefundTicket(ticket) && (
-                          <button 
+                          <button
                             className={styles.refundBtn}
                             onClick={() => handleRefundTicket(ticket)}
                           >

@@ -1,4 +1,3 @@
-// it works dont touch
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlay, FaTicketAlt, FaShieldAlt, FaMobile } from 'react-icons/fa';
@@ -29,7 +28,7 @@ const Home = () => {
         if (mounted) setLoading(false);
       }
     };
-    
+
     const checkUser = async () => {
       try {
         const currentUser = await authService.getCurrentUser();
@@ -91,10 +90,10 @@ const Home = () => {
     return (
       <div className={styles.home}>
         <div className="container">
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
             height: '50vh',
             flexDirection: 'column',
             gap: '20px'
@@ -114,7 +113,7 @@ const Home = () => {
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>CinemaX</h1>
           <p className={styles.heroSubtitle}>
-            Trải nghiệm điện ảnh đỉnh cao với công nghệ hiện đại nhất. 
+            Trải nghiệm điện ảnh đỉnh cao với công nghệ hiện đại nhất.
             Đặt vé nhanh chóng, chọn ghế thoải mái, thanh toán an toàn.
           </p>
           <div className={styles.heroButtons}>
@@ -139,7 +138,7 @@ const Home = () => {
 
       <div className="container">
         {/* Now Showing Section */}
-  <section id="now-section" className={styles.section}>
+        <section id="now-section" className={styles.section}>
           <h2 className={styles.sectionTitle}>Phim Đang Chiếu</h2>
           <div className={styles.moviesGrid}>
             {nowSlice.map(movie => (
@@ -154,7 +153,7 @@ const Home = () => {
         </section>
 
         {/* Coming Soon Section */}
-  <section id="coming-section" className={styles.section}>
+        <section id="coming-section" className={styles.section}>
           <h2 className={styles.sectionTitle}>Phim Sắp Chiếu</h2>
           <div className={styles.moviesGrid}>
             {comingSlice.map(movie => (
@@ -177,25 +176,25 @@ const Home = () => {
                 <FaTicketAlt className={styles.featureIcon} />
                 <h3 className={styles.featureTitle}>Đặt Vé Dễ Dàng</h3>
                 <p className={styles.featureDesc}>
-                  Giao diện thân thiện, đặt vé chỉ trong vài cú click. 
+                  Giao diện thân thiện, đặt vé chỉ trong vài cú click.
                   Chọn suất chiếu và ghế ngồi theo sở thích.
                 </p>
               </div>
-              
+
               <div className={styles.featureCard}>
                 <FaShieldAlt className={styles.featureIcon} />
                 <h3 className={styles.featureTitle}>Thanh Toán An Toàn</h3>
                 <p className={styles.featureDesc}>
-                  Hỗ trợ nhiều phương thức thanh toán: Momo, VNPay, 
+                  Hỗ trợ nhiều phương thức thanh toán: Momo, VNPay,
                   Visa với bảo mật cao nhất.
                 </p>
               </div>
-              
+
               <div className={styles.featureCard}>
                 <FaMobile className={styles.featureIcon} />
                 <h3 className={styles.featureTitle}>Trải Nghiệm Mobile</h3>
                 <p className={styles.featureDesc}>
-                  Giao diện responsive hoàn hảo trên mọi thiết bị. 
+                  Giao diện responsive hoàn hảo trên mọi thiết bị.
                   Đặt vé mọi lúc mọi nơi.
                 </p>
               </div>

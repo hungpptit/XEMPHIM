@@ -1,10 +1,9 @@
-// fix seat reservation bug
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  FaArrowLeft, 
-  FaClock, 
-  FaMapMarkerAlt, 
+import {
+  FaArrowLeft,
+  FaClock,
+  FaMapMarkerAlt,
   FaCalendar,
   FaUsers,
   FaLock
@@ -15,7 +14,7 @@ const SeatSelection = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [seatMap, setSeatMap] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,9 +75,9 @@ const SeatSelection = () => {
         if (isInitial) setLoading(true);
         const { bookingAPI } = await import('../../services/api');
         const response = await bookingAPI.getSeatMap(showtimeId);
-        
+
         if (!active) return;
-        
+
         const seatData = response.data || response;
         if (seatData && seatData.seatMap) {
           const newMap = mapBackendSeatMap(seatData);
@@ -182,38 +181,38 @@ const SeatSelection = () => {
         console.log('Current user ID:', currentUserId);
         console.log('Showtime ID:', showtime?.id);
         console.log('Selected seat IDs:', selectedSeats.map(s => s.id));
-        
+
         // Validate payload
         if (!currentUserId) {
           alert('Vui lòng đăng nhập để đặt vé');
           navigate('/login');
           return;
         }
-        
+
         if (!showtime?.id) {
           alert('Thông tin suất chiếu không hợp lệ');
           return;
         }
-        
+
         if (selectedSeats.length === 0) {
           alert('Vui lòng chọn ít nhất 1 ghế');
           return;
         }
-        
+
         // Use bookingAPI instead of seatService
         const { bookingAPI } = await import('../../services/api');
         const res = await bookingAPI.lockSeats(payload);
         console.log('lockSeat response:', res);
-        
+
         // Handle response format (API might return {data: ...} or direct object)
         const responseData = res.data || res;
         console.log('Response data:', responseData);
-        
+
         if (responseData && responseData.success && responseData.booking) {
           // success: pass booking info to payment page
           const booking = responseData.booking;
           console.log('Booking object:', booking);
-          
+
           navigate('/payment', {
             state: {
               movie,
@@ -233,9 +232,9 @@ const SeatSelection = () => {
             }
             return `Mã ghế ${cid}`;
           });
-          
+
           alert(`Ghế đã bị người khác chọn/khóa chờ thanh toán: ${conflictNames.join(', ')}. Vui lòng chọn ghế khác.`);
-          
+
           // refresh seat map
           const showtimeId = showtime?.id || id;
           const freshRes = await bookingAPI.getSeatMap(showtimeId);
@@ -250,7 +249,7 @@ const SeatSelection = () => {
         }
       } catch (err) {
         console.error('Error locking seats', err);
-        
+
         const responseData = err.response?.data;
         if (responseData && responseData.success === false && responseData.conflicts) {
           const conflictNames = responseData.conflicts.map(cid => {
@@ -260,9 +259,9 @@ const SeatSelection = () => {
             }
             return `Mã ghế ${cid}`;
           });
-          
+
           alert(`Ghế đã bị người khác chọn/khóa chờ thanh toán: ${conflictNames.join(', ')}. Vui lòng chọn ghế khác.`);
-          
+
           // refresh seat map
           try {
             const showtimeId = showtime?.id || id;
@@ -285,7 +284,7 @@ const SeatSelection = () => {
   const renderSeat = (seat) => {
     const isSelected = selectedSeats.find(s => s.id === seat.id);
     let seatClass = `${styles.seat} `;
-    
+
     if (seat.status === 'occupied') {
       seatClass += styles.occupied;
     } else if (seat.status === 'locked') {
@@ -295,7 +294,7 @@ const SeatSelection = () => {
     } else {
       seatClass += styles.available;
     }
-    
+
     if (seat.type === 'vip') {
       seatClass += ` ${styles.vip}`;
     }
@@ -318,8 +317,8 @@ const SeatSelection = () => {
         className={seatClass}
         onClick={() => handleSeatClick(seat)}
         disabled={seat.status === 'occupied' || seat.status === 'locked'}
-        title={seat.status === 'locked' 
-          ? `Ghế ${seat.displayName || seat.id} - Đang khóa/chờ thanh toán` 
+        title={seat.status === 'locked'
+          ? `Ghế ${seat.displayName || seat.id} - Đang khóa/chờ thanh toán`
           : `Ghế ${seat.displayName || seat.id} - ${seat.type === 'vip' ? 'VIP' : 'Thường'} - ${seat.price.toLocaleString()}đ`}
       >
         {seatContent}
@@ -330,25 +329,25 @@ const SeatSelection = () => {
   const renderSeatRow = (row, rowIndex) => {
     const rowSeats = row;
     const rowLetter = rowSeats[0].row;
-    
+
     return (
       <div key={rowIndex} className={styles.row}>
         <div className={styles.rowLabel}>
           {rowLetter}
         </div>
-        
+
         {/* Ghế 1-3 */}
         {rowSeats.slice(0, 3).map(seat => renderSeat(seat))}
-        
+
         {/* Lối đi 1 */}
         <div className={styles.aisle}></div>
-        
+
         {/* Ghế 4-9 */}
         {rowSeats.slice(3, 9).map(seat => renderSeat(seat))}
-        
+
         {/* Lối đi 2 */}
         <div className={styles.aisle}></div>
-        
+
         {/* Ghế 10-12 */}
         {rowSeats.slice(9, 12).map(seat => renderSeat(seat))}
       </div>
@@ -385,7 +384,7 @@ const SeatSelection = () => {
 
   return (
     <div className={styles.seatSelection}>
-      <button 
+      <button
         className={styles.backBtn}
         onClick={() => navigate(-1)}
       >
@@ -413,7 +412,7 @@ const SeatSelection = () => {
       <div className={styles.mainContent}>
         <div className={styles.cinemaContainer}>
           <div className={styles.screen}></div>
-          
+
           <div className={styles.seatsGrid}>
             {/* Trục X - Số ghế */}
             <div className={styles.seatNumbers}>
@@ -442,7 +441,7 @@ const SeatSelection = () => {
                 <span>12</span>
               </div>
             </div>
-            
+
             {seatMap.map((row, rowIndex) => renderSeatRow(row, rowIndex))}
           </div>
 
@@ -482,7 +481,7 @@ const SeatSelection = () => {
 
         <div className={styles.sidebar}>
           <h2 className={styles.sidebarTitle}>Thông tin đặt vé</h2>
-          
+
           <div className={styles.bookingInfo}>
             <div className={styles.infoRow}>
               <span className={styles.label}>Phim:</span>
@@ -559,7 +558,7 @@ const SeatSelection = () => {
             )}
           </div>
 
-          <button 
+          <button
             className={styles.continueBtn}
             onClick={handleContinue}
             disabled={selectedSeats.length === 0}

@@ -1,4 +1,3 @@
-// fix payment bug
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSpinner, FaSyncAlt } from 'react-icons/fa';
@@ -57,7 +56,7 @@ const Payment = () => {
     cancelRequestedRef.current = true;
     try {
       sessionStorage.removeItem('current_payment');
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const { bookingAPI } = await import('../../services/api');
@@ -89,7 +88,7 @@ const Payment = () => {
           cancelPendingBooking().catch(err => {
             console.warn('Failed to cancel expired booking:', err);
           }).finally(() => {
-            try { sessionStorage.removeItem('current_payment'); } catch (e) {}
+            try { sessionStorage.removeItem('current_payment'); } catch (e) { }
             navigate(-1); // Quay về trang chọn ghế
           });
         }
@@ -130,7 +129,7 @@ const Payment = () => {
             isConfirmedRef.current = true;
             try {
               sessionStorage.removeItem('current_payment');
-            } catch (e) {}
+            } catch (e) { }
             clearInterval(pollRef.current);
             setPolling(false);
 
@@ -150,7 +149,7 @@ const Payment = () => {
           } else if (status === 'expired' || status === 'cancelled') {
             clearInterval(pollRef.current);
             setPolling(false);
-            try { sessionStorage.removeItem('current_payment'); } catch (e) {}
+            try { sessionStorage.removeItem('current_payment'); } catch (e) { }
             navigate(-1); // Quay về chọn ghế, không cần alert
           }
         } catch (e) {
@@ -233,7 +232,7 @@ const Payment = () => {
         setTimeout(() => {
           if (activeBookingId !== bookingId && !isConfirmedRef.current) {
             cancelRequestedRef.current = true;
-            try { sessionStorage.removeItem('current_payment'); } catch (e) {}
+            try { sessionStorage.removeItem('current_payment'); } catch (e) { }
             // fetch + keepalive: request tồn tại sau khi component unmount
             fetch(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {
               method: 'POST',
@@ -242,7 +241,7 @@ const Payment = () => {
                 'Content-Type': 'application/json'
               },
               keepalive: true
-            }).catch(() => {});
+            }).catch(() => { });
           }
         }, 100);
       }
@@ -264,7 +263,7 @@ const Payment = () => {
             'Content-Type': 'application/json'
           },
           keepalive: true
-        }).catch(() => {});
+        }).catch(() => { });
       }
     };
 
@@ -310,9 +309,9 @@ const Payment = () => {
               <div className={styles.loadingBox}><FaSpinner className="loading" /> Đang tạo mã QR...</div>
             ) : qrUrl ? (
               <div className={`${styles.qrCard} ${qrFaded ? styles.qrExpired : ''}`}>
-                <QRCodeSVG 
-                  value={qrUrl} 
-                  size={256} 
+                <QRCodeSVG
+                  value={qrUrl}
+                  size={256}
                   level="H"
                   className={`${styles.qrImage} ${qrFaded ? styles.qrImageExpired : ''}`}
                 />

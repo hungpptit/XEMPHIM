@@ -1,4 +1,3 @@
-// navbar interactions - mai sua sau
 import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -16,7 +15,7 @@ const Navbar = () => {
     let mounted = true;
     const init = async () => {
       const u = await authService.getCurrentUser();
-      if(mounted) setUser(u);
+      if (mounted) setUser(u);
     };
     init();
 
@@ -52,7 +51,7 @@ const Navbar = () => {
         <Link to="/" className={styles.logo}>
           CinemaX
         </Link>
-        
+
         <ul className={styles.navLinks}>
           {user?.role === 'admin' ? (
             <>
@@ -128,7 +127,7 @@ const Navbar = () => {
 
                     {/* Kiểm tra class styles.show động để ẩn/hiện menu chuẩn xác */}
                     <div className={`${styles.adminDropdown} ${adminMenuOpen ? styles.show : ''}`}>
-                      <button 
+                      <button
                         onClick={() => {
                           setAdminMenuOpen(false);
                           navigate('/admin');
@@ -137,7 +136,7 @@ const Navbar = () => {
                       >
                         ⚙️ Trang Quản Trị
                       </button>
-                      <button 
+                      <button
                         onClick={handleLogout}
                         className={styles.adminDropdownItem}
                       >

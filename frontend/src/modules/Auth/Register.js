@@ -1,10 +1,9 @@
-// update auth logic
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Auth.module.css';
 import authService from '../../services/authService';
 
-export default function Register(){
+export default function Register() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,12 +16,12 @@ export default function Register(){
     e.preventDefault();
     setError('');
     setLoading(true);
-    try{
+    try {
       await authService.register({ fullName, email, password, phone });
       navigate('/login');
-    }catch(err){
+    } catch (err) {
       setError(err.message || 'Đăng ký thất bại');
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -34,19 +33,19 @@ export default function Register(){
         {error && <div className={styles.error}>{error}</div>}
         <label>
           Họ và tên
-          <input type="text" value={fullName} onChange={e=>setFullName(e.target.value)} required />
+          <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required />
         </label>
         <label>
           Email
-          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
         </label>
         <label>
           Mật khẩu
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
         </label>
         <label>
           Số điện thoại (không bắt buộc)
-          <input type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="Ví dụ: 0912345678" />
+          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Ví dụ: 0912345678" />
         </label>
         <button type="submit" disabled={loading}>{loading ? 'Đang...' : 'Đăng ký'}</button>
       </form>

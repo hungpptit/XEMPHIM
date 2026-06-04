@@ -1,10 +1,9 @@
-// update auth logic
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Auth.module.css';
 import authService from '../../services/authService';
 
-export default function Login(){
+export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,17 +14,17 @@ export default function Login(){
     e.preventDefault();
     setError('');
     setLoading(true);
-    try{
+    try {
       const { user } = await authService.login({ email, password });
       // Nếu user là admin, điều hướng sang /admin, ngược lại về /
-      if(user?.role === 'admin') {
+      if (user?.role === 'admin') {
         navigate('/admin', { replace: true });
       } else {
         navigate('/', { replace: true });
       }
-    }catch(err){
+    } catch (err) {
       setError(err.message || 'Đăng nhập thất bại');
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -37,11 +36,11 @@ export default function Login(){
         {error && <div className={styles.error}>{error}</div>}
         <label>
           Email
-          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
         </label>
         <label>
           Mật khẩu
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
         </label>
         <button type="submit" disabled={loading}>{loading ? 'Đang...' : 'Đăng nhập'}</button>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 8 }}>
