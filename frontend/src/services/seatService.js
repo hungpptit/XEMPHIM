@@ -1,3 +1,4 @@
+// fix seat API mapping bug
 import API from './api';
 
 // Lấy seat map cho showtime

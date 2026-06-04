@@ -1,3 +1,4 @@
+// fix payment bug
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSpinner, FaSyncAlt } from 'react-icons/fa';

@@ -1,3 +1,4 @@
+// fix ticket rendering bug
 import React, { useState, useEffect } from 'react';
 import { QRCodeCanvas } from 'qrcode.react'; 
 import { useNavigate } from 'react-router-dom';
