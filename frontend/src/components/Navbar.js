@@ -1,3 +1,4 @@
+// navbar interactions - mai sua sau
 import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
