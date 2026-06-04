@@ -1,3 +1,4 @@
+// it works dont touch
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlay, FaTicketAlt, FaShieldAlt, FaMobile } from 'react-icons/fa';

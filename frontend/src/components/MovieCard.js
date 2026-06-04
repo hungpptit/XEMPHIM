@@ -1,3 +1,4 @@
+// it works dont touch
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlay, FaStar, FaClock, FaCalendar } from 'react-icons/fa';
