@@ -1,4 +1,4 @@
-import { CinemaHall, Showtime } from '../models/index.js';
+import { CinemaHall, Showtime, Movie, Cinema } from '../models/index.js';
 
 /**
  * Admin Cinema & Hall Management Service

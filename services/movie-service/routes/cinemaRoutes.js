@@ -3,6 +3,7 @@ import { adminAuth } from '../middleware/adminAuth.js';
 import * as hallController from '../controllers/hallController.js';
 import * as seatController from '../controllers/seatController.js';
 import * as cinemaController from '../controllers/cinemaController.js';
+import * as adminController from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.get('/halls/:hallId/seats/layout', adminAuth, seatController.getSeatLayou
 router.put('/seats/:seatId', adminAuth, seatController.updateSeat);
 router.put('/halls/:hallId/seats/type', adminAuth, seatController.updateSeatType);
 router.delete('/seats/:seatId', adminAuth, seatController.deleteSeat);
+
 
 export default router;

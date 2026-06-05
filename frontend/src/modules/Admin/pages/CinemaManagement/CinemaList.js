@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import { VIETNAM_PROVINCES } from '../../../../utils/locations';
 import styles from './CinemaList.module.css';
 
 export default function CinemaManagement() {
@@ -121,7 +122,7 @@ export default function CinemaManagement() {
       <div className={styles.header}>
         <h2>🏢 Quản Lý Rạp Chiếu</h2>
         {!showForm && (
-          <button 
+          <button
             className={styles.btnAdd}
             onClick={() => setShowForm(true)}
           >
@@ -156,9 +157,15 @@ export default function CinemaManagement() {
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                placeholder="VD: Hồ Chí Minh"
+                placeholder="VD: TP. Hồ Chí Minh"
+                list="vietnam-provinces"
                 required
               />
+              <datalist id="vietnam-provinces">
+                {VIETNAM_PROVINCES.map(province => (
+                  <option key={province} value={province} />
+                ))}
+              </datalist>
             </div>
 
             <div className={styles.formGroup}>
@@ -227,8 +234,20 @@ export default function CinemaManagement() {
                 </div>
 
                 <div className={styles.cardBody}>
-                  <p className={styles.location}>📍 {cinema.address}, {cinema.city}</p>
-                  <p className={styles.status}>🏷️ Trạng thái: {cinema.status === 'Active' ? 'Hoạt động' : 'Tạm dừng'}</p>
+                  <div className={styles.infoRow}>
+                    <span className={styles.infoIcon}>📍</span>
+                    <div className={styles.infoContent}>
+                      <span className={styles.infoValue}>{cinema.address}</span>
+                      <span className={styles.infoLabel}>{cinema.city}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.statusRow}>
+                    <span className={styles.infoIcon}>🏷️</span>
+                    <span className={`${styles.statusBadge} ${cinema.status === 'Active' ? styles.statusActive : styles.statusInactive}`}>
+                      {cinema.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Dừng'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className={styles.cardFooter}>

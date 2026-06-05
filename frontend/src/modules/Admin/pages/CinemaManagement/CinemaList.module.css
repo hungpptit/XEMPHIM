@@ -103,7 +103,8 @@
   letter-spacing: 0.5px;
 }
 
-.formGroup input {
+.formGroup input,
+.formGroup select {
   padding: 12px 14px;
   border: 1px solid rgba(255, 215, 0, 0.2);
   border-radius: var(--border-radius-small);
@@ -114,15 +115,31 @@
   transition: var(--transition);
 }
 
+.formGroup select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23FFD700' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 14px) center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
 .formGroup input::placeholder {
   color: rgba(192, 192, 192, 0.5);
 }
 
-.formGroup input:focus {
+.formGroup input:focus,
+.formGroup select:focus {
   outline: none;
   border-color: var(--color-gold);
   background: rgba(26, 26, 26, 0.9);
   box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.formGroup select option {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 10px;
 }
 
 .formActions {
@@ -198,6 +215,9 @@
   transition: var(--transition);
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .cinemaCard:hover {
@@ -252,33 +272,63 @@
 
 .cardBody {
   padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.cardBody p {
-  margin: 10px 0;
+.infoRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.infoContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.infoValue {
+  color: var(--color-text-primary);
   font-size: 13px;
-  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.infoLabel {
+  color: var(--color-gold);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.statusRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin-top: auto;
 }
 
-.location,
-.hotline {
-  font-weight: 500;
+.statusBadge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
-.location {
-  color: var(--color-gold);
+.statusActive {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.hotline {
-  color: var(--color-text-primary);
-}
-
-.seats {
-  color: var(--color-gold);
-  font-weight: 600;
+.statusInactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .cardFooter {
