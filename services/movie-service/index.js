@@ -6,6 +6,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import * as models from './models/index.js';
 import dotenv from 'dotenv';
 import path from 'path';
+import showtimeRoutes from './routes/showtimeRoutes.js';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 if (!process.env.PORT) {
@@ -31,8 +32,6 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/movies', movieRoutes);
 app.use('/api/admin', adminRoutes);
-import showtimeRoutes from './routes/showtimeRoutes.js';
-
 app.use('/api/showtimes', showtimeRoutes);
 
 // Initialize database and start server
