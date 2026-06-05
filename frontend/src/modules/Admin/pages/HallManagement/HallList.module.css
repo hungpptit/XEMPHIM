@@ -335,33 +335,50 @@
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
 }
 
 .btnEdit,
 .btnDelete {
-  background: none;
-  border: none;
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 15px;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 4px;
-  transition: var(--transition);
-  color: var(--color-text-secondary);
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.btnEdit {
+  color: var(--color-gold);
+  box-shadow: 0 4px 10px rgba(255, 215, 0, 0.08);
+}
+
+.btnDelete {
+  color: #ff6b6b;
+  box-shadow: 0 4px 10px rgba(255, 107, 107, 0.08);
+}
+
 .btnEdit:hover {
   color: var(--color-gold);
-  background: rgba(255, 215, 0, 0.1);
+  background: rgba(255, 215, 0, 0.18);
+  border-color: rgba(255, 215, 0, 0.32);
+  box-shadow: 0 10px 20px rgba(255, 215, 0, 0.18);
+  transform: translateY(-1px);
 }
 
 .btnDelete:hover {
   color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  background: rgba(255, 107, 107, 0.18);
+  border-color: rgba(255, 107, 107, 0.32);
+  box-shadow: 0 10px 20px rgba(255, 107, 107, 0.18);
+  transform: translateY(-1px);
 }
 
 .empty {

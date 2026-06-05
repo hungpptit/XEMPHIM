@@ -1,4 +1,6 @@
+
 import React from 'react';
+// import { Agentation } from 'agentation'; // nhớ comment czí này lại
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -55,6 +57,8 @@ function App() {
             />
           </Routes>
         </main>
+        {/* <Agentation />   */}
+        {/* nhớ comment cái  Agengtation này lại , vì không sử dụng  */}
       </div>
     </Router>
   );

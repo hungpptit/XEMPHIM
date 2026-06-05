@@ -246,11 +246,11 @@ export const getShowtimesForMovie = async (movieId) => {
   const { Sequelize } = await import('sequelize');
   const { Showtime, CinemaHall, Cinema } = await import('../models/index.js');
   const Op = Sequelize.Op;
-  
+
   const now = new Date();
-  
+
   const showtimes = await Showtime.findAll({
-    where: { 
+    where: {
       movie_id: movieId,
       start_time: {
         [Op.gt]: now

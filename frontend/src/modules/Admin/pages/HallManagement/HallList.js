@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { useLocation, useParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import styles from './HallList.module.css';
@@ -366,15 +367,17 @@ export default function HallManagement() {
                         className={styles.btnEdit}
                         onClick={() => handleEdit(hall)}
                         title="Chỉnh sửa"
+                        aria-label={`Chỉnh sửa phòng ${hall.name}`}
                       >
-                        ✏️
+                        <FaEdit />
                       </button>
                       <button 
                         className={styles.btnDelete}
                         onClick={() => handleDelete(hall.id)}
                         title="Xóa"
+                        aria-label={`Xóa phòng ${hall.name}`}
                       >
-                        🗑️
+                        <FaTrashAlt />
                       </button>
                     </td>
                   </tr>

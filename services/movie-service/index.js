@@ -6,6 +6,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import * as models from './models/index.js';
 import dotenv from 'dotenv';
 import path from 'path';
+import showtimeRoutes from './routes/showtimeRoutes.js';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 if (!process.env.PORT) {
@@ -31,9 +32,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/movies', movieRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/showtimes', (req, res) => {
-  res.status(501).json({ message: 'Not implemented at root level. Use /api/movies/:id/showtimes instead.' });
-});
+app.use('/api/showtimes', showtimeRoutes);
 
 // Initialize database and start server
 (async () => {

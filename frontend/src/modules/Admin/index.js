@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import CinemaManagement from './pages/CinemaManagement/CinemaList';
 import HallManagement from './pages/HallManagement/HallList';
 import MovieManagement from './pages/MovieManagement/MovieList';
-
+import ShowtimeManagement from './pages/ShowtimeManagement/ShowtimeList';
 import styles from './AdminPanel.module.css';
 import { FaChair, FaHome, FaFilm, FaTicketAlt, FaUserShield, FaChevronRight, FaCity, FaClock } from 'react-icons/fa';
 import { adminService } from './services/adminService';
@@ -14,9 +14,8 @@ export default function AdminPanel() {
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/admin/halls')) return 'halls';
-    if (path.startsWith('/admin/cinemas')) return 'cinemas';
     if (path.startsWith('/admin/movies')) return 'movies';
-
+    if (path.startsWith('/admin/showtimes')) return 'showtimes';
     return 'overview';
   };
 
@@ -49,7 +48,7 @@ export default function AdminPanel() {
               ticketsSoldToday: 0 // Phần này sẽ cập nhật khi có Booking service
             });
           }
-          
+
           // Giả lập nhật ký hoạt động
           setActivities([
             { time: 'Vừa xong', message: 'Dữ liệu hệ thống đã được cập nhật mới nhất.' },
@@ -74,19 +73,9 @@ export default function AdminPanel() {
     navigate('/admin');
   };
 
-  const goHalls = () => {
-    navigate('/admin/halls');
-  };
-
-  const goCinemas = () => {
-    navigate('/admin/cinemas');
-  };
-
-  const goMovies = () => {
-    navigate('/admin/movies');
-  };
-
-
+  const goHalls = () => navigate('/admin/halls');
+  const goMovies = () => navigate('/admin/movies');
+  const goShowtimes = () => navigate('/admin/showtimes');
 
   const getRoleText = () => {
     return 'Bảng Điều Khiển Quản Trị';
@@ -133,9 +122,17 @@ export default function AdminPanel() {
               <span>Quản Lý Phim</span>
             </button>
           </li>
-
+          <li className={styles.navItem}>
+            <button
+              className={`${styles.navBtn} ${activeTab === 'showtimes' ? styles.active : ''}`}
+              onClick={goShowtimes}
+            >
+              <FaTicketAlt className={styles.navIcon} />
+              <span>Quản Lý Suất Chiếu</span>
+            </button>
+          </li>
         </ul>
-        
+
         <div className={styles.sidebarFooter}>
           <div className={styles.adminBadge}>
             <FaUserShield /> <span>Verified Admin</span>
@@ -228,11 +225,11 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          
+
           {activeTab === 'cinemas' && <CinemaManagement />}
           {activeTab === 'halls' && <HallManagement />}
           {activeTab === 'movies' && <MovieManagement />}
-
+          {activeTab === 'showtimes' && <ShowtimeManagement />}
         </div>
       </div>
     </div>

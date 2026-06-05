@@ -17,10 +17,6 @@ export default function PublicRoute({ children }) {
 
         if (user) {
           setCurrentUser(user);
-        } else if (localStorage.getItem('token')) {
-          // Token cũ không hợp lệ thì dọn dẹp để tránh vòng lặp redirect.
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
         }
       } catch (error) {
         console.error('Error checking public route access:', error);

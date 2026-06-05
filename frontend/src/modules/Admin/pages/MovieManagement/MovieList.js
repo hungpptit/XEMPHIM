@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { adminService } from '../../services/adminService';
 import styles from './MovieList.module.css';
 
@@ -265,8 +266,12 @@ export default function MovieManagement() {
                     <td>{m.director || '-'}</td>
                     <td>{statusText}</td>
                     <td className={styles.actions}>
-                      <button className={styles.btnEdit} onClick={() => handleEdit(m)} title="Chỉnh sửa">✏️</button>
-                      <button className={styles.btnDelete} onClick={() => handleDelete(m.id)} title="Xóa">🗑️</button>
+                      <button className={styles.btnEdit} onClick={() => handleEdit(m)} title="Chỉnh sửa" aria-label={`Chỉnh sửa ${m.title}`}>
+                        <FaEdit />
+                      </button>
+                      <button className={styles.btnDelete} onClick={() => handleDelete(m.id)} title="Xóa" aria-label={`Xóa ${m.title}`}>
+                        <FaTrashAlt />
+                      </button>
                     </td>
                   </tr>
                 );

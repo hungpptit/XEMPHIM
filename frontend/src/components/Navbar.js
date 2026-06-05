@@ -53,7 +53,20 @@ const Navbar = () => {
         </Link>
         
         <ul className={styles.navLinks}>
-          {user?.role !== 'admin' && (
+          {user?.role === 'admin' ? (
+            <>
+              <li>
+                <Link to="/" className={`${styles.navLink} ${isActiveLink('/')}`}>
+                  Trang chủ
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin" className={`${styles.navLink} ${isActiveLink('/admin')}`}>
+                  Trang quản trị
+                </Link>
+              </li>
+            </>
+          ) : (
             <>
               <li>
                 <Link to="/" className={`${styles.navLink} ${isActiveLink('/')}`}>
@@ -115,6 +128,15 @@ const Navbar = () => {
                     {/* Kiểm tra class styles.show động để ẩn/hiện menu chuẩn xác */}
                     <div className={`${styles.adminDropdown} ${adminMenuOpen ? styles.show : ''}`}>
                       <button 
+                        onClick={() => {
+                          setAdminMenuOpen(false);
+                          navigate('/admin');
+                        }}
+                        className={styles.adminDropdownItemGo}
+                      >
+                        ⚙️ Trang Quản Trị
+                      </button>
+                      <button 
                         onClick={handleLogout}
                         className={styles.adminDropdownItem}
                       >
@@ -127,7 +149,10 @@ const Navbar = () => {
                     <div className={styles.avatar}>
                       <FaUser />
                     </div>
-                    <Link to="/profile" className={styles.userNameLink}>Hi, {user.full_name || user.fullName || user.email}</Link>
+                    <div className={styles.userMeta}>
+                      <Link to="/profile" className={styles.userNameLink}>Hi, {user.full_name || user.fullName || user.email}</Link>
+                      <span className={styles.userSubtext}>Xem hồ sơ và lịch sử đặt vé</span>
+                    </div>
                   </div>
                 )}
               </>

@@ -10,6 +10,7 @@ import {
   FaCalendar,
   FaUsers,
   FaEye,
+  FaChevronRight,
   FaTimes,
   FaFilm
 } from 'react-icons/fa';
@@ -363,7 +364,8 @@ const MyTickets = () => {
                           onClick={() => navigate(`/movies/${ticket.movie.id}`)}
                         >
                           <FaEye />
-                          Chi tiết phim
+                          <span>Chi tiết phim</span>
+                          <FaChevronRight className={styles.detailChevron} />
                         </button>
                         
                         {canCancelTicket(ticket) && (
