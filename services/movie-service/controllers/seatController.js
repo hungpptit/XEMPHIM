@@ -94,12 +94,25 @@ export const updateSeat = async (req, res) => {
 
 export const updateSeatType = async (req, res) => {
   try {
-    const { hallId, seatType, priceModifier } = req.body;
+    const { hallId } = req.params;
+    const { seatType, totalPrice, basePrice } = req.body;
     const { Seat } = req.app.locals.models;
+    
+    if (!hallId || !seatType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Hall ID và loại ghế là bắt buộc'
+      });
+    }
+
+    console.log(`[Seat Controller] Updating hall ${hallId} - Type: ${seatType}, Price: ${totalPrice}`);
     
     const seatService = await import('../services/seatService.js');
     const result = await seatService.updateSeatType(Seat, {
-      hallId, seatType, priceModifier
+      hallId: Number(hallId), 
+      seatType: seatType, 
+      totalPrice: totalPrice,
+      basePrice: basePrice
     });
 
     res.json({

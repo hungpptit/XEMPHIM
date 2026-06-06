@@ -12,7 +12,7 @@ const Payment = () => {
   const navigate = useNavigate();
 
   // Try to load state from location.state, fallback to sessionStorage
-  const [paymentData, setPaymentData] = useState(() => {
+  const [paymentData] = useState(() => {
     if (location.state && location.state.bookingId) {
       try {
         sessionStorage.setItem('current_payment', JSON.stringify(location.state));
@@ -48,7 +48,7 @@ const Payment = () => {
   const isConfirmedRef = useRef(false);
   const cancelRequestedRef = useRef(false);
 
-  const cancelPendingBooking = async () => {
+  const cancelPendingBooking = React.useCallback(async () => {
     if (!bookingId || isConfirmedRef.current || cancelRequestedRef.current) {
       return;
     }
@@ -65,7 +65,7 @@ const Payment = () => {
       cancelRequestedRef.current = false;
       throw err;
     }
-  };
+  }, [bookingId]);
 
   useEffect(() => {
     if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0 || !bookingId) {
@@ -95,7 +95,7 @@ const Payment = () => {
       }
     }, 1000);
     return () => clearInterval(iv);
-  }, [expiresAt, bookingId]);
+  }, [expiresAt, bookingId, navigate, cancelPendingBooking]);
 
   // Timer QR 60s — đếm lùi cho từng lần tạo QR, mờ khi hết 60s
   useEffect(() => {

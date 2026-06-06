@@ -118,6 +118,7 @@ export default function ShowtimeList() {
   };
 
   const handleSaved = async (msg) => {
+    await fetchMovies(); // Refresh names/halls maps
     await fetchShowtimes(dateFilter);
     if (msg) showToast(msg, 'success');
   };
@@ -158,8 +159,13 @@ export default function ShowtimeList() {
                   <tr key={st.id}>
                     <td>{(page-1)*pageSize + idx + 1}</td>
                     <td>{st.id}</td>
-                    <td>{moviesMap[st.movie_id] || `#${st.movie_id}`}</td>
-                    <td>{hallsMap[st.hall_id] || st.hall_id}</td>
+                    <td>
+                      <div style={{fontWeight:600}}>{st.movie_title}</div>
+                    </td>
+                    <td>
+                      <div>{st.hall_name}</div>
+                      <div style={{fontSize:11, color:'#888'}}>{st.cinema_name}</div>
+                    </td>
                     <td>{(parseLocal(st.start_time) || new Date(st.start_time)).toLocaleString()}</td>
                     <td>{(parseLocal(st.end_time) || new Date(st.end_time)).toLocaleString()}</td>
                     <td>{st.base_price || '-'}</td>

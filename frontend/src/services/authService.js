@@ -52,4 +52,6 @@ const register = async ({ fullName, email, password, phone }) => {
   return { user };
 };
 
-export default { login, logout, register, getCurrentUser };
+const authService = { login, logout, register, getCurrentUser };
+
+export default authService;

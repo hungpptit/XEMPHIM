@@ -9,7 +9,6 @@ import {
   FaLock
 } from 'react-icons/fa';
 import styles from './SeatSelection.module.css';
-import seatService from '../../services/seatService';
 const SeatSelection = () => {
   const { id } = useParams();
   const location = useLocation();

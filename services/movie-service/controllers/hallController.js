@@ -5,12 +5,12 @@
 
 export const createHall = async (req, res) => {
   try {
-    const { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id } = req.body;
+    const { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id, vipRows } = req.body;
     const { CinemaHall, Seat } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
     const hall = await hallService.createHall(CinemaHall, Seat, {
-      name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id
+      name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id, vipRows
     });
 
     res.status(201).json({
@@ -19,7 +19,7 @@ export const createHall = async (req, res) => {
       data: hall
     });
   } catch (error) {
-    console.error('[Hall Controller] Error creating hall:', error.message);
+    console.error('[Hall Controller] Error details:', error);
     res.status(400).json({
       success: false,
       error: error.message

@@ -27,7 +27,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
     price_modifier: {
-      type: DataTypes.DECIMAL(10, 2)
+      type: DataTypes.DECIMAL(15, 2)
     },
     is_active: {
       type: DataTypes.BOOLEAN,

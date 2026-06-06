@@ -3,7 +3,7 @@
  * Quản lý các phòng chiếu
  */
 
-export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id }) => {
+export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id, vipRows }) => {
   try {
     const targetCinemaId = cinema_id || cinemaId;
     if (!targetCinemaId) {
@@ -16,6 +16,7 @@ export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, ha
 
     const rowsNum = parseInt(rows, 10);
     const seatsPerRowNum = parseInt(seatsPerRow, 10);
+    const vipRowsNum = parseInt(vipRows, 10) || 0;
 
     if (isNaN(rowsNum) || rowsNum <= 0 || rowsNum > 30) {
       throw new Error('Số hàng phải từ 1 đến 30');
@@ -39,29 +40,52 @@ export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, ha
       const seatsToCreate = [];
       const rows_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+      // VIP rows are usually in the middle. Let's calculate start row for VIP.
+      // If user specifies e.g. 2 VIP rows, we'll try to put them in the middle-back.
+      // For simplicity, let's just make the LAST 'vipRowsNum' rows VIP.
+      const startVipRowIndex = rowsNum - vipRowsNum;
+
       for (let i = 0; i < rowsNum; i++) {
         const rowLetter = rows_letters[i];
+        const isVipRow = i >= startVipRowIndex;
+        
         for (let j = 1; j <= seatsPerRowNum; j++) {
           seatsToCreate.push({
             hall_id: hall.id,
             row_name: rowLetter,
             seat_number: j,
-            seat_type: 'Standard',
-            price_modifier: 0,
+            seat_type: isVipRow ? 'vip' : 'regular',
+            price_modifier: isVipRow ? 50000.00 : 0.00, // Extra 50k for VIP
             is_active: true
           });
         }
       }
 
-      await Seat.bulkCreate(seatsToCreate);
+      // Instead of bulkCreate, use a loop of individual creates to ensure stability and get better errors
+      console.log(`[Hall Service] Creating ${seatsToCreate.length} seats for hall ${hall.id}...`);
+      
+      const createdSeats = [];
+      for (const seatData of seatsToCreate) {
+        try {
+          const s = await Seat.create(seatData);
+          createdSeats.push(s);
+        } catch (seatErr) {
+          console.error(`[Hall Service] Failed to create seat ${seatData.row_name}${seatData.seat_number}:`, seatErr.message);
+          // Continue to next seat but keep track of error
+        }
+      }
+      
+      console.log(`[Hall Service] Successfully created ${createdSeats.length}/${seatsToCreate.length} seats.`);
+      
+      if (createdSeats.length === 0 && seatsToCreate.length > 0) {
+        throw new Error('Không thể tạo được bất kỳ ghế nào cho phòng chiếu. Vui lòng kiểm tra log backend.');
+      }
     }
 
     return hall;
   } catch (error) {
-    if (error.name === 'SequelizeValidationError') {
-      throw new Error(`Lỗi dữ liệu: ${error.errors.map(e => e.message).join(', ')}`);
-    }
-    throw new Error('Lỗi khi tạo phòng chiếu: ' + (error.message || error));
+    console.error('DATABASE ERROR DETAIL:', error);
+    throw new Error('Lỗi khi tạo phòng chiếu hoặc ghế: ' + (error.message || error));
   }
 };
 

@@ -38,7 +38,7 @@ app.use('/api/showtimes', showtimeRoutes);
 (async () => {
   try {
     console.log('[DB] Starting database sync...');
-    await models.sequelize.sync({ alter: false, logging: (sql) => console.log('[SQL]', sql) });
+    await models.sequelize.sync({ alter: true, logging: (sql) => console.log('[SQL]', sql) });
     console.log('✅ Database synced successfully');
     console.log('[DB] Available models:', Object.keys(models).filter(k => k !== 'sequelize' && k !== 'Sequelize'));
   } catch (error) {

@@ -14,7 +14,7 @@ export const deleteSeat = (id) => API.delete(`/seats/${id}`);
 export const lockSeat = (payload) => API.post('/bookings/lock-seat', payload);
 export const confirmPayment = (payload) => API.post('/bookings/confirm-payment', payload);
 
-export default {
+const seatService = {
   getSeatMap,
   getAllSeats,
   getSeatById,
@@ -24,3 +24,5 @@ export default {
   lockSeat,
   confirmPayment
 };
+
+export default seatService;

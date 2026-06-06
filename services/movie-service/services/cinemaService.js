@@ -93,18 +93,20 @@ export const deleteCinema = async (Cinema, CinemaHall, Showtime, cinemaId) => {
   }
 };
 
-export const getCinemaStats = async (Cinema, CinemaHall, Seat) => {
+export const getCinemaStats = async (Cinema, CinemaHall, Seat, Movie) => {
   try {
     const totalCinemas = await Cinema.count();
     const activeCinemas = await Cinema.count({ where: { status: 'Active' } });
     const totalHalls = await CinemaHall.count();
     const totalSeats = await Seat.count();
+    const totalMovies = await Movie.count();
 
     return {
       totalCinemas,
       activeCinemas,
       totalHalls,
-      totalSeats
+      totalSeats,
+      totalMovies
     };
   } catch (error) {
     throw new Error('Lỗi khi lấy thống kê: ' + error.message);

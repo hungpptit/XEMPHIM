@@ -33,4 +33,11 @@ router.put('/halls/:hallId/seats/type', adminAuth, seatController.updateSeatType
 router.delete('/seats/:seatId', adminAuth, seatController.deleteSeat);
 
 
+
+// ============= SHOWTIME ROUTES (Quản lý suất chiếu) =============
+router.post('/showtimes', adminAuth, adminController.createShowtime);
+router.get('/showtimes', adminAuth, adminController.getShowtimes);
+router.delete('/showtimes/:id', adminAuth, adminController.deleteShowtime);
+
 export default router;
+

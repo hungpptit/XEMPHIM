@@ -144,7 +144,7 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
     const bookingSeatCreates = seatRows.map(s => ({
       booking_id: booking.id,
       seat_id: s.id,
-      price: (showtime?.base_price || 0) * (s.price_modifier || 1)
+      price: (showtime?.base_price || 0) + (Number(s.price_modifier) || 0)
     }));
 
     await BookingSeat.bulkCreate(bookingSeatCreates, { transaction: t });

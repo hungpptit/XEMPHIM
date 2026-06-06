@@ -16,7 +16,7 @@ export default function CinemaManagement() {
     name: '',
     address: '',
     city: '',
-    status: 'Active'
+    status: 'active'
   });
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function CinemaManagement() {
         await adminService.cinema.create(formData);
         setSuccess('Tạo rạp mới thành công!');
       }
-      setFormData({ name: '', address: '', city: '', status: 'Active' });
+      setFormData({ name: '', address: '', city: '', status: 'active' });
       setEditingId(null);
       setShowForm(false);
       loadCinemas();
@@ -92,7 +92,7 @@ export default function CinemaManagement() {
       name: cinema.name || '',
       address: cinema.address || '',
       city: cinema.city || '',
-      status: cinema.status || 'Active'
+      status: cinema.status || 'active'
     });
     setEditingId(cinema.id);
     setShowForm(true);
@@ -113,7 +113,7 @@ export default function CinemaManagement() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', address: '', city: '', status: 'Active' });
+    setFormData({ name: '', address: '', city: '', status: 'active' });
     setError('');
   };
 
@@ -187,8 +187,8 @@ export default function CinemaManagement() {
                 value={formData.status}
                 onChange={handleInputChange}
               >
-                <option value="Active">Hoạt động</option>
-                <option value="Inactive">Tạm dừng</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Tạm dừng</option>
               </select>
             </div>
 
@@ -244,8 +244,8 @@ export default function CinemaManagement() {
 
                   <div className={styles.statusRow}>
                     <span className={styles.infoIcon}>🏷️</span>
-                    <span className={`${styles.statusBadge} ${cinema.status === 'Active' ? styles.statusActive : styles.statusInactive}`}>
-                      {cinema.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Dừng'}
+                    <span className={`${styles.statusBadge} ${(cinema.status || '').toLowerCase() === 'active' ? styles.statusActive : styles.statusInactive}`}>
+                      {(cinema.status || '').toLowerCase() === 'active' ? 'Đang Hoạt Động' : 'Tạm Dừng'}
                     </span>
                   </div>
                 </div>

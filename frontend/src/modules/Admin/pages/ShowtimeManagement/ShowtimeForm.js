@@ -36,19 +36,7 @@ export default function ShowtimeForm({ show, onClose, onSaved, initial, showToas
     }
   }, [initial, halls]);
 
-  useEffect(() => {
-    if (initial) {
-      setForm({
-        movie_id: initial.movie_id ? String(initial.movie_id) : '',
-        hall_id: initial.hall_id ? String(initial.hall_id) : '',
-        start_time: initial.start_time ? formatLocalForInput(initial.start_time) : '',
-        end_time: initial.end_time ? formatLocalForInput(initial.end_time) : '',
-        base_price: initial.base_price != null ? String(initial.base_price) : ''
-      });
-    }
-  }, [initial]);
-
-  const parseLocal = (val) => {
+  const parseLocal = React.useCallback((val) => {
     if (!val) return null;
     if (val instanceof Date) return val;
     const s = String(val);
@@ -64,16 +52,28 @@ export default function ShowtimeForm({ show, onClose, onSaved, initial, showToas
     }
     const dd = new Date(s);
     return isNaN(dd.getTime()) ? null : dd;
-  };
+  }, []);
 
-  const formatLocalForInput = (val) => {
+  const formatLocalForInput = React.useCallback((val) => {
     try {
       const d = parseLocal(val);
       if (!d) return '';
       const pad = (n) => n.toString().padStart(2, '0');
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     } catch (e) { return ''; }
-  };
+  }, [parseLocal]);
+
+  useEffect(() => {
+    if (initial) {
+      setForm({
+        movie_id: initial.movie_id ? String(initial.movie_id) : '',
+        hall_id: initial.hall_id ? String(initial.hall_id) : '',
+        start_time: initial.start_time ? formatLocalForInput(initial.start_time) : '',
+        end_time: initial.end_time ? formatLocalForInput(initial.end_time) : '',
+        base_price: initial.base_price != null ? String(initial.base_price) : ''
+      });
+    }
+  }, [initial, formatLocalForInput]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt, FaEye } from 'react-icons/fa';
 import { useLocation, useParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import styles from './HallList.module.css';
@@ -24,11 +24,62 @@ export default function HallManagement() {
     cinemaId: cinemaId || '',
     rows: '10',
     seatsPerRow: '12',
-    hallType: 'Standard',
-    description: ''
+    vipRows: '2'
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showSeatModal, setShowSeatModal] = useState(false);
+  const [selectedHall, setSelectedHall] = useState(null);
+  const [hallDetail, setHallDetail] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  const loadCinemaName = React.useCallback(async () => {
+    try {
+      const response = await adminService.cinema.getById(cinemaId);
+      const data = response.data?.data || response.data;
+      if (data) {
+        setCinemaName(data.name);
+      }
+    } catch (err) {
+      console.error('Error loading cinema name:', err);
+    }
+  }, [cinemaId]);
+
+  const loadCinemas = React.useCallback(async () => {
+    try {
+      const response = await adminService.cinema.list();
+      const payload = response?.data;
+      const cinemaList = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+      setCinemas(cinemaList);
+    } catch (err) {
+      console.error('Error loading cinemas:', err);
+      setCinemas([]);
+    }
+  }, []);
+
+  const loadHalls = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      let response;
+      if (cinemaId) {
+        response = await adminService.cinema.getHalls(cinemaId);
+      } else {
+        response = await adminService.hall.list();
+      }
+      setHalls(response.data?.data || response.data || []);
+    } catch (err) {
+      console.error('Error loading halls:', err);
+      setError('Lỗi tải danh sách phòng: ' + (err.response?.data?.error || err.message));
+      setHalls([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [cinemaId]);
 
   useEffect(() => {
     loadHalls();
@@ -36,7 +87,7 @@ export default function HallManagement() {
     if (cinemaId) {
       loadCinemaName();
     }
-  }, [cinemaId]);
+  }, [cinemaId, loadHalls, loadCinemas, loadCinemaName]);
 
   useEffect(() => {
     if (cinemaId) {
@@ -60,8 +111,7 @@ export default function HallManagement() {
         cinemaId: cinemaId || '',
         rows: '10',
         seatsPerRow: '12',
-        hallType: 'Standard',
-        description: ''
+        vipRows: '2'
       });
       setError('');
     };
@@ -72,53 +122,6 @@ export default function HallManagement() {
     };
   }, [showForm, cinemaId]);
 
-  const loadCinemaName = async () => {
-    try {
-      const response = await adminService.cinema.getById(cinemaId);
-      const data = response.data?.data || response.data;
-      if (data) {
-        setCinemaName(data.name);
-      }
-    } catch (err) {
-      console.error('Error loading cinema name:', err);
-    }
-  };
-
-  const loadCinemas = async () => {
-    try {
-      const response = await adminService.cinema.list();
-      const payload = response?.data;
-      const cinemaList = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload?.data)
-          ? payload.data
-          : [];
-      setCinemas(cinemaList);
-    } catch (err) {
-      console.error('Error loading cinemas:', err);
-      setCinemas([]);
-    }
-  };
-
-  const loadHalls = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      let response;
-      if (cinemaId) {
-        response = await adminService.cinema.getHalls(cinemaId);
-      } else {
-        response = await adminService.hall.list();
-      }
-      setHalls(response.data?.data || response.data || []);
-    } catch (err) {
-      console.error('Error loading halls:', err);
-      setError('Lỗi tải danh sách phòng: ' + (err.response?.data?.error || err.message));
-      setHalls([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -158,8 +161,7 @@ export default function HallManagement() {
           cinema_id: parseInt(selectedCinemaId, 10),
           rows: parseInt(formData.rows, 10),
           seatsPerRow: parseInt(formData.seatsPerRow, 10),
-          hallType: formData.hallType,
-          description: formData.description
+          vipRows: parseInt(formData.vipRows, 10)
         };
         await adminService.hall.create(createData);
         setSuccess('Tạo phòng chiếu mới thành công!');
@@ -170,6 +172,7 @@ export default function HallManagement() {
         cinemaId: cinemaId || '',
         rows: '10',
         seatsPerRow: '12',
+        vipRows: '2',
         hallType: 'Standard',
         description: ''
       });
@@ -187,8 +190,7 @@ export default function HallManagement() {
       cinemaId: hall.cinema_id || '',
       rows: '10', // Not editable for existing room but provide default
       seatsPerRow: '12',
-      hallType: 'Standard',
-      description: ''
+      vipRows: '0'
     });
     setEditingId(hall.id);
     setShowForm(true);
@@ -206,6 +208,28 @@ export default function HallManagement() {
     }
   };
 
+  const handleViewSeats = async (hall) => {
+    setSelectedHall(hall);
+    setShowSeatModal(true);
+    setLoadingDetail(true);
+    setHallDetail(null);
+    try {
+      const response = await adminService.hall.getDetail(hall.id);
+      setHallDetail(response.data?.data || response.data);
+    } catch (err) {
+      console.error('Error loading hall detail:', err);
+      setError('Lỗi tải sơ đồ ghế: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowSeatModal(false);
+    setHallDetail(null);
+    setSelectedHall(null);
+  };
+
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
@@ -214,8 +238,7 @@ export default function HallManagement() {
       cinemaId: cinemaId || '',
       rows: '10',
       seatsPerRow: '12',
-      hallType: 'Standard',
-      description: ''
+      vipRows: '2'
     });
     setError('');
   };
@@ -308,16 +331,20 @@ export default function HallManagement() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Loại Phòng:</label>
-                  <select
-                    name="hallType"
-                    value={formData.hallType}
+                  <label>Số Hàng Ghế VIP (từ dưới lên):</label>
+                  <input
+                    type="number"
+                    name="vipRows"
+                    value={formData.vipRows}
                     onChange={handleInputChange}
-                  >
-                    <option value="Standard">Standard</option>
-                    <option value="IMAX">IMAX</option>
-                    <option value="VIP">VIP</option>
-                  </select>
+                    placeholder="VD: 2"
+                    min="0"
+                    max={formData.rows}
+                    required
+                  />
+                  <small style={{ color: '#666', fontSize: '0.8rem', display: 'block', marginTop: '4px' }}>
+                    Các hàng ghế phía sau sẽ được thiết lập là VIP (+50.000đ giá vé)
+                  </small>
                 </div>
               </>
             )}
@@ -364,6 +391,14 @@ export default function HallManagement() {
                     <td className={styles.seatCount}>{hall.total_seats || 0} ghế</td>
                     <td className={styles.actions}>
                       <button 
+                        className={styles.btnView}
+                        onClick={() => handleViewSeats(hall)}
+                        title="Xem sơ đồ ghế"
+                        aria-label={`Xem sơ đồ ghế phòng ${hall.name}`}
+                      >
+                        <FaEye />
+                      </button>
+                      <button 
                         className={styles.btnEdit}
                         onClick={() => handleEdit(hall)}
                         title="Chỉnh sửa"
@@ -385,6 +420,56 @@ export default function HallManagement() {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {showSeatModal && (
+        <div className={styles.modalOverlay} onClick={handleCloseModal}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Sơ đồ ghế: {selectedHall?.name}</h3>
+              <button className={styles.btnClose} onClick={handleCloseModal}>×</button>
+            </div>
+            <div className={styles.modalBody}>
+              {loadingDetail ? (
+                <div className={styles.modalLoading}>Đang tải sơ đồ ghế...</div>
+              ) : hallDetail ? (
+                <div className={styles.seatMapContainer}>
+                  <div className={styles.screen}>MÀN HÌNH</div>
+                  <div className={styles.seatGrid}>
+                    {Object.entries(hallDetail.seatLayout || {}).map(([rowLetter, seats]) => (
+                      <div key={rowLetter} className={styles.seatRow}>
+                        <div className={styles.rowLabel}>{rowLetter}</div>
+                        <div className={styles.rowSeats}>
+                          {seats.map(seat => (
+                            <div 
+                              key={`${rowLetter}${seat.number}`} 
+                              className={`${styles.seat} ${styles[seat.type?.toLowerCase()] || styles.regular}`}
+                              title={`Ghế ${rowLetter}${seat.number} - ${seat.type === 'vip' ? 'VIP' : 'Thường'}`}
+                            >
+                              {seat.number}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.legend}>
+                    <div className={styles.legendItem}>
+                      <div className={`${styles.seat} ${styles.regular}`}></div>
+                      <span>Ghế Thường</span>
+                    </div>
+                    <div className={styles.legendItem}>
+                      <div className={`${styles.seat} ${styles.vip}`}></div>
+                      <span>Ghế VIP</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.modalError}>Không thể tải sơ đồ ghế.</div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

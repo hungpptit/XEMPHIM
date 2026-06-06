@@ -129,3 +129,75 @@ export const deleteHall = async (hallId) => {
   await hall.destroy();
   return { message: 'Hall deleted successfully' };
 };
+
+// ============= SHOWTIME MANAGEMENT =============
+
+export const createShowtime = async (movieId, hallId, startTime, endTime, basePrice) => {
+  if (!movieId || !hallId || !startTime || !endTime || !basePrice) {
+    throw new Error('All fields are required: movieId, hallId, startTime, endTime, basePrice');
+  }
+
+  // Verify movie exists
+  const movie = await Movie.findByPk(movieId);
+  if (!movie) {
+    throw new Error('Movie not found');
+  }
+
+  // Verify hall exists
+  const hall = await CinemaHall.findByPk(hallId);
+  if (!hall) {
+    throw new Error('Hall not found');
+  }
+
+  const showtime = await Showtime.create({
+    movie_id: movieId,
+    hall_id: hallId,
+    start_time: startTime,
+    end_time: endTime,
+    base_price: basePrice
+  });
+
+  return showtime;
+};
+
+export const getShowtimes = async () => {
+  try {
+    console.log('[Showtime Service] Fetching all showtimes with associations...');
+    const showtimes = await Showtime.findAll({
+      include: [
+        { 
+          model: Movie, 
+          required: false,
+          attributes: ['id', 'title', 'poster_url'] 
+        },
+        { 
+          model: CinemaHall, 
+          required: false,
+          attributes: ['id', 'name'],
+          include: [
+            {
+              model: Cinema,
+              attributes: ['name']
+            }
+          ]
+        }
+      ],
+      order: [['start_time', 'ASC']]
+    });
+    console.log(`[Showtime Service] Found ${showtimes.length} showtimes`);
+    return showtimes;
+  } catch (error) {
+    console.error('[Showtime Service] Error fetching showtimes:', error);
+    throw error;
+  }
+};
+
+export const deleteShowtime = async (id) => {
+  const showtime = await Showtime.findByPk(id);
+  if (!showtime) {
+    throw new Error('Showtime not found');
+  }
+
+  await showtime.destroy();
+  return { message: 'Showtime deleted successfully' };
+};

@@ -177,3 +177,65 @@ export const deleteHall = async (req, res) => {
     });
   }
 };
+
+// ============= SHOWTIME CONTROLLERS =============
+
+export const createShowtime = async (req, res) => {
+  try {
+    const { movie_id, hall_id, start_time, end_time, base_price } = req.body;
+    
+    const showtime = await adminService.createShowtime(
+      movie_id, 
+      hall_id, 
+      start_time, 
+      end_time, 
+      base_price
+    );
+    
+    res.status(201).json({
+      success: true,
+      message: 'Showtime created successfully',
+      data: showtime
+    });
+  } catch (error) {
+    console.error('Error creating showtime:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const getShowtimes = async (req, res) => {
+  try {
+    const showtimes = await adminService.getShowtimes();
+    res.json({
+      success: true,
+      data: showtimes
+    });
+  } catch (error) {
+    console.error('Error listing showtimes:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const deleteShowtime = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await adminService.deleteShowtime(id);
+    
+    res.json({
+      success: true,
+      message: result.message
+    });
+  } catch (error) {
+    console.error('Error deleting showtime:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+};

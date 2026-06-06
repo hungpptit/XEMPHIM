@@ -62,8 +62,10 @@ export async function getMovie(id) {
   return mapMovie(raw);
 }
 
-export default {
+const movieService = {
   listMovies,
   getMovie,
   mapMovie
 };
+
+export default movieService;

@@ -33,15 +33,7 @@ const hallAPI = {
   delete: (hallId) => adminAPI.delete(`/api/admin/halls/${hallId}`)
 };
 
-// ============= SEAT Management =============
-const seatAPI = {
-  create: (data) => adminAPI.post('/api/admin/seats', data),
-  getByHall: (hallId) => adminAPI.get(`/api/admin/halls/${hallId}/seats`),
-  getLayout: (hallId) => adminAPI.get(`/api/admin/halls/${hallId}/seats/layout`),
-  update: (seatId, data) => adminAPI.put(`/api/admin/seats/${seatId}`, data),
-  updateType: (hallId, data) => adminAPI.put(`/api/admin/halls/${hallId}/seats/type`, data),
-  delete: (seatId) => adminAPI.delete(`/api/admin/seats/${seatId}`)
-};
+
 
 // ============= MOVIE Management =============
 // Use the public /api/movies endpoints implemented in movie-service
@@ -52,21 +44,34 @@ const movieAPI = {
 
 
 
+
+// ============= SHOWTIME Management =============
+const showtimeAPI = {
+  list: () => adminAPI.get('/api/admin/showtimes'),
+  create: (data) => adminAPI.post('/api/admin/showtimes', data),
+  delete: (id) => adminAPI.delete(`/api/admin/showtimes/${id}`)
+};
+
+// ============= USER Management =============
+const userAPI = {
+  list: () => adminAPI.get('/api/admin/users'),
+  update: (userId, data) => adminAPI.put(`/api/admin/users/${userId}`, data),
+  delete: (userId) => adminAPI.delete(`/api/admin/users/${userId}`)
+};
+
 // Combine all services
 export const adminService = {
   cinema: cinemaAPI,
   hall: hallAPI,
-  seat: seatAPI,
   movie: movieAPI,
+  showtime: showtimeAPI,
+  user: userAPI,
   
   // Legacy support for existing code
   createHall: (data) => hallAPI.create(data),
   updateHall: (hallId, data) => hallAPI.update(hallId, data),
   deleteHall: (hallId) => hallAPI.delete(hallId),
-  getHallDetail: (hallId) => hallAPI.getDetail(hallId),
-  
-  getSeatsByHall: (hallId) => seatAPI.getByHall(hallId),
-  getSeatLayout: (hallId) => seatAPI.getLayout(hallId)
+  getHallDetail: (hallId) => hallAPI.getDetail(hallId)
 };
 
 export default adminService;

@@ -4,8 +4,9 @@ import CinemaManagement from './pages/CinemaManagement/CinemaList';
 import HallManagement from './pages/HallManagement/HallList';
 import MovieManagement from './pages/MovieManagement/MovieList';
 import ShowtimeManagement from './pages/ShowtimeManagement/ShowtimeList';
+import UserManagement from './pages/UserManagement/UserList'; 
 import styles from './AdminPanel.module.css';
-import { FaChair, FaHome, FaFilm, FaTicketAlt, FaUserShield, FaChevronRight, FaCity, FaClock } from 'react-icons/fa';
+import { FaHome, FaFilm, FaUserShield, FaChevronRight, FaCity, FaClock, FaUsers, FaTh } from 'react-icons/fa';
 import { adminService } from './services/adminService';
 
 export default function AdminPanel() {
@@ -14,19 +15,21 @@ export default function AdminPanel() {
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/admin/halls')) return 'halls';
+    if (path.startsWith('/admin/cinemas')) return 'cinemas';
     if (path.startsWith('/admin/movies')) return 'movies';
     if (path.startsWith('/admin/showtimes')) return 'showtimes';
+    if (path.startsWith('/admin/users')) return 'users';
     return 'overview';
   };
 
   // Tab mặc định hiển thị Tổng Quan
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
 
-  // Quản lý các chỉ số thống kê bằng state (Đã xóa totalCinemas)
+  // Quản lý các chỉ số thống kê bằng state
   const [stats, setStats] = useState({
     totalHalls: null,
     activeMovies: null,
-    ticketsSoldToday: null
+    totalUsers: null
   });
 
   // Quản lý danh sách lịch sử hoạt động hệ thống từ API
@@ -39,21 +42,28 @@ export default function AdminPanel() {
       const fetchDashboardStats = async () => {
         setIsLoading(true);
         try {
-          // Lấy tổng quan từ Cinema service (đã có sẵn API overview)
+          // Lấy tổng quan từ Cinema service
           const res = await adminService.cinema.getOverview();
-          if (res.data.success) {
-            setStats({
-              totalHalls: res.data.data.totalHalls || 0,
-              activeMovies: res.data.data.totalCinemas || 0,
-              ticketsSoldToday: 0 // Phần này sẽ cập nhật khi có Booking service
-            });
-          }
+          
+          // Lấy danh sách users để có stats (optional: separate stats API in user-service)
+          const userRes = await adminService.user.list();
+          const userCount = (userRes.data?.data || userRes.data || []).length;
 
-          // Giả lập nhật ký hoạt động
-          setActivities([
-            { time: 'Vừa xong', message: 'Dữ liệu hệ thống đã được cập nhật mới nhất.' },
-            { time: '1 giờ trước', message: 'Hệ thống tự động sao lưu dữ liệu rạp chiếu.' }
-          ]);
+          if (res.data.success) {
+            const data = res.data.data;
+            setStats({
+              totalHalls: data.totalHalls || 0,
+              activeMovies: data.totalMovies || 0,
+              totalUsers: userCount
+            });
+
+            setActivities([
+              { time: 'Vừa xong', message: 'Dữ liệu hệ thống đã được đồng bộ mới nhất.' },
+              { time: 'Hôm nay', message: `Hệ thống ghi nhận tổng cộng ${data.totalCinemas} rạp chiếu đang hoạt động.` },
+              { time: 'Người dùng', message: `Hiện đang có ${userCount} tài khoản trong cơ sở dữ liệu.` },
+              { time: 'Thông tin', message: `Danh sách phim hiện tại có ${data.totalMovies} phim đang quản lý.` }
+            ]);
+          }
         } catch (error) {
           console.error("Lỗi lấy dữ liệu dashboard:", error);
         } finally {
@@ -69,17 +79,14 @@ export default function AdminPanel() {
     setActiveTab(getTabFromPath(location.pathname));
   }, [location.pathname]);
 
-  const goOverview = () => {
-    navigate('/admin');
-  };
-
+  const goOverview = () => navigate('/admin');
   const goHalls = () => navigate('/admin/halls');
+  const goCinemas = () => navigate('/admin/cinemas');
   const goMovies = () => navigate('/admin/movies');
   const goShowtimes = () => navigate('/admin/showtimes');
+  const goUsers = () => navigate('/admin/users');
 
-  const getRoleText = () => {
-    return 'Bảng Điều Khiển Quản Trị';
-  };
+  const getRoleText = () => 'Bảng Điều Khiển Quản Trị';
 
   return (
     <div className={styles.adminPanel}>
@@ -87,48 +94,34 @@ export default function AdminPanel() {
       <div className={styles.sidebar}>
         <ul className={styles.sidebarNav}>
           <li className={styles.navItem}>
-            <button
-              className={`${styles.navBtn} ${activeTab === 'overview' ? styles.active : ''}`}
-              onClick={goOverview}
-            >
-              <FaHome className={styles.navIcon} />
-              <span>Tổng Quan</span>
+            <button className={`${styles.navBtn} ${activeTab === 'overview' ? styles.active : ''}`} onClick={goOverview}>
+              <FaHome className={styles.navIcon} /> <span>Tổng Quan</span>
             </button>
           </li>
           <li className={styles.navItem}>
-            <button
-              className={`${styles.navBtn} ${activeTab === 'cinemas' ? styles.active : ''}`}
-              onClick={goCinemas}
-            >
-              <FaCity className={styles.navIcon} />
-              <span>Quản Lý Rạp Chiếu</span>
+            <button className={`${styles.navBtn} ${activeTab === 'cinemas' ? styles.active : ''}`} onClick={goCinemas}>
+              <FaCity className={styles.navIcon} /> <span>Quản Lý Rạp Chiếu</span>
             </button>
           </li>
           <li className={styles.navItem}>
-            <button
-              className={`${styles.navBtn} ${activeTab === 'halls' ? styles.active : ''}`}
-              onClick={goHalls}
-            >
-              <FaChair className={styles.navIcon} />
-              <span>Quản Lý Phòng Chiếu</span>
+            <button className={`${styles.navBtn} ${activeTab === 'halls' ? styles.active : ''}`} onClick={goHalls}>
+              <FaTh className={styles.navIcon} /> <span>Quản Lý Phòng Chiếu</span>
+            </button>
+          </li>
+
+          <li className={styles.navItem}>
+            <button className={`${styles.navBtn} ${activeTab === 'movies' ? styles.active : ''}`} onClick={goMovies}>
+              <FaFilm className={styles.navIcon} /> <span>Quản Lý Phim</span>
             </button>
           </li>
           <li className={styles.navItem}>
-            <button
-              className={`${styles.navBtn} ${activeTab === 'movies' ? styles.active : ''}`}
-              onClick={goMovies}
-            >
-              <FaFilm className={styles.navIcon} />
-              <span>Quản Lý Phim</span>
+            <button className={`${styles.navBtn} ${activeTab === 'showtimes' ? styles.active : ''}`} onClick={goShowtimes}>
+              <FaClock className={styles.navIcon} /> <span>Quản Lý Suất Chiếu</span>
             </button>
           </li>
           <li className={styles.navItem}>
-            <button
-              className={`${styles.navBtn} ${activeTab === 'showtimes' ? styles.active : ''}`}
-              onClick={goShowtimes}
-            >
-              <FaTicketAlt className={styles.navIcon} />
-              <span>Quản Lý Suất Chiếu</span>
+            <button className={`${styles.navBtn} ${activeTab === 'users' ? styles.active : ''}`} onClick={goUsers}>
+              <FaUsers className={styles.navIcon} /> <span>Quản Lý Người Dùng</span>
             </button>
           </li>
         </ul>
@@ -142,43 +135,37 @@ export default function AdminPanel() {
 
       {/* ================= MAIN CONTENT ================= */}
       <div className={styles.mainContent}>
-        {/* Top Header - Đã loại bỏ hoàn toàn phần headerRight chứa thẻ adminProfile */}
         <div className={styles.contentHeader}>
           <div className={styles.headerLeft}>
             <h1 className={styles.contentTitle}>{getRoleText()}</h1>
             <p className={styles.contentSubtitle}>
               {activeTab === 'overview' && 'Hệ thống báo cáo và tổng quan chỉ số'}
               {activeTab === 'cinemas' && 'Quản lý danh sách các cụm rạp và địa điểm'}
-              {activeTab === 'halls' && 'Quản lý sơ đồ và phân phối phòng chiếu'}
+              {activeTab === 'halls' && 'Quản lý danh sách các phòng chiếu trong rạp'}
               {activeTab === 'movies' && 'Quản lý danh sách phim và thông tin'}
-
+              {activeTab === 'showtimes' && 'Sắp xếp lịch chiếu phim tại các rạp và phòng'}
+              {activeTab === 'users' && 'Quản lý danh sách tài khoản và phân quyền người dùng'}
             </p>
           </div>
         </div>
 
-        {/* Content View */}
         <div className={styles.content}>
           {activeTab === 'overview' && (
             <div className={styles.overviewContainer}>
-              {/* Grid các Thẻ Thống Kê */}
               <div className={styles.statsGrid}>
                 <div className={`${styles.statCard} ${styles.cardCyan}`}>
                   <div className={styles.statInfo}>
                     <span className={styles.statLabel}>Tổng Phòng Chiếu</span>
-                    <h2 className={styles.statValue}>
-                      {isLoading ? '...' : (stats.totalHalls !== null ? stats.totalHalls : 0)}
-                    </h2>
+                    <h2 className={styles.statValue}>{isLoading ? '...' : (stats.totalHalls || 0)}</h2>
                     <span className={styles.statTrend}>🔥 Đang cập nhật</span>
                   </div>
-                  <FaChair className={styles.statIcon} />
+                  <FaTh className={styles.statIcon} />
                 </div>
 
                 <div className={`${styles.statCard} ${styles.cardGreen}`}>
                   <div className={styles.statInfo}>
                     <span className={styles.statLabel}>Phim Đang Chiếu</span>
-                    <h2 className={styles.statValue}>
-                      {isLoading ? '...' : (stats.activeMovies !== null ? stats.activeMovies : 0)}
-                    </h2>
+                    <h2 className={styles.statValue}>{isLoading ? '...' : (stats.activeMovies || 0)}</h2>
                     <span className={styles.statTrend}>📈 Đang chiếu rạp</span>
                   </div>
                   <FaFilm className={styles.statIcon} />
@@ -186,17 +173,14 @@ export default function AdminPanel() {
 
                 <div className={`${styles.statCard} ${styles.cardOrange}`}>
                   <div className={styles.statInfo}>
-                    <span className={styles.statLabel}>Vé Bán Ra (Nay)</span>
-                    <h2 className={styles.statValue}>
-                      {stats.ticketsSoldToday !== null ? stats.ticketsSoldToday : '...'}
-                    </h2>
-                    <span className={styles.statTrend}>🚀 Dữ liệu thời gian thực</span>
+                    <span className={styles.statLabel}>Người Dùng</span>
+                    <h2 className={styles.statValue}>{isLoading ? '...' : (stats.totalUsers || 0)}</h2>
+                    <span className={styles.statTrend}>🚀 Đang hoạt động</span>
                   </div>
-                  <FaTicketAlt className={styles.statIcon} />
+                  <FaUsers className={styles.statIcon} />
                 </div>
               </div>
 
-              {/* Nhật ký và phím tắt điều hướng nhanh */}
               <div className={styles.dashboardGrid}>
                 <div className={styles.dashboardSection}>
                   <h3>Nhật Ký Hệ Thống</h3>
@@ -217,6 +201,9 @@ export default function AdminPanel() {
                 <div className={styles.dashboardSection}>
                   <h3>Lối Tắt Hành Động nhanh</h3>
                   <div className={styles.shortcutGrid}>
+                    <button onClick={goUsers} className={styles.shortcutBtn}>
+                      <span>Đi tới Quản lý người dùng</span> <FaChevronRight />
+                    </button>
                     <button onClick={goHalls} className={styles.shortcutBtn}>
                       <span>Đi tới cấu hình sơ đồ phòng ghế</span> <FaChevronRight />
                     </button>
@@ -228,8 +215,10 @@ export default function AdminPanel() {
 
           {activeTab === 'cinemas' && <CinemaManagement />}
           {activeTab === 'halls' && <HallManagement />}
+
           {activeTab === 'movies' && <MovieManagement />}
           {activeTab === 'showtimes' && <ShowtimeManagement />}
+          {activeTab === 'users' && <UserManagement />}
         </div>
       </div>
     </div>

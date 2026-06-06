@@ -208,8 +208,8 @@ export const getSeatMapForShowtime = async (showtimeId) => {
       row: s.row_name,
       number: s.seat_number,
       status,
-      type: s.seat_type,
-      price: (showtime.base_price || 0) * (s.price_modifier || 1),
+      type: s.seat_type === 'VIP' ? 'vip' : (s.seat_type === 'Standard' ? 'regular' : s.seat_type.toLowerCase()),
+      price: (showtime.base_price || 0) + (Number(s.price_modifier) || 0),
       is_active: s.is_active ?? true
     };
 
