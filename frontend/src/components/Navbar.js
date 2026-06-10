@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
+import { listMovies } from '../services/movieService';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaSearch, FaBars, FaUser, FaChevronDown } from 'react-icons/fa';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [user, setUser] = useState(null);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false); // Mặc định luôn là false (đóng)
   const location = useLocation();
@@ -31,9 +34,42 @@ const Navbar = () => {
     return location.pathname === path ? styles.active : '';
   };
 
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const q = queryParams.get('search') || '';
+    setSearchQuery(q);
+  }, [location.search]);
+
+  // Debounced suggestion fetch
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const allMovies = await listMovies();
+        const filtered = allMovies.filter(m =>
+          m.title && m.title.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setSuggestions(filtered);
+      } catch (err) {
+        console.error('Error fetching suggestions:', err);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    console.log('Searching for:', searchQuery);
+    setShowSuggestions(false);
+    if (searchQuery.trim()) {
+      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/');
+    }
   };
 
   const handleLogin = () => navigate('/login');
@@ -88,18 +124,51 @@ const Navbar = () => {
         </ul>
 
         <div className={styles.rightSection}>
-          {user?.role !== 'admin' && (
-            <form onSubmit={handleSearch} className={styles.searchBox}>
-              <input
-                type="text"
-                placeholder="Tìm kiếm phim..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
-              />
-              <FaSearch className={styles.searchIcon} />
-            </form>
-          )}
+          <form onSubmit={handleSearch} className={styles.searchBox}>
+            <input
+              type="text"
+              placeholder="Tìm kiếm phim..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => {
+                // Delay hiding suggestions to allow clicking on list items
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
+              className={styles.searchInput}
+            />
+            <FaSearch className={styles.searchIcon} />
+
+            {showSuggestions && suggestions.length > 0 && (
+              <div className={styles.suggestionList}>
+                {suggestions.map((m) => (
+                  <div
+                    key={m.id}
+                    className={styles.suggestionItem}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setShowSuggestions(false);
+                      navigate(`/movies/${m.id}`);
+                    }}
+                  >
+                    {m.poster && (
+                      <img src={m.poster} alt={m.title} className={styles.suggestionPoster} />
+                    )}
+                    <div className={styles.suggestionInfo}>
+                      <span className={styles.suggestionTitle}>{m.title}</span>
+                      <span className={styles.suggestionMeta}>
+                        {m.duration ? `${m.duration} phút` : ''}
+                        {m.releaseYear ? ` • ${m.releaseYear}` : ''}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </form>
 
           <div className={styles.userSection}>
             {user ? (

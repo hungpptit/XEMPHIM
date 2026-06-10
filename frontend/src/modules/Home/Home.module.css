@@ -318,3 +318,64 @@
     font-size: 14px;
   }
 }
+
+/* Section Header Container */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+  padding-bottom: 15px;
+}
+
+.sectionHeader .sectionTitle {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.sectionHeader .sectionTitle::after {
+  display: none; /* Hide the absolute center line since it's aligned left now */
+}
+
+/* Filter Group styling */
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-white);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.filterSelect {
+  background: rgba(26, 26, 26, 0.8);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  padding: 8px 16px;
+  color: var(--color-gold);
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition);
+}
+
+.filterSelect:hover,
+.filterSelect:focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.filterSelect option {
+  background: #111;
+  color: var(--color-white);
+}
+
+@media (max-width: 768px) {
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

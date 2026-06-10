@@ -13,10 +13,11 @@ async function main() {
     console.log('Connected to DB');
 
     const now = new Date();
+    const nowStr = now.toISOString();
 
     const pastShowtimes = await Showtime.findAll({
       where: {
-        start_time: { [Op.lt]: now }
+        start_time: { [Op.lt]: nowStr }
       },
       include: [
         {

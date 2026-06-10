@@ -1,5 +1,14 @@
 import { Showtime, sequelize } from '../models/index.js';
 import { QueryTypes } from 'sequelize';
+import Redis from 'ioredis';
+
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+if (!redis) {
+  console.warn('⚠️ [Redis Cache] REDIS_URL not configured in showtimeService.');
+}
+
+import axios from 'axios';
+const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 
 export const listShowtimes = async ({ date, movie_id, hall_id }) => {
   const { Movie, CinemaHall, Cinema } = sequelize.models;
@@ -40,8 +49,23 @@ export const listShowtimes = async ({ date, movie_id, hall_id }) => {
 };
 
 export const getShowtimeById = async (id) => {
-  const st = await Showtime.findByPk(id);
-  return st ? st.toJSON() : null;
+  const { Movie, CinemaHall, Cinema } = sequelize.models;
+  const st = await Showtime.findByPk(id, {
+    include: [
+      { model: Movie, attributes: ['id', 'title', 'duration_minutes', 'poster_url'] },
+      { 
+        model: CinemaHall, 
+        attributes: ['id', 'name', 'cinema_id'],
+        include: [{ model: Cinema, attributes: ['id', 'name', 'address', 'city'] }]
+      }
+    ]
+  });
+  if (!st) return null;
+  const json = st.toJSON();
+  json.movie_title = json.Movie?.title || 'Unknown Movie';
+  json.hall_name = json.CinemaHall?.name || 'Unknown Hall';
+  json.cinema_name = json.CinemaHall?.Cinema?.name || '';
+  return json;
 };
 
 const timesOverlap = (aStart, aEnd, bStart, bEnd) => {
@@ -95,7 +119,17 @@ export const createShowtime = async (payload) => {
     }
   }
 
-  const created = await Showtime.create({ movie_id, hall_id, start_time: newStart, end_time: newEnd, base_price });
+  const created = await Showtime.create({ movie_id, hall_id, start_time: newStart.toISOString(), end_time: newEnd.toISOString(), base_price });
+
+  if (redis) {
+    try {
+      await redis.del(`showtimes:movie:${movie_id}`);
+      console.log(`⚡ [Redis Cache] Invalidated: showtimes:movie:${movie_id}`);
+    } catch (err) {
+      console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
+    }
+  }
+
   return created.toJSON();
 };
 
@@ -121,13 +155,28 @@ export const updateShowtime = async (id, updates) => {
     }
   }
 
-  if (updates.start_time) st.start_time = newStart;
-  if (updates.end_time) st.end_time = newEnd;
+  const oldMovieId = st.movie_id;
+
+  if (updates.start_time) st.start_time = newStart.toISOString();
+  if (updates.end_time) st.end_time = newEnd.toISOString();
   if (updates.base_price !== undefined) st.base_price = updates.base_price;
   if (updates.movie_id) st.movie_id = updates.movie_id;
   if (updates.hall_id !== undefined) st.hall_id = updates.hall_id;
 
   await st.save();
+
+  if (redis) {
+    try {
+      await redis.del(`showtimes:movie:${oldMovieId}`);
+      if (st.movie_id !== oldMovieId) {
+        await redis.del(`showtimes:movie:${st.movie_id}`);
+      }
+      console.log('⚡ [Redis Cache] Invalidated showtimes cache for updated showtime');
+    } catch (err) {
+      console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
+    }
+  }
+
   return st.toJSON();
 };
 
@@ -135,17 +184,32 @@ export const deleteShowtime = async (id) => {
   const st = await Showtime.findByPk(id);
   if (!st) return false;
 
-  // Check bookings table for any bookings referencing this showtime
-  const sql = 'SELECT COUNT(*) AS cnt FROM bookings WHERE showtime_id = :id';
-  const rows = await sequelize.query(sql, { replacements: { id }, type: QueryTypes.SELECT });
-  const cnt = rows && rows[0] && (rows[0].cnt || rows[0].CNT || Object.values(rows[0])[0]);
-  const number = parseInt(cnt, 10) || 0;
+  let number = 0;
+  try {
+    const res = await axios.get(`${BOOKING_SERVICE}/api/bookings/showtimes/${id}/bookings-count`);
+    number = res.data?.count || 0;
+  } catch (err) {
+    console.error('Failed to check bookings for showtime from booking-service:', err.message);
+    throw new Error('Could not verify existing bookings for showtime');
+  }
+
   if (number > 0) {
     const err = new Error('Cannot delete showtime: existing bookings found');
     err.code = 'HAS_BOOKINGS';
     throw err;
   }
 
+  const movieId = st.movie_id;
   await st.destroy();
+
+  if (redis) {
+    try {
+      await redis.del(`showtimes:movie:${movieId}`);
+      console.log(`⚡ [Redis Cache] Invalidated: showtimes:movie:${movieId}`);
+    } catch (err) {
+      console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
+    }
+  }
+
   return true;
 };

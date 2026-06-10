@@ -42,6 +42,7 @@ function mapMovie(m) {
     rating,
     duration: m.duration_minutes ?? m.duration ?? null,
     releaseYear,
+    releaseDate: m.release_date || null,
     genres: Array.isArray(m.genres) ? m.genres : (m.genres || []),
     director: m.director || null,
     cast: Array.isArray(m.cast) ? m.cast : (m.cast || []),

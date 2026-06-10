@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaPlay, FaTicketAlt, FaShieldAlt, FaMobile } from 'react-icons/fa';
 import MovieCard from '../../components/MovieCard';
 import { listMovies } from '../../services/movieService';
@@ -13,6 +13,12 @@ const Home = () => {
   const PAGE_SIZE = 10;
   const [nowPage, setNowPage] = useState(1);
   const [comingPage, setComingPage] = useState(1);
+  const [nowSort, setNowSort] = useState('default');
+  const [comingSort, setComingSort] = useState('default');
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const searchQuery = queryParams.get('search') || '';
 
   useEffect(() => {
     let mounted = true;
@@ -52,8 +58,46 @@ const Home = () => {
     };
   }, []);
 
-  const nowShowingMovies = movies.filter(movie => movie.isAvailable);
-  const comingSoonMovies = movies.filter(movie => !movie.isAvailable);
+  const filteredMovies = searchQuery
+    ? movies.filter(movie => movie.title && movie.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : movies;
+
+  let nowShowingMovies = filteredMovies.filter(movie => movie.isAvailable);
+  let comingSoonMovies = filteredMovies.filter(movie => !movie.isAvailable);
+
+  // Apply sorting for Now Showing
+  if (nowSort === 'rating') {
+    nowShowingMovies = [...nowShowingMovies].sort((a, b) => b.rating - a.rating);
+  } else if (nowSort === 'newest') {
+    nowShowingMovies = [...nowShowingMovies].sort((a, b) => {
+      const dateA = a.releaseDate ? new Date(a.releaseDate) : new Date(0);
+      const dateB = b.releaseDate ? new Date(b.releaseDate) : new Date(0);
+      return dateB - dateA;
+    });
+  } else if (nowSort === 'oldest') {
+    nowShowingMovies = [...nowShowingMovies].sort((a, b) => {
+      const dateA = a.releaseDate ? new Date(a.releaseDate) : new Date(8640000000000000);
+      const dateB = b.releaseDate ? new Date(b.releaseDate) : new Date(8640000000000000);
+      return dateA - dateB;
+    });
+  }
+
+  // Apply sorting for Coming Soon
+  if (comingSort === 'rating') {
+    comingSoonMovies = [...comingSoonMovies].sort((a, b) => b.rating - a.rating);
+  } else if (comingSort === 'newest') {
+    comingSoonMovies = [...comingSoonMovies].sort((a, b) => {
+      const dateA = a.releaseDate ? new Date(a.releaseDate) : new Date(0);
+      const dateB = b.releaseDate ? new Date(b.releaseDate) : new Date(0);
+      return dateB - dateA;
+    });
+  } else if (comingSort === 'oldest') {
+    comingSoonMovies = [...comingSoonMovies].sort((a, b) => {
+      const dateA = a.releaseDate ? new Date(a.releaseDate) : new Date(8640000000000000);
+      const dateB = b.releaseDate ? new Date(b.releaseDate) : new Date(8640000000000000);
+      return dateA - dateB;
+    });
+  }
 
   // pagination calculations
   const nowTotalPages = Math.max(1, Math.ceil(nowShowingMovies.length / PAGE_SIZE));
@@ -136,9 +180,46 @@ const Home = () => {
       </section>
 
       <div className="container">
+        {searchQuery && (
+          <div style={{
+            margin: '30px 0 10px 0',
+            padding: '20px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '10px',
+            borderLeft: '4px solid var(--color-gold)',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+          }}>
+            <h2 style={{ fontSize: '20px', color: 'var(--color-gold)', margin: 0 }}>
+              Kết quả tìm kiếm cho: "{searchQuery}"
+            </h2>
+            <p style={{ margin: '8px 0 0 0', color: 'rgba(255, 255, 255, 0.6)', fontSize: '14px' }}>
+              Tìm thấy {filteredMovies.length} phim phù hợp.
+            </p>
+          </div>
+        )}
+
         {/* Now Showing Section */}
-  <section id="now-section" className={styles.section}>
-          <h2 className={styles.sectionTitle}>Phim Đang Chiếu</h2>
+        <section id="now-section" className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Phim Đang Chiếu</h2>
+            <div className={styles.filterGroup}>
+              <label htmlFor="now-sort">Sắp xếp:</label>
+              <select
+                id="now-sort"
+                value={nowSort}
+                onChange={(e) => {
+                  setNowSort(e.target.value);
+                  setNowPage(1);
+                }}
+                className={styles.filterSelect}
+              >
+                <option value="default">Mặc định</option>
+                <option value="rating">Đánh giá cao nhất</option>
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+              </select>
+            </div>
+          </div>
           <div className={styles.moviesGrid}>
             {nowSlice.map(movie => (
               <MovieCard key={movie.id} movie={movie} />
@@ -152,8 +233,27 @@ const Home = () => {
         </section>
 
         {/* Coming Soon Section */}
-  <section id="coming-section" className={styles.section}>
-          <h2 className={styles.sectionTitle}>Phim Sắp Chiếu</h2>
+        <section id="coming-section" className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Phim Sắp Chiếu</h2>
+            <div className={styles.filterGroup}>
+              <label htmlFor="coming-sort">Sắp xếp:</label>
+              <select
+                id="coming-sort"
+                value={comingSort}
+                onChange={(e) => {
+                  setComingSort(e.target.value);
+                  setComingPage(1);
+                }}
+                className={styles.filterSelect}
+              >
+                <option value="default">Mặc định</option>
+                <option value="rating">Đánh giá cao nhất</option>
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+              </select>
+            </div>
+          </div>
           <div className={styles.moviesGrid}>
             {comingSlice.map(movie => (
               <MovieCard key={movie.id} movie={movie} />

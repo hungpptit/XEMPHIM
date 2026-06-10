@@ -1,5 +1,5 @@
 import {
-    listSeats, getSeatById, createSeat, updateSeat, deleteSeat
+    listSeats, getSeatById, createSeat, updateSeat, deleteSeat, bulkCreateSeats
 } from "../services/seatService.js";
 import { getSeatMapForShowtime } from '../services/seatService.js';
 
@@ -65,4 +65,19 @@ export const getSeatMap = async (req, res) => {
         console.error('Error in getSeatMap:', err && err.stack ? err.stack : err);
         res.status(500).json({ message: err.message });
     }
+};
+
+export const createBulkSeats = async (req, res) => {
+  try {
+    const seats = req.body;
+    const seatsArray = Array.isArray(seats) ? seats : (seats.seats || []);
+    if (seatsArray.length === 0) {
+      return res.status(400).json({ message: 'No seats provided' });
+    }
+    const result = await bulkCreateSeats(seatsArray);
+    res.status(201).json(result);
+  } catch (err) {
+    console.error('Error creating bulk seats:', err);
+    res.status(500).json({ message: err.message });
+  }
 };

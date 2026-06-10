@@ -1,4 +1,7 @@
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
+import axios from 'axios';
+
+const MOVIE_SERVICE = process.env.MOVIE_SERVICE_URL || 'http://localhost:4002';
 
 /**
  * Admin Statistics Service
@@ -6,12 +9,12 @@ import { Op } from 'sequelize';
  */
 
 export const getRevenueStats = async (appModels) => {
-  const { Booking, Movie, Cinema, Showtime } = appModels;
+  const { Booking } = appModels;
 
   try {
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
     // 1. Summary Stats
     const totalRevenueResult = await Booking.sum('total_price', {
@@ -21,14 +24,14 @@ export const getRevenueStats = async (appModels) => {
     const todayRevenueResult = await Booking.sum('total_price', {
       where: { 
         status: 'confirmed',
-        created_at: { [Op.gte]: startOfDay }
+        created_at: { [Op.gte]: Sequelize.literal(`'${startOfDay}'`) }
       }
     });
 
     const monthRevenueResult = await Booking.sum('total_price', {
       where: { 
         status: 'confirmed',
-        created_at: { [Op.gte]: startOfMonth }
+        created_at: { [Op.gte]: Sequelize.literal(`'${startOfMonth}'`) }
       }
     });
 
@@ -42,11 +45,13 @@ export const getRevenueStats = async (appModels) => {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const start = new Date(d.setHours(0, 0, 0, 0));
       const end = new Date(d.setHours(23, 59, 59, 999));
+      const startStr = start.toISOString();
+      const endStr = end.toISOString();
       
       const dayRev = await Booking.sum('total_price', {
         where: {
           status: 'confirmed',
-          created_at: { [Op.between]: [start, end] }
+          created_at: { [Op.between]: [Sequelize.literal(`'${startStr}'`), Sequelize.literal(`'${endStr}'`)] }
         }
       });
       
@@ -56,33 +61,46 @@ export const getRevenueStats = async (appModels) => {
       });
     }
 
-    // 3. Top Movies by Revenue
-    // Since we need to join with Movie via Showtime, it's easier to do this:
+    // 3. Top Movies and Cinemas by Revenue
     const bookings = await Booking.findAll({
       where: { status: 'confirmed' },
-      include: [{
-        model: Showtime,
-        include: [{ model: Movie }]
-      }]
+      attributes: ['showtime_id', 'total_price']
     });
 
+    const showtimeIds = [...new Set(bookings.map(b => b.showtime_id).filter(Boolean))];
+    
+    // Fetch showtime details in parallel from movie-service
+    const showtimes = await Promise.all(showtimeIds.map(async (sid) => {
+      try {
+        const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${sid}`);
+        return res.data;
+      } catch (err) {
+        console.error(`Failed to fetch showtime ${sid} for stats:`, err.message);
+        return null;
+      }
+    }));
+
+    const showtimeMap = showtimes.filter(Boolean).reduce((acc, st) => {
+      acc[st.id] = st;
+      return acc;
+    }, {});
+
     const movieRevenue = {};
+    const cinemaRevenue = {};
+
     bookings.forEach(b => {
-      const movieTitle = b.Showtime?.Movie?.title || 'Unknown';
+      const showtime = showtimeMap[b.showtime_id];
+      const movieTitle = showtime?.movie_title || 'Unknown';
+      const cinemaName = showtime?.cinema_name || 'Unknown';
+
       movieRevenue[movieTitle] = (movieRevenue[movieTitle] || 0) + Number(b.total_price);
+      cinemaRevenue[cinemaName] = (cinemaRevenue[cinemaName] || 0) + Number(b.total_price);
     });
 
     const topMovies = Object.entries(movieRevenue)
       .map(([title, revenue]) => ({ title, revenue }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
-
-    // 4. Revenue by Cinema
-    const cinemaRevenue = {};
-    bookings.forEach(b => {
-      const cinemaName = b.Showtime?.Cinema?.name || 'Unknown';
-      cinemaRevenue[cinemaName] = (cinemaRevenue[cinemaName] || 0) + Number(b.total_price);
-    });
 
     const topCinemas = Object.entries(cinemaRevenue)
       .map(([name, revenue]) => ({ name, revenue }))

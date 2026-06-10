@@ -31,6 +31,18 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/users', adminUserRoutes);
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const { User } = req.app.locals.models;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ id: user.id, email: user.email, full_name: user.full_name, phone_number: user.phone_number, role: user.role });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.use('/api/users', (req, res) => {
   // If request contains gateway-injected headers, we can return the current user info
   const userId = req.headers['x-user-id'];
