@@ -15,6 +15,13 @@ export default function Register(){
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    if (!emailRegex.test(email)) {
+      setError('Email phải có định dạng @gmail.com (ví dụ: example@gmail.com)');
+      return;
+    }
+
     setLoading(true);
     try{
       await authService.register({ fullName, email, password, phone });

@@ -1,4 +1,11 @@
 import { Sequelize, DataTypes } from 'sequelize';
+
+// Override timezone formatting for MSSQL to prevent "Conversion failed when converting date and/or time from character string"
+Sequelize.DATE.prototype._stringify = function _stringify(date, options) {
+  date = this._applyTimezone(date, options);
+  return date.format('YYYY-MM-DD HH:mm:ss.SSS');
+};
+
 import path from 'path';
 import dotenv from 'dotenv';
 import MovieModel from './movie.js';
