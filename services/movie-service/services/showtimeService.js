@@ -2,41 +2,24 @@ import { Showtime, sequelize } from '../models/index.js';
 import { QueryTypes } from 'sequelize';
 
 export const listShowtimes = async ({ date, movie_id, hall_id }) => {
-  const { Movie, CinemaHall, Cinema } = sequelize.models;
   const where = {};
-  
-  if (movie_id) where.movie_id = movie_id;
-  if (hall_id) where.hall_id = hall_id;
-  
+  const Op = sequelize.Sequelize.Op;
+  const conditions = [];
+  const replacements = {};
+
+  if (movie_id) conditions.push('movie_id = :movie_id') && (replacements.movie_id = movie_id);
+  if (hall_id) conditions.push('hall_id = :hall_id') && (replacements.hall_id = hall_id);
   if (date) {
-    const Op = sequelize.Sequelize.Op;
-    // Filter by date (local midnights) using Sequelize literal for SQL Server compatibility
-    where.start_time = sequelize.where(
-      sequelize.fn('CONVERT', sequelize.literal('date'), sequelize.col('start_time')),
-      date
-    );
+    // filter by date (local midnights)
+    conditions.push("CONVERT(date, start_time) = :date") && (replacements.date = date);
   }
 
-  const rows = await Showtime.findAll({
-    where,
-    include: [
-      { model: Movie, attributes: ['title'] },
-      { 
-        model: CinemaHall, 
-        attributes: ['name'],
-        include: [{ model: Cinema, attributes: ['name'] }]
-      }
-    ],
-    order: [['start_time', 'ASC']]
-  });
+  let sql = 'SELECT * FROM showtimes';
+  if (conditions.length > 0) sql += ' WHERE ' + conditions.join(' AND ');
+  sql += ' ORDER BY start_time ASC';
 
-  return rows.map(r => {
-    const json = r.toJSON();
-    json.movie_title = json.Movie?.title || 'Unknown Movie';
-    json.hall_name = json.CinemaHall?.name || 'Unknown Hall';
-    json.cinema_name = json.CinemaHall?.Cinema?.name || '';
-    return json;
-  });
+  const rows = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT });
+  return rows;
 };
 
 export const getShowtimeById = async (id) => {
@@ -52,13 +35,6 @@ const parseLocal = (val) => {
   if (!val) return null;
   if (val instanceof Date) return val;
   const s = String(val);
-  
-  // If it's a full ISO string from frontend (has Z or +00:00), just use new Date()
-  if (s.includes('Z') || s.includes('+00:00')) {
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
   const m = s.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
   if (m) {
     const y = parseInt(m[1], 10);
