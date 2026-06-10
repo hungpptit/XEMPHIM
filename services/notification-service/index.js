@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { startNotificationConsumer } from './consumer.js';
+import { startNotificationConsumer, sendTicketEmail } from './consumer.js';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -21,6 +21,17 @@ app.use(cookieParser());
 app.use((req, res, next) => {
   console.log(`[Notification Service] ${req.method} ${req.path}`);
   next();
+});
+
+// Send notification via HTTP endpoint (as fallback if RabbitMQ is not running)
+app.post('/api/notifications/send', async (req, res) => {
+  try {
+    const info = await sendTicketEmail(req.body);
+    res.json({ success: true, message: 'Email sent successfully', info });
+  } catch (err) {
+    console.error('❌ [Notification Service] HTTP send error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Health check endpoint

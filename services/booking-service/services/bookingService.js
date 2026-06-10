@@ -15,11 +15,23 @@ if (!redis) {
   console.warn('⚠️ [Redis] REDIS_URL not configured. Distributed locking is disabled; falling back to DB transaction locks.');
 }
 
+// HTTP notification helper as fallback/alternative to RabbitMQ
+async function sendNotificationViaHttp(msg) {
+  try {
+    const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4006';
+    await axios.post(`${notificationServiceUrl}/api/notifications/send`, msg);
+    console.log(`📧 [HTTP Notification] Successfully sent ticket notification via direct HTTP call`);
+  } catch (err) {
+    console.error('❌ [HTTP Notification] Failed to send ticket notification via HTTP fallback:', err.message);
+  }
+}
+
 // RabbitMQ notification publisher helper
 async function publishNotification(msg) {
   const mqUrl = process.env.CLOUDAMQP_URL || process.env.RABBITMQ_URL;
   if (!mqUrl) {
-    console.warn('⚠️ [RabbitMQ] CLOUDAMQP_URL/RABBITMQ_URL not configured. Email notification message cannot be published.');
+    console.warn('⚠️ [RabbitMQ] CLOUDAMQP_URL/RABBITMQ_URL not configured. Falling back to HTTP notification.');
+    await sendNotificationViaHttp(msg);
     return;
   }
   try {
@@ -35,6 +47,8 @@ async function publishNotification(msg) {
     await conn.close();
   } catch (err) {
     console.error('❌ [RabbitMQ] Error publishing notification message:', err.message);
+    console.log('🔄 [RabbitMQ Fallback] Attempting to send notification via HTTP...');
+    await sendNotificationViaHttp(msg);
   }
 }
 
