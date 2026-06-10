@@ -1,5 +1,6 @@
 import { CinemaHall, Showtime, Movie, Cinema } from '../models/index.js';
 import Redis from 'ioredis';
+import * as showtimeService from './showtimeService.js';
 
 const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
 if (!redis) {
@@ -155,7 +156,8 @@ export const createShowtime = async (movieId, hallId, startTime, endTime, basePr
     throw new Error('Hall not found');
   }
 
-  const showtime = await Showtime.create({
+  // Delegate to showtimeService for full time-overlap validation
+  const showtime = await showtimeService.createShowtime({
     movie_id: movieId,
     hall_id: hallId,
     start_time: startTime,
@@ -165,9 +167,8 @@ export const createShowtime = async (movieId, hallId, startTime, endTime, basePr
 
   if (redis) {
     try {
-      await redis.del(`showtimes:movie:${movieId}`);
       await redis.del('movies:list');
-      console.log(`⚡ [Redis Cache] Invalidated: showtimes:movie:${movieId} and movies:list`);
+      console.log('⚡ [Redis Cache] Invalidated: movies:list');
     } catch (err) {
       console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
     }
@@ -209,19 +210,16 @@ export const getShowtimes = async () => {
 };
 
 export const deleteShowtime = async (id) => {
-  const showtime = await Showtime.findByPk(id);
-  if (!showtime) {
+  // Delegate to showtimeService for bookings check before deletion
+  const ok = await showtimeService.deleteShowtime(id);
+  if (!ok) {
     throw new Error('Showtime not found');
   }
 
-  const movieId = showtime.movie_id;
-  await showtime.destroy();
-
   if (redis) {
     try {
-      await redis.del(`showtimes:movie:${movieId}`);
       await redis.del('movies:list');
-      console.log(`⚡ [Redis Cache] Invalidated: showtimes:movie:${movieId} and movies:list`);
+      console.log('⚡ [Redis Cache] Invalidated: movies:list');
     } catch (err) {
       console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
     }

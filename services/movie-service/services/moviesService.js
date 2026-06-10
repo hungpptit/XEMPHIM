@@ -7,14 +7,36 @@ if (!redis) {
   console.warn('⚠️ [Redis Cache] REDIS_URL not configured. Caching is disabled; falling back to DB queries directly.');
 }
 
+export const invalidateListCache = async () => {
+  if (!redis) return;
+  try {
+    let cursor = '0';
+    do {
+      const reply = await redis.scan(cursor, 'MATCH', 'movies:list*', 'COUNT', 100);
+      cursor = reply[0];
+      const keys = reply[1];
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } while (cursor !== '0');
+    console.log('⚡ [Redis Cache] Invalidated all movies:list keys');
+  } catch (err) {
+    console.warn('⚠️ [Redis Cache] Error invalidating list cache:', err.message);
+  }
+};
+
 export const listMovies = async (options = {}) => {
   // options: { all: boolean, page: number, limit: number }
-  const cacheKey = options.all ? 'movies:list:all' : 'movies:list';
+  const cacheKey = options.all
+    ? 'movies:list:all'
+    : (options.page && options.limit)
+      ? `movies:list:${options.page}:${options.limit}`
+      : 'movies:list';
   if (redis) {
     try {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        console.log('⚡ [Redis Cache] Hit: listMovies');
+        console.log(`⚡ [Redis Cache] Hit: listMovies (${cacheKey})`);
         return JSON.parse(cached);
       }
     } catch (err) {
@@ -162,14 +184,7 @@ export const createMovie = async (payload) => {
   }
 
   // Invalidate list cache
-  if (redis) {
-    try {
-      await redis.del('movies:list');
-      console.log('⚡ [Redis Cache] Invalidated: movies:list');
-    } catch (err) {
-      console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
-    }
-  }
+  await invalidateListCache();
 
   return m;
 };
@@ -197,11 +212,11 @@ export const updateMovie = async (id, payload) => {
   }
 
   // Invalidate cache
+  await invalidateListCache();
   if (redis) {
     try {
-      await redis.del('movies:list');
       await redis.del(`movies:detail:${id}`);
-      console.log(`⚡ [Redis Cache] Invalidated: movies:list and movies:detail:${id}`);
+      console.log(`⚡ [Redis Cache] Invalidated: movies:detail:${id}`);
     } catch (err) {
       console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
     }
@@ -216,11 +231,11 @@ export const deleteMovie = async (id) => {
   await movie.destroy();
 
   // Invalidate cache
+  await invalidateListCache();
   if (redis) {
     try {
-      await redis.del('movies:list');
       await redis.del(`movies:detail:${id}`);
-      console.log(`⚡ [Redis Cache] Invalidated: movies:list and movies:detail:${id}`);
+      console.log(`⚡ [Redis Cache] Invalidated: movies:detail:${id}`);
     } catch (err) {
       console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
     }
