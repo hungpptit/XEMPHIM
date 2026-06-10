@@ -3,28 +3,16 @@ import axios from 'axios';
 const API = axios.create({
   baseURL: 'http://localhost:8080/api',
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -51,7 +39,7 @@ export const bookingAPI = {
   getSeatMap: (showtimeId) => API.get(`/seats/showtimes/${showtimeId}/seats`),
   lockSeats: (bookingData) => API.post('/bookings/lock-seat', bookingData),
   confirmPayment: (bookingId, paymentData) => API.post(`/bookings/${bookingId}/confirm-payment`, paymentData),
-  createSepayQR: (bookingId) => API.post(`/bookings/${bookingId}/create-sepay-qr`),
+  createZaloPayQR: (bookingId) => API.post(`/bookings/${bookingId}/create-zalopay-qr`),
   cancelBooking: (bookingId) => API.post(`/bookings/${bookingId}/cancel`),
   refundBooking: (bookingId, refundData) => API.post(`/bookings/${bookingId}/refund`, refundData),
   getBooking: (bookingId) => API.get(`/bookings/${bookingId}`),

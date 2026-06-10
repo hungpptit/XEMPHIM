@@ -10,6 +10,7 @@ import {
   FaCalendar,
   FaUsers,
   FaEye,
+  FaChevronRight,
   FaTimes,
   FaFilm
 } from 'react-icons/fa';
@@ -40,7 +41,9 @@ const MyTickets = () => {
         showtime: {
           date: new Date(booking.showtime.start_time).toISOString().slice(0, 10),
           time: new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          cinema: `Rạp ${booking.showtime.hall_id}`
+          cinema: booking.showtime.CinemaHall?.Cinema
+            ? `${booking.showtime.CinemaHall.Cinema.name} - ${booking.showtime.CinemaHall.name}`
+            : `Rạp ${booking.showtime.hall_id}`
         },
         selectedSeats: booking.seats,
         totalPrice: booking.total_price,
@@ -361,7 +364,8 @@ const MyTickets = () => {
                           onClick={() => navigate(`/movies/${ticket.movie.id}`)}
                         >
                           <FaEye />
-                          Chi tiết phim
+                          <span>Chi tiết phim</span>
+                          <FaChevronRight className={styles.detailChevron} />
                         </button>
                         
                         {canCancelTicket(ticket) && (

@@ -1,17 +1,25 @@
 import express from 'express';
 import {
-  confirmPaymentFromWebhook,
   createOrderHandler,
-  refundOrderHandler
+  refundOrderHandler,
+  getPaymentByBooking,
+  createPaymentRecord,
+  updatePaymentRecord,
+  voidPendingPayments,
+  expirePendingPaymentsRecord
 } from '../controllers/paymentController.js';
 
 const router = express.Router();
 
-// Webhook forwarder confirm endpoint
-router.post('/confirm', confirmPaymentFromWebhook);
-
-// Internal microservices endpoints
+// Internal microservices endpoints (called by booking-service)
 router.post('/orders', createOrderHandler);
 router.post('/refunds', refundOrderHandler);
+
+// DB management endpoints
+router.get('/booking/:booking_id', getPaymentByBooking);
+router.post('/record', createPaymentRecord);
+router.put('/record/:id', updatePaymentRecord);
+router.post('/void-pending', voidPendingPayments);
+router.post('/expire-pending-records', expirePendingPaymentsRecord);
 
 export default router;

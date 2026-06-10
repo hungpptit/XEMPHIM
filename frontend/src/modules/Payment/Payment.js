@@ -4,20 +4,68 @@ import { FaArrowLeft, FaSpinner, FaSyncAlt } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
 import styles from './Payment.module.css';
 import Popup from '../../components/Popup'; // Import the custom Popup component
+// Module-level variable to prevent React Strict Mode double-render from canceling booking
+let activeBookingId = null;
 
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { movie, showtime, selectedSeats, totalPrice, bookingId, bookingCode } = location.state || {};
+
+  // Try to load state from location.state, fallback to sessionStorage
+  const [paymentData] = useState(() => {
+    if (location.state && location.state.bookingId) {
+      try {
+        sessionStorage.setItem('current_payment', JSON.stringify(location.state));
+      } catch (e) {
+        console.error('Failed to save payment state to sessionStorage:', e);
+      }
+      return location.state;
+    } else {
+      try {
+        const saved = sessionStorage.getItem('current_payment');
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Failed to load payment state from sessionStorage:', e);
+      }
+    }
+    return {};
+  });
+
+  const { movie, showtime, selectedSeats, totalPrice, bookingId, bookingCode } = paymentData;
 
   const [qrUrl, setQrUrl] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
-  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [expiresAt, setExpiresAt] = useState(null);       // tổng session 3 phút
+  const [qrCreatedAt, setQrCreatedAt] = useState(null);  // thời điểm tạo QR gần nhất (để đếm 60s)
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(60); // đếm lùi 60s cho mỗi QR
+  const [qrFaded, setQrFaded] = useState(false);
   const [loadingQr, setLoadingQr] = useState(false);
   const [polling, setPolling] = useState(false);
   const [showPopup, setShowPopup] = useState(false); // State to manage popup visibility
   const [popupActions, setPopupActions] = useState({}); // State to manage popup actions
   const pollRef = useRef(null);
+  const isConfirmedRef = useRef(false);
+  const cancelRequestedRef = useRef(false);
+
+  const cancelPendingBooking = React.useCallback(async () => {
+    if (!bookingId || isConfirmedRef.current || cancelRequestedRef.current) {
+      return;
+    }
+
+    cancelRequestedRef.current = true;
+    try {
+      sessionStorage.removeItem('current_payment');
+    } catch (e) {}
+
+    try {
+      const { bookingAPI } = await import('../../services/api');
+      await bookingAPI.cancelBooking(bookingId);
+    } catch (err) {
+      cancelRequestedRef.current = false;
+      throw err;
+    }
+  }, [bookingId]);
 
   useEffect(() => {
     if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0 || !bookingId) {
@@ -26,15 +74,48 @@ const Payment = () => {
     }
   }, [movie, showtime, selectedSeats, bookingId, navigate]);
 
+  // Timer tổng session 3 phút — khi hết tự cancel và quay về chọn ghế
   useEffect(() => {
     if (!expiresAt) return;
     const iv = setInterval(() => {
       const s = Math.max(0, Math.floor((new Date(expiresAt) - new Date()) / 1000));
-      setSecondsLeft(s);
-      if (s <= 0) clearInterval(iv);
-    }, 300);
+      if (s <= 0) {
+        clearInterval(iv);
+        if (!isConfirmedRef.current) {
+          // Dừng polling
+          if (pollRef.current) clearInterval(pollRef.current);
+          // Cancel booking nếu chưa confirmed
+          cancelPendingBooking().catch(err => {
+            console.warn('Failed to cancel expired booking:', err);
+          }).finally(() => {
+            try { sessionStorage.removeItem('current_payment'); } catch (e) {}
+            navigate(-1); // Quay về trang chọn ghế
+          });
+        }
+      }
+    }, 1000);
     return () => clearInterval(iv);
-  }, [expiresAt]);
+  }, [expiresAt, bookingId, navigate, cancelPendingBooking]);
+
+  // Timer QR 60s — đếm lùi cho từng lần tạo QR, mờ khi hết 60s
+  useEffect(() => {
+    if (!qrCreatedAt) return;
+
+    setQrFaded(false);
+    setQrSecondsLeft(60);
+
+    const iv = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - qrCreatedAt) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      setQrSecondsLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(iv);
+        setQrFaded(true);
+      }
+    }, 500);
+
+    return () => clearInterval(iv);
+  }, [qrCreatedAt]);
 
   useEffect(() => {
     if (!polling || !bookingId) return;
@@ -45,6 +126,10 @@ const Payment = () => {
           const res = await bookingAPI.getBookingStatus(bookingId);
           const status = res.data?.status || res.status || (res.data && res.data.status) || null;
           if (status === 'confirmed') {
+            isConfirmedRef.current = true;
+            try {
+              sessionStorage.removeItem('current_payment');
+            } catch (e) {}
             clearInterval(pollRef.current);
             setPolling(false);
 
@@ -61,6 +146,11 @@ const Payment = () => {
             };
 
             setPopupActions({ handleConfirm });
+          } else if (status === 'expired' || status === 'cancelled') {
+            clearInterval(pollRef.current);
+            setPolling(false);
+            try { sessionStorage.removeItem('current_payment'); } catch (e) {}
+            navigate(-1); // Quay về chọn ghế, không cần alert
           }
         } catch (e) {
           // ignore transient errors
@@ -71,22 +161,28 @@ const Payment = () => {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [polling, bookingId, navigate]);
 
-  const createQr = async () => {
+  const createQr = async (isRefresh = false) => {
     if (!bookingId) return;
     setLoadingQr(true);
     try {
       const { bookingAPI } = await import('../../services/api');
-      const res = await bookingAPI.createSepayQR(bookingId);
+      const res = await bookingAPI.createZaloPayQR(bookingId);
       const data = res.data || res;
       setQrUrl(data.qr_url || data.qrUrl || data.order_url || null);
-      if (data.expires_at) {
-        setExpiresAt(new Date(data.expires_at));
-      } else if (data.expires_in) {
-        setExpiresAt(new Date(Date.now() + Number(data.expires_in) * 1000));
-      } else {
-        // ZaloPay default: 300 seconds (5 minutes)
-        setExpiresAt(new Date(Date.now() + 300 * 1000));
+
+      // Chỉ set expiresAt (tổng 3 phút) lần đầu, không reset khi refresh
+      if (!isRefresh) {
+        if (data.expires_at) {
+          setExpiresAt(new Date(data.expires_at));
+        } else if (data.expires_in) {
+          setExpiresAt(new Date(Date.now() + Number(data.expires_in) * 1000));
+        } else {
+          setExpiresAt(new Date(Date.now() + 180 * 1000));
+        }
       }
+
+      // Luôn reset timer QR 60s khi tạo QR mới
+      setQrCreatedAt(Date.now());
       setPolling(true);
     } catch (err) {
       console.error('Error creating payment QR:', err);
@@ -99,14 +195,86 @@ const Payment = () => {
   const handleRefresh = () => {
     setPolling(false);
     if (pollRef.current) clearInterval(pollRef.current);
-    createQr();
+    createQr(true); // isRefresh = true → không reset tổng 3 phút
   };
+
+  const handleBack = async () => {
+    if (bookingId && !isConfirmedRef.current) {
+      try {
+        await cancelPendingBooking();
+      } catch (err) {
+        console.error('Failed to cancel booking on back click:', err);
+      }
+    }
+    navigate(-1);
+  };
+
+  // ✅ GIẢI PHÁP ĐÚNG cho browser back button:
+  // useEffect cleanup chạy khi component unmount theo BẤT KỲ cách nào.
+  // Không dùng popstate vì React Router intercept navigation trước,
+  // có thể cleanup listener đã chạy trước khi popstate handler kịp fire.
+  useEffect(() => {
+    activeBookingId = bookingId;
+    return () => {
+      // Set to null to indicate this instance is unmounting
+      if (activeBookingId === bookingId) {
+        activeBookingId = null;
+      }
+    };
+  }, [bookingId]);
+
+  useEffect(() => {
+    return () => {
+      // Chạy khi unmount: browser back, navigate(), timer hết hạn, v.v.
+      // Không chạy khi: đã confirm (isConfirmedRef=true) hoặc đã cancel rồi (cancelRequestedRef=true)
+      if (!isConfirmedRef.current && !cancelRequestedRef.current && bookingId) {
+        // Defer execution to avoid canceling on React Strict Mode double-mount/unmount
+        setTimeout(() => {
+          if (activeBookingId !== bookingId && !isConfirmedRef.current) {
+            cancelRequestedRef.current = true;
+            try { sessionStorage.removeItem('current_payment'); } catch (e) {}
+            // fetch + keepalive: request tồn tại sau khi component unmount
+            fetch(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              keepalive: true
+            }).catch(() => {});
+          }
+        }, 100);
+      }
+    };
+  }, [bookingId]);
 
   useEffect(() => {
     createQr();
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+
+    // beforeunload: handle F5, đóng tab, navigate ra ngoài SPA (full page unload)
+    // Đây là trường hợp KHÁC với browser back trong SPA
+    const handleBeforeUnload = () => {
+      if (bookingId && !isConfirmedRef.current && !cancelRequestedRef.current) {
+        cancelRequestedRef.current = true;
+        fetch(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          keepalive: true
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [bookingId]);
 
   if (!movie || !showtime || !selectedSeats || selectedSeats.length === 0 || !bookingId) {
     return (
@@ -123,13 +291,13 @@ const Payment = () => {
 
   return (
     <div className={styles.payment}>
-      <button className={styles.backBtn} onClick={() => navigate(-1)}>
+      <button className={styles.backBtn} onClick={handleBack}>
         <FaArrowLeft />
       </button>
 
       <div className={styles.header}>
         <h1 className={styles.title}>Thanh toán bằng ZaloPay</h1>
-        <p className={styles.subtitle}>Quét mã QR trong 5 phút để thanh toán</p>
+        <p className={styles.subtitle}>QR sẽ mờ sau 1 phút, thời gian thanh toán tối đa 3 phút</p>
       </div>
 
       <div className={styles.content}>
@@ -140,12 +308,12 @@ const Payment = () => {
             {loadingQr ? (
               <div className={styles.loadingBox}><FaSpinner className="loading" /> Đang tạo mã QR...</div>
             ) : qrUrl ? (
-              <div className={`${styles.qrCard} ${secondsLeft <= 0 ? styles.qrExpired : ''}`}>
+              <div className={`${styles.qrCard} ${qrFaded ? styles.qrExpired : ''}`}>
                 <QRCodeSVG 
                   value={qrUrl} 
                   size={256} 
                   level="H"
-                  className={`${styles.qrImage} ${secondsLeft <= 0 ? styles.qrImageExpired : ''}`}
+                  className={`${styles.qrImage} ${qrFaded ? styles.qrImageExpired : ''}`}
                 />
                 <div className={styles.qrInfo}>
                   <div className={styles.accountName}>ZaloPay</div>
@@ -161,7 +329,7 @@ const Payment = () => {
 
           <div className={styles.qrControls}>
             <div className={styles.timer}>
-              Thời gian còn lại: <strong className={secondsLeft <= 10 ? styles.timerExpired : ''}>{secondsLeft}s</strong>
+              Mã QR hết hạn sau: <strong className={qrSecondsLeft <= 10 ? styles.timerExpired : ''}>{qrSecondsLeft}s</strong>
             </div>
             <button className={styles.refreshBtn} onClick={handleRefresh} disabled={loadingQr}>
               <FaSyncAlt /> Làm mới

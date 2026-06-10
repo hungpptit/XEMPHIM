@@ -53,7 +53,14 @@ export const createOrder = async ({ booking_id, booking_code, amount, descriptio
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
-    console.log('✅ [ZaloPay] Order created:', result.data);
+    // return_code: 1 = ZaloPay TẠO ORDER thành công (CHƯA thanh toán)
+    // Thanh toán thực sự chỉ xác nhận khi ZaloPay gọi callback về /api/zalopay/callback
+    console.log('✅ [ZaloPay] Order created (chờ user quét QR, CHƯA thanh toán):', {
+      app_trans_id,
+      zalopay_return_code: result.data.return_code,        // 1 = tạo order OK
+      zalopay_return_message: result.data.return_message,  // ZaloPay tự trả, ko phải trạng thái thanh toán
+      order_url: result.data.order_url ? '(có QR URL)' : '(không có)'
+    });
 
     return {
       success: result.data.return_code === 1,

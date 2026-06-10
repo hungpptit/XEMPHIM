@@ -7,8 +7,9 @@ if (!redis) {
   console.warn('⚠️ [Redis Cache] REDIS_URL not configured. Caching is disabled; falling back to DB queries directly.');
 }
 
-export const listMovies = async () => {
-  const cacheKey = 'movies:list';
+export const listMovies = async (options = {}) => {
+  // options: { all: boolean, page: number, limit: number }
+  const cacheKey = options.all ? 'movies:list:all' : 'movies:list';
   if (redis) {
     try {
       const cached = await redis.get(cacheKey);
@@ -24,26 +25,49 @@ export const listMovies = async () => {
   const { Sequelize } = await import('sequelize');
   const { Showtime } = await import('../models/index.js');
   const Op = Sequelize.Op;
-  const now = new Date();
+  const now = new Date().toISOString();
 
-  const movies = await Movie.findAll({
-    attributes: [
-      'id',
-      'title',
-      'description',
-      'poster_url',
-      'backdrop_url',
-      'trailer_url',
-      'duration_minutes',
-      'release_date',
-      'rating',
-      'director',
-      'status'
-    ]
-  });
+  // If options.page/limit provided, use pagination; otherwise fetch all
+  const attributes = [
+    'id',
+    'title',
+    'description',
+    'poster_url',
+    'backdrop_url',
+    'trailer_url',
+    'duration_minutes',
+    'release_date',
+    'rating',
+    'director',
+    'status'
+  ];
+
+  let movies;
+  if (options.page && options.limit) {
+    const page = parseInt(options.page, 10) || 1;
+    const limit = parseInt(options.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+    // use findAndCountAll to return total count for pagination
+    const { rows, count } = await Movie.findAndCountAll({ attributes, offset, limit });
+    movies = { rows, count };
+  } else {
+    movies = await Movie.findAll({ attributes });
+  }
+
+  // If caller requests all movies (options.all===true) or pagination, return raw fetch
+  if (options.all || (options.page && options.limit)) {
+    if (redis) {
+      try {
+        await redis.set(cacheKey, JSON.stringify(movies), 'EX', 3600);
+        console.log('⚡ [Redis Cache] Miss & Set: listMovies');
+      } catch (err) {
+        console.warn('⚠️ [Redis Cache] Error writing cache:', err.message);
+      }
+    }
+    return movies;
+  }
 
   const moviesWithFutureShowtimes = [];
-  
   for (const movie of movies) {
     if (movie.status === 'coming_soon') {
       moviesWithFutureShowtimes.push(movie);
@@ -54,7 +78,7 @@ export const listMovies = async () => {
       where: {
         movie_id: movie.id,
         start_time: {
-          [Op.gt]: now
+          [Op.gt]: Sequelize.literal(`'${now}'`)
         }
       }
     });
@@ -129,7 +153,7 @@ export const createMovie = async (payload) => {
     release_date: payload.release_date || payload.releaseYear || null,
     rating: payload.rating || null,
     director: payload.director || null,
-    status: payload.status || 'active'
+    status: payload.status || 'coming_soon'
   });
 
   if (payload.genres && Array.isArray(payload.genres)) {
@@ -220,19 +244,31 @@ export const getShowtimesForMovie = async (movieId) => {
   }
 
   const { Sequelize } = await import('sequelize');
-  const { Showtime } = await import('../models/index.js');
+  const { Showtime, CinemaHall, Cinema } = await import('../models/index.js');
   const Op = Sequelize.Op;
-  
-  const now = new Date();
-  
+
+  const now = new Date().toISOString();
+
   const showtimes = await Showtime.findAll({
-    where: { 
+    where: {
       movie_id: movieId,
       start_time: {
-        [Op.gt]: now
+        [Op.gt]: Sequelize.literal(`'${now}'`)
       }
     },
     attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price'],
+    include: [
+      {
+        model: CinemaHall,
+        attributes: ['id', 'name', 'cinema_id'],
+        include: [
+          {
+            model: Cinema,
+            attributes: ['id', 'name', 'address', 'city']
+          }
+        ]
+      }
+    ],
     order: [['start_time', 'ASC']]
   });
 

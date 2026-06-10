@@ -6,14 +6,16 @@ import GenreModel from './genre.js';
 import MovieGenreModel from './movie_genre.js';
 import ShowtimeModel from './showtime.js';
 import CinemaHallModel from './cinema_hall.js';
+import SeatModel from './seat.js';
+import CinemaModel from './cinema.js';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
-if (!process.env.DB_NAME) {
+if (!process.env.MOVIE_DB_NAME) {
   dotenv.config({ path: path.join(process.cwd(), '..', '..', '.env') });
 }
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'master',
+  process.env.MOVIE_DB_NAME || 'XemPhim_Movie',
   process.env.DB_USER || 'sa',
   process.env.DB_PASS || process.env.SA_PASSWORD,
   {
@@ -35,10 +37,21 @@ const Genre = GenreModel(sequelize, DataTypes);
 const MovieGenre = MovieGenreModel(sequelize, DataTypes);
 const Showtime = ShowtimeModel(sequelize, DataTypes);
 const CinemaHall = CinemaHallModel(sequelize, DataTypes);
+const Seat = SeatModel(sequelize, DataTypes);
+const Cinema = CinemaModel(sequelize, DataTypes);
 
 // Associations
+Cinema.hasMany(CinemaHall, { foreignKey: 'cinema_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+CinemaHall.belongsTo(Cinema, { foreignKey: 'cinema_id' });
+
 Movie.hasMany(Showtime, { foreignKey: 'movie_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 Showtime.belongsTo(Movie, { foreignKey: 'movie_id' });
+
+CinemaHall.hasMany(Seat, { foreignKey: 'hall_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+Seat.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
+
+Showtime.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
+CinemaHall.hasMany(Showtime, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 
 export {
   sequelize,
@@ -47,5 +60,7 @@ export {
   Genre,
   MovieGenre,
   Showtime,
-  CinemaHall
+  CinemaHall,
+  Seat,
+  Cinema
 };

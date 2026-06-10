@@ -42,11 +42,12 @@ function mapMovie(m) {
     rating,
     duration: m.duration_minutes ?? m.duration ?? null,
     releaseYear,
+    releaseDate: m.release_date || null,
     genres: Array.isArray(m.genres) ? m.genres : (m.genres || []),
     director: m.director || null,
     cast: Array.isArray(m.cast) ? m.cast : (m.cast || []),
     status,
-    isAvailable: ['now_showing', 'active', 'available'].includes(status)
+    isAvailable: status === 'now_showing'
   };
 }
 
@@ -62,8 +63,10 @@ export async function getMovie(id) {
   return mapMovie(raw);
 }
 
-export default {
+const movieService = {
   listMovies,
   getMovie,
   mapMovie
 };
+
+export default movieService;

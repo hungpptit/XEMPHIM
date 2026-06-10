@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "xemphim-microservices": "file:.."
+  }
+}

@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import bookingRoutes from './routes/bookingRoutes.js';
+import adminStatsRoutes from './routes/adminStatsRoutes.js';
+import * as models from './models/index.js';
 import { startExpireJob } from './jobs/expireBookingsJob.js';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -18,6 +20,9 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+// Store models in app.locals for controllers
+app.locals.models = models;
+
 // Debug logging middleware
 app.use((req, res, next) => {
   console.log(`[Booking Service] ${req.method} ${req.path}`);
@@ -26,6 +31,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
 
 // Start background expiration worker (every 60 seconds)
 startExpireJob(60);

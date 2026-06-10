@@ -3,7 +3,7 @@ import bookingService from '../services/bookingService.js';
 export const lockSeatHandler = async (req, res) => {
   try {
     const { user_id, showtime_id, seat_ids } = req.body;
-    const result = await bookingService.lockSeats({ user_id, showtime_id, seat_ids, holdSeconds: 300 });
+    const result = await bookingService.lockSeats({ user_id, showtime_id, seat_ids, holdSeconds: 180 });
     if (!result.success) {
       return res.status(409).json({ 
         success: false, 
@@ -51,13 +51,13 @@ export const getUserBookingsHandler = async (req, res) => {
   }
 };
 
-export const createSepayQRHandler = async (req, res) => {
+export const createZaloPayQRHandler = async (req, res) => {
   try {
     const bookingId = req.params.bookingId;
-    const result = await bookingService.createSepayQR({ booking_id: bookingId, expiresIn: 60 });
+    const result = await bookingService.createZaloPayQR({ booking_id: bookingId, expiresIn: 180 });
     res.json(result);
   } catch (err) {
-    console.error('Error creating Sepay QR:', err && err.stack ? err.stack : err);
+    console.error('Error creating ZaloPay QR:', err && err.stack ? err.stack : err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -131,12 +131,74 @@ export const refundBookingHandler = async (req, res) => {
   }
 };
 
+export const getShowtimeSeatsHandler = async (req, res) => {
+  try {
+    const showtimeId = req.params.showtimeId;
+    const { Booking, BookingSeat, Sequelize } = req.app.locals.models;
+    const now = new Date().toISOString();
+
+    // 1. Get confirmed seats
+    const confirmedSeats = await BookingSeat.findAll({
+      include: [{
+        model: Booking,
+        where: { showtime_id: showtimeId, status: 'confirmed' },
+        attributes: []
+      }],
+      attributes: ['seat_id']
+    });
+
+    // 2. Get locked (pending) seats
+    const lockedSeats = await BookingSeat.findAll({
+      include: [{
+        model: Booking,
+        where: {
+          showtime_id: showtimeId,
+          status: 'locked',
+          [Sequelize.Op.or]: [
+            { expire_at: null },
+            { expire_at: { [Sequelize.Op.gt]: Sequelize.literal(`'${now}'`) } }
+          ]
+        },
+        attributes: []
+      }],
+      attributes: ['seat_id']
+    });
+
+    res.json({
+      confirmedSeatIds: confirmedSeats.map(s => s.seat_id),
+      lockedSeatIds: lockedSeats.map(s => s.seat_id)
+    });
+  } catch (err) {
+    console.error('Error getting showtime seats:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getShowtimeBookingsCountHandler = async (req, res) => {
+  try {
+    const showtimeId = req.params.showtimeId;
+    const { Booking, Sequelize } = req.app.locals.models;
+    const count = await Booking.count({
+      where: {
+        showtime_id: showtimeId,
+        status: { [Sequelize.Op.ne]: 'cancelled' }
+      }
+    });
+    res.json({ count });
+  } catch (err) {
+    console.error('Error getting showtime bookings count:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export default {
   lockSeatHandler,
   confirmPaymentHandler,
   getUserBookingsHandler,
-  createSepayQRHandler,
+  createZaloPayQRHandler,
   getBookingStatusHandler,
   cancelBookingHandler,
-  refundBookingHandler
+  refundBookingHandler,
+  getShowtimeSeatsHandler,
+  getShowtimeBookingsCountHandler
 };

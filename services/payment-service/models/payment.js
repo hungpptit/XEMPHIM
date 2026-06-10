@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     expire_at: {
-      type: DataTypes.DATE
+      type: DataTypes.STRING
     },
     status: {
       type: DataTypes.STRING
@@ -41,10 +41,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     created_at: {
-      type: DataTypes.DATE
+      type: DataTypes.STRING
     },
     updated_at: {
-      type: DataTypes.DATE
+      type: DataTypes.STRING
     }
   }, {
     tableName: 'Payments',
