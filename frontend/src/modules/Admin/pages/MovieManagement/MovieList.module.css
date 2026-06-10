@@ -365,3 +365,87 @@
 .title {
   font-weight: 600;
 }
+
+.primaryBtn {
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  color: var(--color-gold, #ffd700) !important;
+  padding: 10px 22px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 215, 0, 0.18);
+  border-color: var(--color-gold, #ffd700);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.18);
+}
+
+.dateInput {
+  background: rgba(26, 26, 26, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  color: #fff;
+  padding: 9px 16px;
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dateInput:focus {
+  border-color: var(--color-gold, #ffd700);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.25);
+  background: rgba(26, 26, 26, 0.95);
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clearFilterBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ccc;
+  padding: 9px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clearFilterBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.statsBadge {
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  color: var(--color-gold, #ffd700);
+  padding: 9px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+

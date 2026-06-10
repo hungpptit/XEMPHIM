@@ -7,6 +7,9 @@
   transition: var(--transition);
   position: relative;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .movieCard:hover {
@@ -114,6 +117,9 @@
 
 .content {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .title {
@@ -160,6 +166,7 @@
 .actions {
   display: flex;
   gap: 10px;
+  margin-top: auto;
 }
 
 .bookBtn {

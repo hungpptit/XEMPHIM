@@ -25,7 +25,7 @@ export const listMovies = async (options = {}) => {
   const { Sequelize } = await import('sequelize');
   const { Showtime } = await import('../models/index.js');
   const Op = Sequelize.Op;
-  const now = new Date();
+  const now = new Date().toISOString();
 
   // If options.page/limit provided, use pagination; otherwise fetch all
   const attributes = [
@@ -78,7 +78,7 @@ export const listMovies = async (options = {}) => {
       where: {
         movie_id: movie.id,
         start_time: {
-          [Op.gt]: now
+          [Op.gt]: Sequelize.literal(`'${now}'`)
         }
       }
     });
@@ -247,13 +247,13 @@ export const getShowtimesForMovie = async (movieId) => {
   const { Showtime, CinemaHall, Cinema } = await import('../models/index.js');
   const Op = Sequelize.Op;
 
-  const now = new Date();
+  const now = new Date().toISOString();
 
   const showtimes = await Showtime.findAll({
     where: {
       movie_id: movieId,
       start_time: {
-        [Op.gt]: now
+        [Op.gt]: Sequelize.literal(`'${now}'`)
       }
     },
     attributes: ['id', 'movie_id', 'hall_id', 'start_time', 'end_time', 'base_price'],

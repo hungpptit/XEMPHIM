@@ -5,13 +5,15 @@ import {
   createNewSeat,
   updateSeatById,
   deleteSeatById,
-  getSeatMap
+  getSeatMap,
+  createBulkSeats
 } from '../controllers/seatController.js';
 
 const router = express.Router();
 
 router.get('/', getAllSeats);
 router.get('/showtimes/:showtimeId/seats', getSeatMap);
+router.post('/bulk', createBulkSeats);
 router.get('/:id', getSeat);
 router.post('/', createNewSeat);
 router.put('/:id', updateSeatById);

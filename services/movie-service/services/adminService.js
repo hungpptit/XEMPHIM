@@ -1,4 +1,10 @@
 import { CinemaHall, Showtime, Movie, Cinema } from '../models/index.js';
+import Redis from 'ioredis';
+
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+if (!redis) {
+  console.warn('⚠️ [Redis Cache] REDIS_URL not configured in adminService. Caching is disabled.');
+}
 
 /**
  * Admin Cinema & Hall Management Service
@@ -157,6 +163,16 @@ export const createShowtime = async (movieId, hallId, startTime, endTime, basePr
     base_price: basePrice
   });
 
+  if (redis) {
+    try {
+      await redis.del(`showtimes:movie:${movieId}`);
+      await redis.del('movies:list');
+      console.log(`⚡ [Redis Cache] Invalidated: showtimes:movie:${movieId} and movies:list`);
+    } catch (err) {
+      console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
+    }
+  }
+
   return showtime;
 };
 
@@ -198,6 +214,18 @@ export const deleteShowtime = async (id) => {
     throw new Error('Showtime not found');
   }
 
+  const movieId = showtime.movie_id;
   await showtime.destroy();
+
+  if (redis) {
+    try {
+      await redis.del(`showtimes:movie:${movieId}`);
+      await redis.del('movies:list');
+      console.log(`⚡ [Redis Cache] Invalidated: showtimes:movie:${movieId} and movies:list`);
+    } catch (err) {
+      console.warn('⚠️ [Redis Cache] Error invalidating cache:', err.message);
+    }
+  }
+
   return { message: 'Showtime deleted successfully' };
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import API from '../../../../services/api';
 import styles from '../MovieManagement/MovieList.module.css';
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt, FaPlus, FaCalendarAlt, FaSync } from 'react-icons/fa';
 import ShowtimeForm from './ShowtimeForm';
 import Toast from '../../../../components/Toast';
 
@@ -128,10 +128,18 @@ export default function ShowtimeList() {
       <div className={styles.header}>
         <h2>🎟️ Quản Lý Suất Chiếu</h2>
         <div style={{display:'flex', alignItems:'center', gap:12}}>
-          <button className={styles.primaryBtn} onClick={() => { setEditing(null); setShowForm(true); }}>Tạo suất chiếu</button>
-          <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} />
-          <button className={styles.pageBtn} onClick={() => { setDateFilter(''); fetchShowtimes(''); }}>Hiển thị tất cả</button>
-          <span style={{color:'#ddd', marginLeft:8}}>Tổng {showtimes.length} suất</span>
+          <button className={styles.primaryBtn} onClick={() => { setEditing(null); setShowForm(true); }}>
+            <FaPlus /> Tạo suất chiếu
+          </button>
+          <div className={styles.filterGroup}>
+            <input type="date" className={styles.dateInput} value={dateFilter} onChange={e => setDateFilter(e.target.value)} />
+            <button className={styles.clearFilterBtn} onClick={() => { setDateFilter(''); fetchShowtimes(''); }}>
+              <FaSync /> Hiển thị tất cả
+            </button>
+          </div>
+          <span className={styles.statsBadge}>
+            <FaCalendarAlt /> Tổng {showtimes.length} suất
+          </span>
         </div>
       </div>
 

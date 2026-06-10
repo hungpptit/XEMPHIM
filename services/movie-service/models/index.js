@@ -10,12 +10,12 @@ import SeatModel from './seat.js';
 import CinemaModel from './cinema.js';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
-if (!process.env.DB_NAME) {
+if (!process.env.MOVIE_DB_NAME) {
   dotenv.config({ path: path.join(process.cwd(), '..', '..', '.env') });
 }
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'master',
+  process.env.MOVIE_DB_NAME || 'XemPhim_Movie',
   process.env.DB_USER || 'sa',
   process.env.DB_PASS || process.env.SA_PASSWORD,
   {

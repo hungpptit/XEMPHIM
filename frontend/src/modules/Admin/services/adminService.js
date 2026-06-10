@@ -39,6 +39,8 @@ const hallAPI = {
 // Use the public /api/movies endpoints implemented in movie-service
 const movieAPI = {
   list: (params = {}) => adminAPI.get('/api/movies', { params }),
+  create: (data) => adminAPI.post('/api/movies', data),
+  update: (movieId, data) => adminAPI.put(`/api/movies/${movieId}`, data),
   delete: (movieId) => adminAPI.delete(`/api/movies/${movieId}`)
 };
 

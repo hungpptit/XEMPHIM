@@ -23,18 +23,14 @@ export default (sequelize, DataTypes) => {
       allowNull: true
     },
     created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      type: DataTypes.DATE
     },
     updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      type: DataTypes.DATE
     }
   }, {
     tableName: 'cinemas',
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    timestamps: false
   });
 
   return Cinema;

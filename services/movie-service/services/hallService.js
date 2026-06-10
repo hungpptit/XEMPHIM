@@ -1,3 +1,6 @@
+import axios from 'axios';
+const SEAT_SERVICE = process.env.SEAT_SERVICE_URL || 'http://localhost:4003';
+
 /**
  * Cinema Hall Management Service
  * Quản lý các phòng chiếu
@@ -55,14 +58,14 @@ export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, ha
             row_name: rowLetter,
             seat_number: j,
             seat_type: isVipRow ? 'vip' : 'regular',
-            price_modifier: isVipRow ? 50000.00 : 0.00, // Extra 50k for VIP
+            price_modifier: isVipRow ? 1.20 : 1.00, // VIP modifier is 1.2, regular is 1.0
             is_active: true
           });
         }
       }
 
       // Instead of bulkCreate, use a loop of individual creates to ensure stability and get better errors
-      console.log(`[Hall Service] Creating ${seatsToCreate.length} seats for hall ${hall.id}...`);
+      console.log(`[Hall Service] Creating ${seatsToCreate.length} seats for hall ${hall.id} locally...`);
       
       const createdSeats = [];
       for (const seatData of seatsToCreate) {
@@ -75,10 +78,26 @@ export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, ha
         }
       }
       
-      console.log(`[Hall Service] Successfully created ${createdSeats.length}/${seatsToCreate.length} seats.`);
+      console.log(`[Hall Service] Successfully created ${createdSeats.length}/${seatsToCreate.length} seats locally.`);
       
       if (createdSeats.length === 0 && seatsToCreate.length > 0) {
         throw new Error('Không thể tạo được bất kỳ ghế nào cho phòng chiếu. Vui lòng kiểm tra log backend.');
+      }
+
+      console.log(`[Hall Service] Synchronizing seats with seat-service...`);
+      try {
+        await axios.post(`${SEAT_SERVICE}/api/seats/bulk`, seatsToCreate.map(s => ({
+          hall_id: hall.id,
+          row_name: s.row_name,
+          seat_number: s.seat_number,
+          seat_type: s.seat_type,
+          price_modifier: s.price_modifier,
+          is_active: s.is_active
+        })));
+        console.log(`[Hall Service] Successfully synchronized seats to seat-service.`);
+      } catch (syncErr) {
+        console.error(`[Hall Service] Failed to synchronize seats to seat-service:`, syncErr.message);
+        throw new Error('Lỗi đồng bộ ghế sang Seat Service: ' + syncErr.message);
       }
     }
 

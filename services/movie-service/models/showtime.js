@@ -15,10 +15,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
     start_time: {
-      type: DataTypes.DATE
+      type: DataTypes.STRING
     },
     end_time: {
-      type: DataTypes.DATE
+      type: DataTypes.STRING
     },
     base_price: {
       type: DataTypes.DECIMAL

@@ -10,5 +10,7 @@ router.get('/:bookingId/status', bookingController.getBookingStatusHandler);
 router.post('/:bookingId/cancel', bookingController.cancelBookingHandler);
 router.post('/:bookingId/refund', bookingController.refundBookingHandler);
 router.get('/user/:userId', bookingController.getUserBookingsHandler);
+router.get('/showtimes/:showtimeId/seats', bookingController.getShowtimeSeatsHandler);
+router.get('/showtimes/:showtimeId/bookings-count', bookingController.getShowtimeBookingsCountHandler);
 
 export default router;

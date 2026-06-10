@@ -65,6 +65,8 @@ export const updateCinema = async (Cinema, cinemaId, updates) => {
     }
   });
 
+  updateData.updated_at = Cinema.sequelize.literal('GETDATE()');
+
   try {
     await cinema.update(updateData);
     return cinema;
