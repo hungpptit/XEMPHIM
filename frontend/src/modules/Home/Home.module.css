@@ -6,7 +6,8 @@
 
 .hero {
   position: relative;
-  height: 60vh;
+  height: 40vh;
+  min-height: 350px;
   background: linear-gradient(
     rgba(0, 0, 0, 0.6),
     rgba(0, 0, 0, 0.8)
@@ -16,7 +17,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
   overflow: hidden;
 }
 
@@ -247,7 +248,9 @@
 
 @media (max-width: 480px) {
   .hero {
-    height: 50vh;
+    height: auto;
+    min-height: 250px;
+    padding: 40px 0;
   }
   
   .heroTitle {

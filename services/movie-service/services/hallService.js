@@ -55,7 +55,7 @@ export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, ha
             row_name: rowLetter,
             seat_number: j,
             seat_type: isVipRow ? 'vip' : 'regular',
-            price_modifier: isVipRow ? 50000.00 : 0.00, // Extra 50k for VIP
+            price_modifier: isVipRow ? 15000.00 : 0.00, // Extra 15k for VIP (90k total with 75k base price)
             is_active: true
           });
         }

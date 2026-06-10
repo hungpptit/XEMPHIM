@@ -203,13 +203,15 @@ export const getSeatMapForShowtime = async (showtimeId) => {
       }
     }
 
+    const modifier = Number(s.price_modifier) || 0.0;
+    const surcharge = (modifier === 1.0) ? 0.0 : modifier;
     const seatObj = {
       id: s.id,
       row: s.row_name,
       number: s.seat_number,
       status,
       type: s.seat_type === 'VIP' ? 'vip' : (s.seat_type === 'Standard' ? 'regular' : s.seat_type.toLowerCase()),
-      price: (showtime.base_price || 0) + (Number(s.price_modifier) || 0),
+      price: (showtime.base_price || 0) + surcharge,
       is_active: s.is_active ?? true
     };
 

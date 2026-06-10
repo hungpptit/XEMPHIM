@@ -328,6 +328,14 @@ const SeatSelection = () => {
   const renderSeatRow = (row, rowIndex) => {
     const rowSeats = row;
     const rowLetter = rowSeats[0].row;
+    const N = rowSeats.length;
+    let L = 3;
+    let R = 3;
+    if (N > 12) {
+      L = Math.floor(N / 4);
+      R = L;
+    }
+    const M = N - L - R;
     
     return (
       <div key={rowIndex} className={styles.row}>
@@ -335,20 +343,20 @@ const SeatSelection = () => {
           {rowLetter}
         </div>
         
-        {/* Ghế 1-3 */}
-        {rowSeats.slice(0, 3).map(seat => renderSeat(seat))}
+        {/* Left group */}
+        {rowSeats.slice(0, L).map(seat => renderSeat(seat))}
         
-        {/* Lối đi 1 */}
+        {/* Aisle 1 */}
         <div className={styles.aisle}></div>
         
-        {/* Ghế 4-9 */}
-        {rowSeats.slice(3, 9).map(seat => renderSeat(seat))}
+        {/* Middle group */}
+        {rowSeats.slice(L, L + M).map(seat => renderSeat(seat))}
         
-        {/* Lối đi 2 */}
+        {/* Aisle 2 */}
         <div className={styles.aisle}></div>
         
-        {/* Ghế 10-12 */}
-        {rowSeats.slice(9, 12).map(seat => renderSeat(seat))}
+        {/* Right group */}
+        {rowSeats.slice(L + M, N).map(seat => renderSeat(seat))}
       </div>
     );
   };
@@ -414,32 +422,38 @@ const SeatSelection = () => {
           
           <div className={styles.seatsGrid}>
             {/* Trục X - Số ghế */}
-            <div className={styles.seatNumbers}>
-              <div className={styles.rowLabel}></div>
-              {/* Số 1-3 */}
-              <div className={styles.numberGroup}>
-                <span>1</span>
-                <span>2</span>
-                <span>3</span>
-              </div>
-              <div className={styles.aisle}></div>
-              {/* Số 4-9 */}
-              <div className={styles.numberGroup}>
-                <span>4</span>
-                <span>5</span>
-                <span>6</span>
-                <span>7</span>
-                <span>8</span>
-                <span>9</span>
-              </div>
-              <div className={styles.aisle}></div>
-              {/* Số 10-12 */}
-              <div className={styles.numberGroup}>
-                <span>10</span>
-                <span>11</span>
-                <span>12</span>
-              </div>
-            </div>
+            {seatMap.length > 0 && (() => {
+              const rowSeats = seatMap[0];
+              const N = rowSeats.length;
+              let L = 3;
+              let R = 3;
+              if (N > 12) {
+                L = Math.floor(N / 4);
+                R = L;
+              }
+              const M = N - L - R;
+              
+              const leftSeats = rowSeats.slice(0, L);
+              const midSeats = rowSeats.slice(L, L + M);
+              const rightSeats = rowSeats.slice(L + M, N);
+
+              return (
+                <div className={styles.seatNumbers}>
+                  <div className={styles.rowLabel}></div>
+                  <div className={styles.numberGroup}>
+                    {leftSeats.map((s, idx) => <span key={s.id || idx}>{s.number}</span>)}
+                  </div>
+                  <div className={styles.aisle}></div>
+                  <div className={styles.numberGroup}>
+                    {midSeats.map((s, idx) => <span key={s.id || idx}>{s.number}</span>)}
+                  </div>
+                  <div className={styles.aisle}></div>
+                  <div className={styles.numberGroup}>
+                    {rightSeats.map((s, idx) => <span key={s.id || idx}>{s.number}</span>)}
+                  </div>
+                </div>
+              );
+            })()}
             
             {seatMap.map((row, rowIndex) => renderSeatRow(row, rowIndex))}
           </div>

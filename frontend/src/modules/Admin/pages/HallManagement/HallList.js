@@ -343,7 +343,7 @@ export default function HallManagement() {
                     required
                   />
                   <small style={{ color: '#666', fontSize: '0.8rem', display: 'block', marginTop: '4px' }}>
-                    Các hàng ghế phía sau sẽ được thiết lập là VIP (+50.000đ giá vé)
+                    Các hàng ghế phía sau sẽ được thiết lập là VIP (+15.000đ giá vé)
                   </small>
                 </div>
               </>

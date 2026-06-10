@@ -141,11 +141,15 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
     const showtime = await Showtime.findByPk(showtime_id, { transaction: t });
 
     const seatRows = await Seat.findAll({ where: { id: targetSeatIds }, transaction: t });
-    const bookingSeatCreates = seatRows.map(s => ({
-      booking_id: booking.id,
-      seat_id: s.id,
-      price: (showtime?.base_price || 0) + (Number(s.price_modifier) || 0)
-    }));
+    const bookingSeatCreates = seatRows.map(s => {
+      const modifier = Number(s.price_modifier) || 0.0;
+      const surcharge = (modifier === 1.0) ? 0.0 : modifier;
+      return {
+        booking_id: booking.id,
+        seat_id: s.id,
+        price: (showtime?.base_price || 0) + surcharge
+      };
+    });
 
     await BookingSeat.bulkCreate(bookingSeatCreates, { transaction: t });
 
