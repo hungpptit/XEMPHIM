@@ -1,12 +1,12 @@
 # 🎬 XEMPHIM - Hệ Thống Đặt Vé Xem Phim Online
 
-[![Node.js](https://img.shields.io/badge/Node.js-16+-green)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18.x-blue)](https://reactjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-336791)](https://www.postgresql.org/)
+[![MSSQL](https://img.shields.io/badge/MSSQL-SQL_Server-red)](https://www.microsoft.com/en-us/sql-server/)
 [![ZaloPay](https://img.shields.io/badge/ZaloPay-Integration-orange)](https://zalopay.vn/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Hệ thống quản lý đặt vé xem phim **toàn diện** được xây dựng với kiến trúc **Microservices**. Hỗ trợ thanh toán qua **ZaloPay**, tích hợp **RabbitMQ** cho xử lý bất đồng bộ, và giao diện web hiện đại với **React**.
+Hệ thống quản lý đặt vé xem phim **toàn diện** được xây dựng với kiến trúc **Microservices**. Hỗ trợ thanh toán qua **ZaloPay**, tích hợp **RabbitMQ** cho xử lý bất đồng bộ, và giao diện web hiện đại với **React**. Hệ thống sử dụng **Microsoft SQL Server (MSSQL)** làm cơ sở dữ liệu chính.
 
 ## ✨ Tính Năng Chính
 
@@ -25,44 +25,36 @@ Hệ thống quản lý đặt vé xem phim **toàn diện** được xây dựn
 ```
 ┌─────────────────────────────────┐
 │   Frontend (React)              │
-│   Port: 3000/3001              │
+│   Port: 3000                    │
 └──────────────┬──────────────────┘
                │
 ┌──────────────▼──────────────────┐
 │  API Gateway                    │
-│  Port: 3000                     │
+│  Port: 8080                     │
 │  (Route aggregation & auth)     │
 └──────────────┬──────────────────┘
                │
-      ┌────────┴─────────────────────┬──────────────┐
-      │                              │              │
-┌─────▼──────┐ ┌─────────┐ ┌────────▼──┐ ┌─────────▼──┐
-│ User       │ │ Movie   │ │ Booking   │ │ Payment    │
-│ Service    │ │ Service │ │ Service   │ │ Service    │
-│ :5001      │ │ :5002   │ │ :5003     │ │ :5004      │
-└─────┬──────┘ └────┬────┘ └────┬──────┘ └────┬───────┘
-      │             │           │             │
-      │   ┌─────────┴───────────┼─────────────┤
-      │   │                     │             │
-      │   │  ┌──────────────────▼──┐          │
-      │   │  │ Seat Service        │          │
-      │   │  │ :5005               │          │
-      │   │  └──────────┬───────────┘          │
-      │   │             │                      │
-      └───┴─────────────┼──────────────────────┘
-          │             │
-      ┌───▼─────────────▼──────────────────────┐
-      │  PostgreSQL Database (Shared)          │
-      │  - Users, Movies, Showtimes            │
-      │  - Bookings, Seats, Payments           │
-      └────────────────────────────────────────┘
-          │
-      ┌───▼──────────────────────────┐
-      │ RabbitMQ Message Queue       │
-      │ (Async Processing)           │
-      │ - Notification Service       │
-      │ - Booking expiration jobs    │
-      └──────────────────────────────┘
+      ┌────────┴─────────────────────┬──────────────┬──────────────┐
+      │                              │              │              │
+┌─────▼──────┐ ┌─────────┐ ┌────────▼──┐ ┌─────────▼──┐ ┌──────────▼──┐
+│ User       │ │ Movie   │ │ Seat      │ │ Booking    │ │ Payment     │
+│ Service    │ │ Service │ │ Service   │ │ Service    │ │ Service     │
+│ :4001      │ │ :4002   │ │ :4003     │ │ :4004      │ │ :4005       │
+└─────┬──────┘ └────┬────┘ └────┬──────┘ └────┬───────┘ └────┬────────┘
+      │             │           │             │              │
+      └─────────────┴───────────┼─────────────┴──────────────┘
+                                │
+       ┌────────────────────────▼────────────────────────┐
+       │  Microsoft SQL Server (MSSQL) - Port 1433       │
+       │  - XemPhim_User      - XemPhim_Movie            │
+       │  - XemPhim_Seat      - XemPhim_Booking          │
+       │  - XemPhim_Payment                              │
+       └────────────────────────┬────────────────────────┘
+                                │
+       ┌────────────────────────▼────────────────────────┐
+       │ RabbitMQ Message Queue (Async Processing)       │
+       │ - Notification Service (:4006 / consumer)       │
+       └─────────────────────────────────────────────────┘
 ```
 
 ## 🛠️ Công Nghệ Sử Dụng
@@ -76,10 +68,11 @@ Hệ thống quản lý đặt vé xem phim **toàn diện** được xây dựn
 
 ### Backend Services
 - **Node.js + Express** - RESTful API framework
-- **Sequelize ORM** - Database management & migrations
-- **PostgreSQL** - Production-ready relational database
+- **Sequelize ORM** - Database management & schemas
+- **Microsoft SQL Server (MSSQL)** - Relational Database
+- **tedious** - SQL Server client for Node.js
 - **JWT** - Authentication & Authorization
-- **bcryptjs** - Password hashing
+- **bcrypt / bcryptjs** - Password hashing
 - **RabbitMQ** - Message queue for async operations
 - **amqplib** - RabbitMQ client
 
@@ -88,7 +81,7 @@ Hệ thống quản lý đặt vé xem phim **toàn diện** được xây dựn
 - **MD5/HMAC** - Cryptographic signatures for security
 
 ### DevOps & Tools
-- **npm/yarn** - Package management
+- **npm** - Package management
 - **Nodemon** - Development auto-reload
 - **Ngrok** - Local development tunneling
 - **Swagger/OpenAPI** - API documentation
@@ -139,25 +132,26 @@ XEMPHIM/
 │   └── README.md
 │
 ├── gateway/                       # API Gateway (Route Aggregation)
-│   ├── index.js                   # Main gateway server
+│   ├── index.js                   # Main gateway server (Port 8080)
 │   ├── package.json
 │   └── swagger.json               # API Documentation
 │
 ├── services/                      # Microservices
 │   │
-│   ├── user-service/              # 👤 User Management (Port 5001)
+│   ├── user-service/              # 👤 User Management (Port 4001)
 │   │   ├── index.js
 │   │   ├── package.json
 │   │   ├── controllers/
 │   │   │   └── authController.js
 │   │   ├── models/
+│   │   │   ├── index.js
 │   │   │   └── user.js
 │   │   ├── routes/
 │   │   │   └── auth.js
 │   │   └── utils/
 │   │       └── jwt.js
 │   │
-│   ├── movie-service/             # 🎥 Movie Management (Port 5002)
+│   ├── movie-service/             # 🎥 Movie Management (Port 4002)
 │   │   ├── index.js
 │   │   ├── package.json
 │   │   ├── controllers/
@@ -174,7 +168,23 @@ XEMPHIM/
 │   │   └── services/
 │   │       └── moviesService.js
 │   │
-│   ├── booking-service/           # 🎫 Booking Management (Port 5003)
+│   ├── seat-service/              # 🪑 Seat Management (Port 4003)
+│   │   ├── index.js
+│   │   ├── package.json
+│   │   ├── controllers/
+│   │   │   └── seatController.js
+│   │   ├── models/
+│   │   │   ├── seat.js
+│   │   │   ├── booking_seat.js
+│   │   │   ├── showtime.js
+│   │   │   ├── cinema_hall.js
+│   │   │   └── index.js
+│   │   ├── routes/
+│   │   │   └── seatRoutes.js
+│   │   └── services/
+│   │       └── seatService.js
+│   │
+│   ├── booking-service/           # 🎫 Booking Management (Port 4004)
 │   │   ├── index.js
 │   │   ├── package.json
 │   │   ├── controllers/
@@ -193,7 +203,7 @@ XEMPHIM/
 │   │   └── services/
 │   │       └── bookingService.js
 │   │
-│   ├── payment-service/           # 💳 Payment & ZaloPay (Port 5004)
+│   ├── payment-service/           # 💳 Payment & ZaloPay (Port 4005)
 │   │   ├── index.js
 │   │   ├── package.json
 │   │   ├── controllers/
@@ -208,32 +218,14 @@ XEMPHIM/
 │   │   └── services/
 │   │       └── zalopayService.js  # ZaloPay integration
 │   │
-│   ├── seat-service/              # 🪑 Seat Management (Port 5005)
-│   │   ├── index.js
-│   │   ├── package.json
-│   │   ├── controllers/
-│   │   │   └── seatController.js
-│   │   ├── models/
-│   │   │   ├── seat.js
-│   │   │   ├── booking_seat.js
-│   │   │   ├── showtime.js
-│   │   │   ├── cinema_hall.js
-│   │   │   └── index.js
-│   │   ├── routes/
-│   │   │   └── seatRoutes.js
-│   │   └── services/
-│   │       └── seatService.js
-│   │
-│   └── notification-service/      # 🔔 Async Notifications
+│   └── notification-service/      # 🔔 Async Notifications (Port 4006)
 │       ├── index.js
 │       ├── package.json
 │       └── consumer.js            # RabbitMQ consumer
 │
 ├── docs/                          # Documentation
-│   ├── payment_flow.md            # ZaloPay integration guide
-│   └── ...
+│   └── payment_flow.md            # ZaloPay integration guide
 │
-├── MOCK_DATA_LOCATIONS.md         # Mock data locations
 ├── HUONG_DAN_DAY_DU_ZALOPAY.md    # ZaloPay setup guide
 ├── zalopay_qr_integration.md      # QR code integration guide
 ├── RUN_NGROK_GUIDE.md             # Ngrok tunneling guide
@@ -244,413 +236,277 @@ XEMPHIM/
 ## 🚀 Hướng Dẫn Cài Đặt & Chạy
 
 ### Prerequisites
-- **Node.js** 16+ ([Download](https://nodejs.org/))
-- **PostgreSQL** 13+ ([Download](https://www.postgresql.org/download/))
-- **RabbitMQ** ([Download](https://www.rabbitmq.com/download.html)) - Optional for full features
-- **npm** hoặc **yarn**
+- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **Microsoft SQL Server (MSSQL)** ([Download](https://www.microsoft.com/en-us/sql-server/sql-server-downloads))
+- **RabbitMQ** ([Download](https://www.rabbitmq.com/download.html))
+- **npm**
 - **Git**
 
 ### Installation - Step by Step
 
 #### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/XEMPHIM.git
+git clone https://github.com/hungpptit/XEMPHIM.git
 cd XEMPHIM
 ```
 
 #### 2. Install Dependencies for All Services
+Có thể sử dụng câu lệnh ở thư mục gốc để tự động cài đặt cho toàn bộ các thư mục con:
 ```bash
-# Install root dependencies
+npm run install-all
+```
+
+Hoặc cài đặt thủ công:
+```bash
+# Cài đặt root dependencies
 npm install
 
-# Frontend
+# Cài đặt gateway
+cd gateway && npm install && cd ..
+
+# Cài đặt frontend
 cd frontend && npm install && cd ..
 
-# Services
+# Cài đặt các microservices
 cd services/user-service && npm install && cd ../../
 cd services/movie-service && npm install && cd ../../
+cd services/seat-service && npm install && cd ../../
 cd services/booking-service && npm install && cd ../../
 cd services/payment-service && npm install && cd ../../
-cd services/seat-service && npm install && cd ../../
 cd services/notification-service && npm install && cd ../../
 ```
 
 #### 3. Database Setup
 
-Create PostgreSQL database:
+Hãy đảm bảo dịch vụ **SQL Server** đã được khởi động và cổng mặc định `1433` đang được mở.
+Tạo các database tương ứng cho các service trên SQL Server:
+- `XemPhim_User`
+- `XemPhim_Movie`
+- `XemPhim_Seat`
+- `XemPhim_Booking`
+- `XemPhim_Payment`
+
+Bạn có thể chạy các truy vấn SQL sau:
 ```sql
-CREATE DATABASE xemphim;
-CREATE USER xemphim_user WITH PASSWORD 'your_password';
-ALTER ROLE xemphim_user SET client_encoding TO 'utf8';
-ALTER ROLE xemphim_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE xemphim_user SET default_transaction_deferrable TO on;
-GRANT ALL PRIVILEGES ON DATABASE xemphim TO xemphim_user;
+CREATE DATABASE XemPhim_User;
+CREATE DATABASE XemPhim_Movie;
+CREATE DATABASE XemPhim_Seat;
+CREATE DATABASE XemPhim_Booking;
+CREATE DATABASE XemPhim_Payment;
 ```
 
 #### 4. Environment Configuration
 
-Create `.env` files in each service directory:
+Tạo một file `.env` chung ở thư mục gốc hoặc các file `.env` riêng lẻ cho từng service:
 
-**services/user-service/.env**
+**File `.env` ở thư mục gốc:**
 ```env
-PORT=5001
 NODE_ENV=development
-DATABASE_URL=postgresql://xemphim_user:your_password@localhost:5432/xemphim
-JWT_SECRET=your_jwt_secret_key_min_32_chars_long
+PORT=8080
+HOSTNAME=localhost
+
+# SQL Server Configuration
+DB_HOST=localhost
+DB_PORT=1433
+DB_USERNAME=sa
+DB_PASS=your_sa_password
+DB_ENCRYPT=false
+SA_PASSWORD=your_sa_password
+
+# Database Names
+USER_DB_NAME=XemPhim_User
+MOVIE_DB_NAME=XemPhim_Movie
+SEAT_DB_NAME=XemPhim_Seat
+BOOKING_DB_NAME=XemPhim_Booking
+PAYMENT_DB_NAME=XemPhim_Payment
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_key_here
 JWT_EXPIRE=7d
-BCRYPT_ROUNDS=10
-```
 
-**services/movie-service/.env**
-```env
-PORT=5002
-NODE_ENV=development
-DATABASE_URL=postgresql://xemphim_user:your_password@localhost:5432/xemphim
-```
+# ZaloPay Integration
+APP_ID=2554
+KEY1=your_zalopay_key1
+KEY2=your_zalopay_key2
+ZALOPAY_ENDPOINT=https://sb-openapi.zalopay.vn
+ZALOPAY_CALLBACK_URL=https://your-ngrok-subdomain.ngrok-free.dev/api/zalopay/callback
 
-**services/booking-service/.env**
-```env
-PORT=5003
-NODE_ENV=development
-DATABASE_URL=postgresql://xemphim_user:your_password@localhost:5432/xemphim
+# RabbitMQ Configuration
 RABBITMQ_URL=amqp://localhost
-BOOKING_EXPIRE_TIME=300
-```
 
-**services/payment-service/.env**
-```env
-PORT=5004
-NODE_ENV=development
-DATABASE_URL=postgresql://xemphim_user:your_password@localhost:5432/xemphim
-ZALOPAY_APP_ID=your_zalopay_app_id
-ZALOPAY_KEY1=your_zalopay_key1
-ZALOPAY_KEY2=your_zalopay_key2
-ZALOPAY_ENDPOINT=https://api.zalopay.vn
-CALLBACK_URL=http://your-domain/api/callback
-```
-
-**services/seat-service/.env**
-```env
-PORT=5005
-NODE_ENV=development
-DATABASE_URL=postgresql://xemphim_user:your_password@localhost:5432/xemphim
-```
-
-**services/notification-service/.env**
-```env
-NODE_ENV=development
-RABBITMQ_URL=amqp://localhost
-```
-
-**frontend/.env**
-```env
-REACT_APP_API_URL=http://localhost:3000/api
-REACT_APP_ZALOPAY_ENABLED=true
+# Email SMTP Setup (Nodemailer)
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+EMAIL_FROM="XemPhim PTIT <your_email@gmail.com>"
 ```
 
 ### Running Services
 
-Open multiple terminal windows and run each command:
+Bạn có thể chạy toàn bộ các dịch vụ (Gateway, Frontend và 6 Microservices) song song chỉ với 1 lệnh từ thư mục gốc nhờ vào `concurrently`:
+```bash
+npm run dev-all
+```
+
+Hoặc chạy từng dịch vụ một trong các terminal khác nhau:
 
 **Terminal 1 - Frontend (React)**
 ```bash
 cd frontend
 npm start
-# Runs at http://localhost:3000
+# Khởi chạy tại http://localhost:3000
 ```
 
 **Terminal 2 - API Gateway**
 ```bash
-node gateway/index.js
-# Routes requests to microservices
+npm run dev-gateway
+# Khởi chạy tại http://localhost:8080
 ```
 
 **Terminal 3 - User Service**
 ```bash
-cd services/user-service
-npm start
-# Runs at http://localhost:5001
+npm run dev-user
+# Khởi chạy tại http://localhost:4001
 ```
 
 **Terminal 4 - Movie Service**
 ```bash
-cd services/movie-service
-npm start
-# Runs at http://localhost:5002
+npm run dev-movie
+# Khởi chạy tại http://localhost:4002
 ```
 
-**Terminal 5 - Booking Service**
+**Terminal 5 - Seat Service**
 ```bash
-cd services/booking-service
-npm start
-# Runs at http://localhost:5003
+npm run dev-seat
+# Khởi chạy tại http://localhost:4003
 ```
 
-**Terminal 6 - Payment Service**
+**Terminal 6 - Booking Service**
 ```bash
-cd services/payment-service
-npm start
-# Runs at http://localhost:5004
+npm run dev-booking
+# Khởi chạy tại http://localhost:4004
 ```
 
-**Terminal 7 - Seat Service**
+**Terminal 7 - Payment Service**
 ```bash
-cd services/seat-service
-npm start
-# Runs at http://localhost:5005
+npm run dev-payment
+# Khởi chạy tại http://localhost:4005
 ```
 
-**Terminal 8 - Notification Service (Optional)**
+**Terminal 8 - Notification Service**
 ```bash
-cd services/notification-service
-node consumer.js
-# RabbitMQ consumer for async notifications
+npm run dev-notification
+# Khởi chạy tại http://localhost:4006
 ```
 
 ### Verify All Services
 
-Once all services are running, test the API Gateway:
+Khi mọi dịch vụ đã sẵn sàng, truy vấn Gateway Health Check:
 ```bash
-curl http://localhost:3000/api/health
+curl http://localhost:8080/api/health
 ```
 
-Visit Frontend:
+Giao diện người dùng có thể truy cập tại:
 ```
 http://localhost:3000
 ```
 
 ## 📊 API Endpoints
 
-### User Service (Port 5001)
+Mọi request từ Frontend sẽ đi qua **API Gateway (Port 8080)**:
+
+### User Service (Port 4001)
 ```
-POST   /api/auth/register      - Register new user
-POST   /api/auth/login         - User login
-GET    /api/auth/profile       - Get user profile (JWT required)
-PUT    /api/auth/profile       - Update user profile
-POST   /api/auth/logout        - User logout
+POST   /api/auth/register      - Đăng ký tài khoản mới (Gmail kết thúc bằng @gmail.com)
+POST   /api/auth/login         - Đăng nhập tài khoản
+GET    /api/auth/profile       - Lấy thông tin cá nhân (Cần JWT cookie)
+POST   /api/auth/logout        - Đăng xuất
 ```
 
-### Movie Service (Port 5002)
+### Movie Service (Port 4002)
 ```
-GET    /api/movies             - Get all movies
-GET    /api/movies/:id         - Get movie details
-GET    /api/movies/genre/:id   - Get movies by genre
-GET    /api/showtimes          - Get showtimes
-GET    /api/cinema-halls       - Get cinema halls
+GET    /api/movies             - Lấy danh sách toàn bộ phim
+GET    /api/movies/:id         - Lấy chi tiết thông tin phim
+GET    /api/showtimes          - Lấy danh sách suất chiếu
 ```
 
-### Booking Service (Port 5003)
+### Seat Service (Port 4003)
 ```
-POST   /api/bookings           - Create new booking
-GET    /api/bookings           - Get user bookings
-GET    /api/bookings/:id       - Get booking details
-PUT    /api/bookings/:id       - Update booking
-DELETE /api/bookings/:id       - Cancel booking
+GET    /api/seats/:showtimeId  - Lấy trạng thái ghế ngồi của suất chiếu
+POST   /api/seats/reserve      - Giữ ghế tạm thời
+DELETE /api/seats/release      - Hủy giữ ghế
 ```
 
-### Seat Service (Port 5005)
+### Booking Service (Port 4004)
 ```
-GET    /api/seats/:showtimeId  - Get available seats
-POST   /api/seats/reserve      - Reserve seats
-DELETE /api/seats/release      - Release reserved seats
-```
-
-### Payment Service (Port 5004)
-```
-POST   /api/payments           - Create payment
-GET    /api/payments/:id       - Get payment status
-POST   /api/zalopay/create-qr  - Create ZaloPay QR
-POST   /api/zalopay/callback   - ZaloPay callback handler
+POST   /api/bookings           - Tạo một đơn đặt vé mới
+GET    /api/bookings           - Lấy danh sách đơn đặt vé của user
+GET    /api/bookings/:id       - Xem chi tiết đơn đặt vé
+DELETE /api/bookings/:id       - Hủy đơn đặt vé
 ```
 
-## 🎯 User Flow
+### Payment Service (Port 4005)
+```
+POST   /api/payments           - Tạo giao dịch thanh toán
+GET    /api/payments/:id       - Lấy trạng thái thanh toán
+POST   /api/zalopay/create-qr  - Tạo mã thanh toán QR ZaloPay
+POST   /api/zalopay/callback   - Nhận callback cập nhật từ ZaloPay
+```
+
+## 🎯 Luồng Nghiệp Vụ Người Dùng
 
 ```
-1. Register/Login (User Service)
+1. Đăng ký/Đăng nhập (User Service)
    ↓
-2. Browse Movies (Movie Service)
+2. Xem thông tin phim & suất chiếu (Movie Service)
    ↓
-3. Select Showtime (Movie Service)
+3. Lựa chọn ghế ngồi (Seat Service)
    ↓
-4. Choose Seats (Seat Service)
+4. Tạo đơn đặt vé (Booking Service)
    ↓
-5. Create Booking (Booking Service)
+5. Tạo QR thanh toán ZaloPay (Payment Service)
    ↓
-6. Payment (Payment Service → ZaloPay)
+6. Callback xác nhận thành công & giữ vé (Booking/Seat Service)
    ↓
-7. Confirm Booking (Booking Service)
+7. Thông báo qua Email (Notification Service / RabbitMQ)
    ↓
-8. View Ticket with QR Code (My Tickets)
+8. Theo dõi vé đã mua (My Tickets)
 ```
 
-## 🔐 Security Features
+## 🔐 Các Tính Năng Bảo Mật
 
-- **JWT Authentication**: Secure token-based auth across all services
-- **Password Hashing**: bcryptjs with salt rounds (10)
-- **CORS Configuration**: Restricted to allowed origins
-- **Input Validation**: Server-side validation on all endpoints
-- **SQL Injection Prevention**: Sequelize ORM parameterized queries
-- **XSS Protection**: React's built-in XSS protection
-- **HTTPS Ready**: Support for production SSL/TLS
+- **JWT Authentication**: Xác thực người dùng bằng Cookie HttpOnly an toàn
+- **Password Hashing**: Mã hóa mật khẩu thông qua thư viện bcrypt/bcryptjs
+- **CORS Configuration**: Gateway kiểm soát truy cập từ domain frontend được cho phép
+- **Input Validation**: Ràng buộc email `@gmail.com` ở cả client và server
+- **SQL Injection Prevention**: Sử dụng các truy vấn tham số hóa mặc định của Sequelize ORM
 
-## 🌐 ZaloPay Integration
+## 🌐 Tích Hợp ZaloPay Sandbox
 
-### Features:
-- Generate ZaloPay payment QR codes
-- Real-time payment status tracking
-- Secure HMAC-MD5 signature validation
-- Automatic transaction logging
-- Payment retry mechanism
+- Sử dụng ZaloPay Merchant Sandbox App ID `2554` để thử nghiệm
+- Callback được cấu hình qua Ngrok tunnel để hướng dữ liệu từ ZaloPay Server về môi trường local máy phát triển.
+- Chi tiết cấu hình tham khảo tại [HUONG_DAN_DAY_DU_ZALOPAY.md](./HUONG_DAN_DAY_DU_ZALOPAY.md).
 
-### Setup:
-See [HUONG_DAN_DAY_DU_ZALOPAY.md](./HUONG_DAN_DAY_DU_ZALOPAY.md) for detailed ZaloPay configuration.
+## 📊 Trạng Thái Dự Án
 
-## 📱 Frontend Modules
-
-### Auth Module
-- User registration & login
-- Password validation
-- Token storage & management
-
-### Home Module
-- Movie listing with filters
-- Search functionality
-- Movie recommendations
-
-### Movie Detail Module
-- Full movie information
-- Trailer integration
-- Showtime selection
-
-### SeatSelection Module
-- Interactive seat map
-- Real-time availability
-- Seat pricing display
-
-### Payment Module
-- Multiple payment gateways
-- ZaloPay QR code display
-- Payment status tracking
-
-### MyTickets Module
-- Booked tickets list
-- QR code display
-- Ticket cancellation
-- Refund tracking
-
-## 🧪 Testing
-
-### Test User Credentials
-```
-Email: test@example.com
-Password: Test123456
-```
-
-### Test ZaloPay Payment (Sandbox Mode)
-- Use sandbox ZaloPay credentials
-- Test transactions don't charge real money
-- See [zalopay_qr_integration.md](./zalopay_qr_integration.md) for details
-
-## 🌍 Deployment
-
-### Production Checklist
-- [ ] Set NODE_ENV=production
-- [ ] Use environment variables for all secrets
-- [ ] Enable HTTPS/SSL
-- [ ] Set up database backups
-- [ ] Configure RabbitMQ for production
-- [ ] Implement rate limiting
-- [ ] Set up monitoring and logging
-- [ ] Configure CI/CD pipeline
-
-### Docker Deployment (Optional)
-```bash
-# Build Docker images for each service
-docker-compose up -d
-```
-
-## 📚 Documentation
-
-- [Payment Flow](./docs/payment_flow.md)
-- [ZaloPay Setup Guide](./HUONG_DAN_DAY_DU_ZALOPAY.md)
-- [ZaloPay QR Integration](./zalopay_qr_integration.md)
-- [Ngrok Setup Guide](./RUN_NGROK_GUIDE.md)
-- [Mock Data Locations](./MOCK_DATA_LOCATIONS.md)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/AmazingFeature`
-3. Commit changes: `git commit -m 'Add AmazingFeature'`
-4. Push to branch: `git push origin feature/AmazingFeature`
-5. Open Pull Request
-
-## 📝 Project Structure Best Practices
-
-- **Controllers**: Handle HTTP requests/responses
-- **Services**: Business logic layer
-- **Models**: Database schemas
-- **Routes**: API endpoint definitions
-- **Utils**: Reusable utility functions
-- **Middleware**: Authentication, validation, error handling
-
-## 🐛 Troubleshooting
-
-### Database Connection Error
-- Verify PostgreSQL is running
-- Check DATABASE_URL in .env
-- Ensure database exists
-
-### RabbitMQ Connection Error
-- Start RabbitMQ service
-- Verify RABBITMQ_URL in .env
-- Check RabbitMQ management console on port 15672
-
-### CORS Error
-- Verify frontend URL in gateway CORS config
-- Check service-to-service communication settings
-- Ensure proper Origin headers
-
-### ZaloPay Integration Issues
-- Verify ZaloPay credentials in .env
-- Check callback URL configuration
-- Ensure HMAC signature validation is correct
-
-## 📊 Project Status
-
-- [x] Microservices architecture
-- [x] User authentication with JWT
-- [x] Movie & showtime management
-- [x] Booking & seat selection
-- [x] ZaloPay payment integration
-- [x] React frontend
-- [x] API Gateway
-- [ ] Email notifications
-- [ ] SMS notifications
-- [ ] Admin dashboard
-- [ ] Analytics dashboard
+- [x] Kiến trúc Microservices hoàn chỉnh
+- [x] Cơ sở dữ liệu SQL Server phân mảnh theo service
+- [x] Xác thực người dùng qua JWT
+- [x] Đặt vé & Quản lý phim/suất chiếu
+- [x] Thanh toán tích hợp ZaloPay Sandbox
+- [x] Thông báo bất đồng bộ qua RabbitMQ (Notification Service)
+- [ ] Dashboard quản lý dành cho Admin
+- [ ] Gửi mã vé QR code chi tiết qua Email
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Project này được phân phối dưới giấy phép MIT License.
 
-## 👨‍💻 Authors
+## 👨‍💻 Tác giả
 
-- **Phạm Tuấn Hung** - Initial work and development
-
-## 🙏 Acknowledgments
-
-- ZaloPay for payment gateway
-- PostgreSQL for database
-- RabbitMQ for message queuing
-- React community for amazing framework
-
-## 📞 Support
-
-For support, please create an issue in the repository or contact the development team.
+- **Phạm Tuấn Hưng** - Nhà phát triển chính
 
 ---
 
-**Last Updated**: May 20, 2026  
-**Version**: 1.0.0  
-**Status**: Active Development
+**Cập nhật lần cuối**: Tháng 6, 2026  
+**Phiên bản**: 1.0.0  
+**Trạng thái**: Hoàn thiện đợt Refactor cơ sở dữ liệu & Cấu hình dịch vụ
