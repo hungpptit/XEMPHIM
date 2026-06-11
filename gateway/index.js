@@ -89,6 +89,7 @@ app.use('/api/users', proxy(USER_SERVICE, proxyOptions));
 app.use('/api/movies', proxy(MOVIE_SERVICE, proxyOptions));
 app.use('/api/showtimes', proxy(MOVIE_SERVICE, proxyOptions));
 app.use('/api/admin/users', proxy(USER_SERVICE, proxyOptions));
+app.use('/api/admin/stats', proxy(BOOKING_SERVICE, proxyOptions));
 app.use('/api/admin', proxy(MOVIE_SERVICE, proxyOptions));
 app.use('/api/seats', proxy(SEAT_SERVICE, proxyOptions));
 app.use('/api/bookings', proxy(BOOKING_SERVICE, proxyOptions));
