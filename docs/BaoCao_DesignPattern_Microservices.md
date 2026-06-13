@@ -27,7 +27,41 @@ Hệ thống **XemPhim** được thiết kế dựa trên kiến trúc **Micros
    │   User   │   │   Movie   │   │   Seat    │   │  Booking  │  │  Payment  │
    │ Service  │   │  Service  │   │  Service  │   │  Service  │  │  Service  │
    └──────────┘   └───────────┘   └───────────┘   └─────┬─────┘  └───────────┘
-                                                     ## 2. Các Mẫu Thiết Kế Kiến Trúc (Architectural Patterns)
+```
+
+---
+
+## Danh Sách Các Mẫu Thiết Kế Được Áp Dụng (Table of Patterns)
+
+Dưới đây là danh sách tổng hợp các mẫu thiết kế đã được áp dụng trong dự án **XemPhim**, được phân loại theo mục đích thiết kế:
+
+### 1. Nhóm Mẫu Kiến Trúc (Architectural Patterns)
+*   **API Gateway Pattern:** Chốt chặn entry-point duy nhất, định tuyến request và kiểm tra bảo mật (JWT) tập trung.
+*   **Database per Service Pattern:** Chia cơ sở dữ liệu độc lập cho mỗi microservice để giảm khớp nối (loose coupling).
+*   **Event-Driven Architecture (EDA) & Publish-Subscribe Pattern:** Gửi thông báo vé xem phim bất đồng bộ qua RabbitMQ nhằm tối ưu thời gian phản hồi.
+
+### 2. Nhóm Mẫu Khởi Tạo & Cấu Trúc (Creational & Structural Patterns)
+*   **Singleton Pattern:** Tái sử dụng một kết nối duy nhất đối với Sequelize và Redis Client để tránh cạn kiệt tài nguyên.
+*   **Factory Method Pattern:** Sử dụng hàm factory để khởi tạo các Sequelize Model độc lập.
+*   **Proxy Pattern (Reverse Proxy):** Dùng API Gateway làm reverse proxy định tuyến request từ Client tới các microservices.
+*   **Facade Pattern (Backend Service Facade):** Đóng gói logic tương tác phức tạp (DB transaction, Redis lock, RabbitMQ publish) tại tầng Service.
+*   **Adapter Pattern (Payment Gateway Adapter):** Chuyển đổi dữ liệu và phương thức gọi từ ZaloPay API về định dạng nghiệp vụ chuẩn của hệ thống.
+
+### 3. Nhóm Mẫu Hành Vi (Behavioral Patterns)
+*   **Chain of Responsibility Pattern (Chuỗi Trách Nhiệm):** Sử dụng các Express middleware nối tiếp nhau để xử lý tuần tự một request (xác thực token, phân quyền...).
+*   **Resilience Pattern & Fallback Mechanism (Phòng Vệ & Cơ Chế Dự Phòng):** Tự động chuyển hướng xử lý sang các kênh thay thế (như gửi HTTP thay cho RabbitMQ) khi có lỗi dịch vụ ngoài.
+
+### 4. Nhóm Xử Lý Đồng Thời & Phân Tán (Concurrency & Distributed Patterns)
+*   **Distributed Lock Pattern (Khóa Phân Tán):** Sử dụng Redis (cờ `NX`, `PX`) làm khóa ghế tạm thời tốc độ cao để chặn trùng lặp ghế ở RAM.
+*   **Pessimistic Concurrency Control (Kiểm Soát Đồng Thời Bi Quan):** Sử dụng Sequelize Transaction kết hợp cờ `t.LOCK.UPDATE` làm khóa dòng mức cơ sở dữ liệu làm lớp bảo vệ thanh toán cuối cùng.
+
+### 5. Nhóm Mẫu Phía Client (Frontend Patterns)
+*   **Service Layer (Client-side Facade Pattern):** Gom nhóm toàn bộ API endpoints của Axios thành các lớp dịch vụ tập trung để dễ quản lý.
+*   **Component-Based Architecture (Kiến Trúc Component):** Thiết kế giao diện React chia nhỏ thành các khối độc lập (SeatMap, MovieCard, Header...) dễ tái sử dụng.
+
+---
+
+## 2. Các Mẫu Thiết Kế Kiến Trúc (Architectural Patterns)
 
 ### 2.1. API Gateway Pattern
 *   **Vị trí áp dụng:** File `/gateway/index.js`
@@ -112,13 +146,15 @@ Hệ thống **XemPhim** được thiết kế dựa trên kiến trúc **Micros
 ## 3. Các Mẫu Thiết Kế Khởi Tạo & Cấu Trúc (Creational & Structural Patterns)
 
 ### 3.1. Singleton Pattern
-*   **Vị trí áp dụng:** Các tệp tin `models/index.js` của các service (ví dụ: `/services/booking-service/models/index.js`).
-*   **Mô tả:** Chỉ khởi tạo duy nhất một đối tượng kết nối `Sequelize` và tái sử dụng nó toàn cục nhằm tiết kiệm tài nguyên kết nối (Connection Pool).
+*   **Vị trí áp dụng:** 
+    *   Các tệp tin `models/index.js` của các service (ví dụ: `/services/booking-service/models/index.js`).
+    *   Thực thể Redis client tại `/services/booking-service/services/bookingService.js`.
+*   **Mô tả:** Chỉ khởi tạo duy nhất một đối tượng kết nối (`Sequelize`, `Redis`) và tái sử dụng nó toàn cục nhằm tiết kiệm tài nguyên kết nối (Connection Pool).
 *   **Tại sao lại dùng? (Lý do & Lợi ích):**
     *   **Quản lý và tiết kiệm tài nguyên (Resource Optimization):** Việc khởi tạo kết nối cơ sở dữ liệu (Database Connection) hoặc kết nối TCP (Redis/RabbitMQ) tốn rất nhiều thời gian và CPU. Nếu mỗi request của khách hàng lại tạo một kết nối mới, server sẽ nhanh chóng bị cạn kiệt bộ nhớ (Connection Exhaustion) dẫn đến sập hệ thống.
     *   **Duy trì trạng thái kết nối tập trung:** Dễ dàng kiểm soát Connection Pool (tối đa bao nhiêu kết nối hoạt động đồng thời), giám sát hiệu năng truy vấn từ một thực thể duy nhất.
 *   **Minh chứng code & Dấu hiệu nhận biết:**
-    *   Một instance `new Sequelize(...)` được khởi tạo duy nhất một lần và export trực tiếp để các module khác import dùng chung.
+    *   Một instance `new Sequelize(...)` hoặc `new Redis(...)` được khởi tạo duy nhất một lần và dùng chung trên toàn service.
     ```javascript
     // services/booking-service/models/index.js
     const sequelize = new Sequelize(
@@ -128,6 +164,9 @@ Hệ thống **XemPhim** được thiết kế dựa trên kiến trúc **Micros
       { dialect: 'mssql', /* ... */ }
     );
     export { sequelize }; // Xuất ra đối tượng đơn nhất (Singleton)
+
+    // services/booking-service/services/bookingService.js
+    const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null; // Singleton instance của Redis Client
     ```
 
 ### 3.2. Factory Method Pattern
@@ -163,6 +202,60 @@ Hệ thống **XemPhim** được thiết kế dựa trên kiến trúc **Micros
     // gateway/index.js
     const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
     app.use('/api/bookings', proxy(BOOKING_SERVICE, proxyOptions));
+    ```
+
+### 3.4. Facade Pattern (Backend Service Facade)
+*   **Vị trí áp dụng:** `/services/booking-service/services/bookingService.js`
+*   **Mô tả:** Cung cấp một giao diện đơn giản thống nhất (`lockSeats`, `confirmPayment`) che giấu đi sự phức tạp khi tương tác với hàng loạt hệ thống con phía sau (Database Models, DB Transactions, Redis Locks, RabbitMQ).
+*   **Tại sao lại dùng? (Lý do & Lợi ích):**
+    *   **Giảm thiểu khớp nối (Loose Coupling):** Các controller chỉ cần tương tác qua facade `bookingService` mà không cần biết cách khởi tạo giao dịch DB, cách set lock trong Redis, hay cách mở kênh TCP tới RabbitMQ.
+    *   **Đóng gói logic nghiệp vụ:** Đảm bảo toàn bộ logic quy trình phức tạp được bọc trong một hàm duy nhất, dễ viết unit test và dễ quản lý luồng dữ liệu.
+*   **Minh chứng code & Dấu hiệu nhận biết:**
+    *   Hàm `confirmPayment` đóng gói toàn bộ quy trình thanh toán phức tạp:
+    ```javascript
+    // services/booking-service/services/bookingService.js
+    export const confirmPayment = async ({ booking_id, payment_method, payment_payload }) => {
+      const t = await sequelize.transaction();
+      try {
+        // 1. Xác nhận Booking trong DB (Sequelize)
+        // 2. Giải phóng khóa Redis
+        await releaseSeatLocks(booking.showtime_id, seatIds);
+        // 3. Bắn event sang RabbitMQ gửi mail
+        await publishNotification({ booking_id, ... });
+        await t.commit();
+        return { success: true };
+      } catch (err) {
+        await t.rollback();
+        throw err;
+      }
+    };
+    ```
+
+### 3.5. Adapter Pattern (Payment Gateway Adapter)
+*   **Vị trí áp dụng:** `/services/payment-service/services/zalopayService.js`
+*   **Mô tả:** Chuyển đổi giao diện thô từ API của cổng thanh toán ZaloPay (Adaptee) về giao diện gọi hàm nghiệp vụ chuẩn hóa của hệ thống XEMPHIM (Target).
+*   **Tại sao lại dùng? (Lý do & Lợi ích):**
+    *   **Tính độc lập với bên thứ ba:** Giúp hệ thống không bị ràng buộc trực tiếp vào đặc tả API của ZaloPay. Nếu sau này tích hợp thêm Stripe hay VNPay, ta chỉ cần viết thêm Adapter mới, lớp Controller vẫn giữ nguyên cách gọi.
+    *   **Bảo mật & Trách nhiệm đơn lẻ:** Các tác vụ ký số, sinh MAC (HMAC-SHA256) phức tạp được che giấu hoàn chỉnh bên trong Adapter.
+*   **Minh chứng code & Dấu hiệu nhận biết:**
+    *   Adapter nhận tham số chuẩn nội bộ và chuyển đổi thành request payload đúng chuẩn ZaloPay, đồng thời tính toán signature.
+    ```javascript
+    // services/payment-service/services/zalopayService.js
+    export const createOrder = async ({ booking_id, booking_code, amount, description }) => {
+      const order = {
+        app_id: config.app_id,
+        app_trans_id: `${moment().format('YYMMDD')}_${Math.floor(Math.random() * 1000000)}`,
+        app_user: `user_${booking_id}`,
+        amount: Math.round(Number(amount)),
+        embed_data: JSON.stringify({ booking_id, booking_code }),
+      };
+      // Adapter tự tính toán chữ ký số ZaloPay yêu cầu
+      const data = `${config.app_id}|${order.app_trans_id}|${order.app_user}|...`;
+      order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
+      
+      const result = await axios.post(`${config.endpoint}/v2/create`, null, { params: order });
+      return { success: result.data.return_code === 1, order_url: result.data.order_url }; // Kết quả trả về chuẩn hóa
+    };
     ```
 
 ---
