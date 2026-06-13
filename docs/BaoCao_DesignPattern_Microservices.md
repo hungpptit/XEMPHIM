@@ -130,9 +130,9 @@ Hệ thống **XemPhim** được thiết kế dựa trên kiến trúc **Micros
     export { sequelize }; // Xuất ra đối tượng đơn nhất (Singleton)
     ```
 
-### 3.2. Factory Pattern
+### 3.2. Factory Method Pattern
 *   **Vị trí áp dụng:** Các tệp định nghĩa model cơ sở dữ liệu (ví dụ: `/services/booking-service/models/booking.js`).
-*   **Mô tả:** Định nghĩa model dưới dạng một Factory Function nhận kết nối `sequelize` để khởi tạo.
+*   **Mô tả:** Định nghĩa model dưới dạng một Factory Function nhận kết nối `sequelize` để khởi tạo (tương ứng với mẫu Factory Method nhận tham số để khởi tạo các Model Object cụ thể).
 *   **Tại sao lại dùng? (Lý do & Lợi ích):**
     *   **Tách biệt mối quan tâm (Separation of Concerns):** Giúp tách rời định nghĩa cấu trúc bảng (Schema Definition) ra khỏi instance kết nối thực tế.
     *   **Thuận tiện cho Unit Testing (Dễ Mocking):** Khi viết kiểm thử tự động, chúng ta có thể truyền vào một đối tượng DB giả lập (Mock Database connection) vào Factory Function này mà không cần kết nối thật đến SQL Server, giúp test chạy nhanh và độc lập.
@@ -183,9 +183,9 @@ Hệ thống **XemPhim** được thiết kế dựa trên kiến trúc **Micros
     router.post('/admin/movies', verifyToken, verifyAdmin, createMovie);
     ```
 
-### 4.2. Fallback Pattern (Mẫu Thiết Kế Phòng Vệ/Dự Phòng)
+### 4.2. Resilience Pattern & Fallback Mechanism (Mẫu Thiết Kế Phòng Vệ & Cơ Chế Dự Phòng)
 *   **Vị trí áp dụng:** Logic xử lý gửi mail và khóa ghế trong `/services/booking-service/services/bookingService.js`.
-*   **Mô tả:** Khi RabbitMQ hoặc Redis gặp sự cố, hệ thống tự động bắt lỗi và chuyển hướng sang logic thay thế (gửi HTTP API trực tiếp hoặc dùng khóa DB thông thường) để tránh sập tính năng.
+*   **Mô tả:** Cơ chế ngắt mạch và dự phòng khi các dịch vụ bên ngoài (RabbitMQ hoặc Redis) gặp sự cố, hệ thống tự động bắt lỗi và hạ cấp tính năng một cách êm đẹp (Graceful Degradation) thông qua logic thay thế.
 *   **Tại sao lại dùng? (Lý do & Lợi ích):**
     *   **Tối đa hóa tính sẵn sàng của hệ thống (Graceful Degradation):** RabbitMQ hay Redis là các hệ thống độc lập và hoàn toàn có thể bị sập do quá tải hoặc mất mạng. Nếu không có cơ chế Fallback, hệ thống đặt vé sẽ bị tê liệt hoàn toàn khi một trong hai dịch vụ này gặp sự cố. Việc dự phòng giúp hệ thống tự động hạ cấp tính năng một cách êm đẹp: tuy chậm hơn một chút (dùng HTTP REST hoặc DB Lock) nhưng vẫn đảm bảo khách mua được vé và nhận được email.
 *   **Minh chứng code & Dấu hiệu nhận biết:**
@@ -244,9 +244,9 @@ Hệ thống **XemPhim** được thiết kế dựa trên kiến trúc **Micros
 
 ## 6. Mẫu Thiết Kế Phía Client (Frontend Patterns)
 
-### 6.1. Service/API Layer Pattern
+### 6.1. Service Layer (Client-side Facade Pattern)
 *   **Vị trí áp dụng:** File `/frontend/src/services/api.js` cấu hình Axios instance.
-*   **Mô tả:** Đóng gói toàn bộ các endpoint gọi API vào một lớp dịch vụ tập trung để dễ quản lý URL và bắt lỗi tập trung (Axios Interceptors).
+*   **Mô tả:** Đóng gói toàn bộ các endpoint gọi API vào một lớp dịch vụ tập trung (Service Layer) đồng thời đóng vai trò làm Facade che giấu sự phức tạp của cấu hình Axios, headers và interceptors phía sau.
 *   **Tại sao lại dùng? (Lý do & Lợi ích):**
     *   **Quản lý Endpoint tập trung:** Nếu URL API của server thay đổi, nhà phát triển chỉ cần cập nhật ở một file duy nhất `api.js` thay vì đi rà soát và sửa đổi ở hàng trăm Component React khác nhau.
     *   **Xử lý lỗi tập trung (Axios Interceptors):** Giúp bắt tất cả lỗi 401 (Hết phiên đăng nhập) để tự động xóa cookie/localstorage và đẩy user về trang đăng nhập một cách đồng bộ trên toàn ứng dụng.
