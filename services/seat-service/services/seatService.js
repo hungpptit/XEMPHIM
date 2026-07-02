@@ -2,10 +2,13 @@ import { Seat } from '../models/index.js';
 import Redis from 'ioredis';
 import axios from 'axios';
 
+// Khởi tạo Redis client phục vụ cho việc kiểm tra trạng thái khóa ghế thời gian thực (Real-time seat locks)
 const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
 const MOVIE_SERVICE = process.env.MOVIE_SERVICE_URL || 'http://localhost:4002';
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 
+// Truy vấn danh sách ID các ghế đang bị khóa (tạm giữ) trên Redis cho một lịch chiếu
+// Thiết kế: Quét qua tất cả các khóa tạm giữ dạng 'lock:showtime:${showtimeId}:seat:*' để lấy ra các ghế đang bị khóa tạm thời 120s.
 async function getRedisLockedSeatIds(showtimeId) {
   if (!redis) return new Set();
 
@@ -80,8 +83,11 @@ export const deleteSeat = async (id) => {
   return true;
 };
 
+// Lấy bản đồ trạng thái ghế ngồi cho một lịch chiếu
+// Thiết kế: Kết hợp dữ liệu từ SQL Server (ghế trống, ghế đã thanh toán thành công)
+// và Redis (các ghế đang bị giữ tạm thời do tiến trình đặt vé đang diễn ra)
 export const getSeatMapForShowtime = async (showtimeId) => {
-  // 1. Fetch showtime details from movie-service
+  // 1. Lấy thông tin lịch chiếu từ movie-service
   let showtime = null;
   try {
     const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${showtimeId}`);
@@ -93,16 +99,14 @@ export const getSeatMapForShowtime = async (showtimeId) => {
 
   if (!showtime) return null;
 
-  // Note: showtime from movie-service already contains nested CinemaHall/Cinema details
-
-  // 2. Fetch seats in the showtime's hall
+  // 2. Lấy danh sách toàn bộ ghế có trong phòng chiếu đó
   const seats = await Seat.findAll({
     where: { hall_id: showtime.hall_id },
     attributes: ['id', 'hall_id', 'row_name', 'seat_number', 'seat_type', 'price_modifier', 'is_active'],
     order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
   });
 
-  // 3. Fetch locked and confirmed seat IDs from booking-service
+  // 3. Lấy thông tin ghế đã đặt (confirmed) và bị khóa (locked) từ DB của booking-service
   let confirmedSeatIds = new Set();
   let lockedSeatIds = new Set();
 
@@ -114,7 +118,7 @@ export const getSeatMapForShowtime = async (showtimeId) => {
     console.error('Failed to fetch showtime seat reservations from booking-service:', err.message);
   }
 
-  // Also query Redis locks locally
+  // 4. Lấy thêm các ghế đang bị khóa tạm thời trên Redis (Real-time locks) và gộp lại
   try {
     const redisLocked = await getRedisLockedSeatIds(showtimeId);
     for (const id of redisLocked) {
@@ -132,9 +136,9 @@ export const getSeatMapForShowtime = async (showtimeId) => {
       status = 'inactive';
     } else {
       if (lockedSeatIds.has(s.id)) {
-        status = 'locked';
+        status = 'locked'; // Ghế đang bị giữ tạm thời
       } else if (confirmedSeatIds.has(s.id)) {
-        status = 'occupied';
+        status = 'occupied'; // Ghế đã được mua thành công
       }
     }
 

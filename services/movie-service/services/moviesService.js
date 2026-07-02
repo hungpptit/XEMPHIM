@@ -1,12 +1,16 @@
 import { Movie, Genre } from '../models/index.js';
 import Redis from 'ioredis';
 
-// Initialize Redis client with fallback
+// Khởi tạo Redis client với cơ chế dự phòng
+// Thiết kế: Sử dụng Redis làm lớp đệm cache để giảm tải cho DB SQL Server đối với các truy vấn đọc dữ liệu phim/lịch chiếu.
 const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
 if (!redis) {
   console.warn('⚠️ [Redis Cache] REDIS_URL not configured. Caching is disabled; falling back to DB queries directly.');
 }
 
+// Xóa bỏ toàn bộ cache danh sách phim (movies:list*)
+// Thiết kế: Dùng cơ chế Active Invalidation (Xóa cache chủ động) khi có thay đổi dữ liệu (thêm/sửa/xóa phim).
+// Sử dụng lệnh SCAN của Redis để duyệt qua tất cả key khớp với pattern và xóa chúng.
 export const invalidateListCache = async () => {
   if (!redis) return;
   try {
@@ -25,6 +29,12 @@ export const invalidateListCache = async () => {
   }
 };
 
+// Lấy danh sách phim
+// Thiết kế: Áp dụng Cache-Aside Pattern.
+// Bước 1: Sinh cache key dựa trên tham số phân trang.
+// Bước 2: Kiểm tra trong Redis. Nếu có (Cache Hit), trả về dữ liệu JSON ngay lập tức.
+// Bước 3: Nếu không có (Cache Miss), truy vấn Database SQL Server.
+// Bước 4: Lưu dữ liệu vừa lấy được từ DB vào Redis với TTL là 1 giờ (3600 giây) để tái sử dụng.
 export const listMovies = async (options = {}) => {
   // options: { all: boolean, page: number, limit: number }
   const cacheKey = options.all
@@ -49,7 +59,7 @@ export const listMovies = async (options = {}) => {
   const Op = Sequelize.Op;
   const now = new Date().toISOString();
 
-  // If options.page/limit provided, use pagination; otherwise fetch all
+  // Nếu có thông số page/limit thì dùng phân trang; ngược lại lấy toàn bộ
   const attributes = [
     'id',
     'title',
@@ -69,14 +79,12 @@ export const listMovies = async (options = {}) => {
     const page = parseInt(options.page, 10) || 1;
     const limit = parseInt(options.limit, 10) || 10;
     const offset = (page - 1) * limit;
-    // use findAndCountAll to return total count for pagination
     const { rows, count } = await Movie.findAndCountAll({ attributes, offset, limit });
     movies = { rows, count };
   } else {
     movies = await Movie.findAll({ attributes });
   }
 
-  // If caller requests all movies (options.all===true) or pagination, return raw fetch
   if (options.all || (options.page && options.limit)) {
     if (redis) {
       try {
@@ -112,7 +120,7 @@ export const listMovies = async (options = {}) => {
 
   if (redis) {
     try {
-      await redis.set(cacheKey, JSON.stringify(moviesWithFutureShowtimes), 'EX', 3600); // cache for 1 hour
+      await redis.set(cacheKey, JSON.stringify(moviesWithFutureShowtimes), 'EX', 3600); // cache 1 giờ
       console.log('⚡ [Redis Cache] Miss & Set: listMovies');
     } catch (err) {
       console.warn('⚠️ [Redis Cache] Error writing cache:', err.message);
@@ -122,6 +130,8 @@ export const listMovies = async (options = {}) => {
   return moviesWithFutureShowtimes;
 };
 
+// Lấy thông tin chi tiết một bộ phim theo ID
+// Thiết kế: Cache-Aside Pattern. Lưu cache chi tiết phim theo key: movies:detail:${id} với TTL 1 giờ.
 export const getMovieById = async (id) => {
   const cacheKey = `movies:detail:${id}`;
   if (redis) {
@@ -164,6 +174,8 @@ export const getMovieById = async (id) => {
   return movie;
 };
 
+// Thêm mới phim
+// Thiết kế: Sau khi tạo phim thành công trong SQL Server, thực hiện xóa cache danh sách phim (movies:list*) để đảm bảo dữ liệu mới nhất được cập nhật cho người dùng (Active Invalidation).
 export const createMovie = async (payload) => {
   const m = await Movie.create({
     title: payload.title,
@@ -183,12 +195,14 @@ export const createMovie = async (payload) => {
     await m.setGenres(genres);
   }
 
-  // Invalidate list cache
+  // Hủy cache danh sách
   await invalidateListCache();
 
   return m;
 };
 
+// Cập nhật thông tin phim
+// Thiết kế: Thực hiện cập nhật DB thành công, sau đó xóa cả cache danh sách phim (movies:list*) và cache chi tiết của bộ phim đó (movies:detail:${id}) để ngăn chặn hiện tượng dữ liệu cũ (Stale Data).
 export const updateMovie = async (id, payload) => {
   const movie = await Movie.findByPk(id);
   if (!movie) return null;
@@ -211,7 +225,7 @@ export const updateMovie = async (id, payload) => {
     await movie.setGenres(genres);
   }
 
-  // Invalidate cache
+  // Hủy cache danh sách và cache chi tiết phim
   await invalidateListCache();
   if (redis) {
     try {
@@ -225,12 +239,14 @@ export const updateMovie = async (id, payload) => {
   return movie;
 };
 
+// Xóa phim
+// Thiết kế: Xóa phim thành công ở DB, hủy bỏ cache danh sách và cache chi tiết phim khỏi Redis.
 export const deleteMovie = async (id) => {
   const movie = await Movie.findByPk(id);
   if (!movie) return false;
   await movie.destroy();
 
-  // Invalidate cache
+  // Hủy cache danh sách và cache chi tiết phim
   await invalidateListCache();
   if (redis) {
     try {
@@ -244,6 +260,8 @@ export const deleteMovie = async (id) => {
   return true;
 };
 
+// Lấy danh sách lịch chiếu của một bộ phim
+// Thiết kế: Áp dụng Cache-Aside Pattern cho lịch chiếu của từng bộ phim với cache key là: showtimes:movie:${movieId} và TTL ngắn hơn (10 phút - 600 giây) vì lịch chiếu có thể biến động liên tục.
 export const getShowtimesForMovie = async (movieId) => {
   const cacheKey = `showtimes:movie:${movieId}`;
   if (redis) {
@@ -289,7 +307,7 @@ export const getShowtimesForMovie = async (movieId) => {
 
   if (redis) {
     try {
-      await redis.set(cacheKey, JSON.stringify(showtimes), 'EX', 600); // cache for 10 minutes
+      await redis.set(cacheKey, JSON.stringify(showtimes), 'EX', 600); // cache trong 10 phút
       console.log(`⚡ [Redis Cache] Miss & Set: getShowtimesForMovie(${movieId})`);
     } catch (err) {
       console.warn('⚠️ [Redis Cache] Error writing cache:', err.message);

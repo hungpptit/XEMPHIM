@@ -2,6 +2,7 @@ import axios from 'axios';
 import CryptoJS from 'crypto-js';
 import moment from 'moment';
 
+// Cấu hình môi trường tích hợp cổng thanh toán ZaloPay (Sandbox)
 const config = {
   app_id: process.env.APP_ID || '2554',
   key1: process.env.KEY1 || 'sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn',
@@ -10,11 +11,14 @@ const config = {
   callback_url: process.env.ZALOPAY_CALLBACK_URL || 'https://unsentiently-fattenable-daria.ngrok-free.dev/api/zalopay/callback'
 };
 
+// Tạo đơn hàng thanh toán ZaloPay (Sinh liên kết quét mã QR thanh toán)
 export const createOrder = async ({ booking_id, booking_code, amount, description }) => {
   try {
+    // Sinh mã app_trans_id duy nhất cho đơn hàng theo định dạng YYMMDD_idNgauNhien
     const transID = Math.floor(Math.random() * 1000000);
     const app_trans_id = `${moment().format('YYMMDD')}_${transID}`;
     
+    // Xây dựng payload đối tượng đơn hàng theo đặc tả yêu cầu của ZaloPay (Adapter)
     const order = {
       app_id: config.app_id,
       app_trans_id,
@@ -37,7 +41,10 @@ export const createOrder = async ({ booking_id, booking_code, amount, descriptio
       bank_code: ''
     };
 
+    // Chuỗi dữ liệu thô để tạo chữ ký số (MAC) gửi sang ZaloPay để chống giả mạo
+    // Công thức: app_id|app_trans_id|app_user|amount|app_time|embed_data|item
     const data = `${config.app_id}|${app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
+    // Sử dụng thuật toán HMAC-SHA256 kết hợp Key1 để sinh chữ ký số (MAC)
     order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
     console.log('📤 [ZaloPay] Creating order:', {
@@ -76,8 +83,10 @@ export const createOrder = async ({ booking_id, booking_code, amount, descriptio
   }
 };
 
+// Xác thực tính hợp lệ của chữ ký số (MAC) nhận từ Webhook/Callback của ZaloPay
 export const verifyCallback = (dataStr, receivedMac) => {
   try {
+    // Tính toán lại mã MAC dựa trên dữ liệu nhận được và Key2 (khóa nhận callback)
     const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
     const isValid = mac === receivedMac;
     
@@ -94,8 +103,10 @@ export const verifyCallback = (dataStr, receivedMac) => {
   }
 };
 
+// Truy vấn trạng thái giao dịch thanh toán từ ZaloPay bằng mã app_trans_id
 export const queryOrder = async (app_trans_id) => {
   try {
+    // Chuỗi tạo chữ ký truy vấn: app_id|app_trans_id|key1
     const data = `${config.app_id}|${app_trans_id}|${config.key1}`;
     const mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
@@ -128,16 +139,19 @@ export const queryOrder = async (app_trans_id) => {
   }
 };
 
+// Yêu cầu hoàn tiền (Refund) đơn đặt vé đã thanh toán thành công qua ZaloPay
 export const refundOrder = async ({ zp_trans_id, amount, description, booking_id }) => {
   try {
     const timestamp = Date.now();
     const refundID = Math.floor(Math.random() * 1000000);
+    // Sinh mã hoàn tiền duy nhất m_refund_id theo định dạng YYMMDD_appid_idNgauNhien
     const m_refund_id = `${moment().format('YYMMDD')}_${config.app_id}_${refundID}`;
     
     const zpTransIdStr = String(zp_trans_id);
     const refundAmount = Math.round(Number(amount));
     const refundFeeAmount = 0;
     
+    // Tạo chuỗi thô để ký số hoàn tiền theo định dạng quy định của ZaloPay
     const macInput = `${config.app_id}|${zpTransIdStr}|${refundAmount}|${refundFeeAmount}|${description}|${timestamp}`;
     const mac = CryptoJS.HmacSHA256(macInput, config.key1).toString();
 
@@ -185,6 +199,7 @@ export const refundOrder = async ({ zp_trans_id, amount, description, booking_id
   }
 };
 
+// Truy vấn trạng thái của yêu cầu hoàn tiền (Refund) bằng mã m_refund_id
 export const queryRefund = async (m_refund_id) => {
   try {
     const timestamp = Date.now();

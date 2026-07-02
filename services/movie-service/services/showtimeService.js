@@ -2,6 +2,7 @@ import { Showtime, sequelize } from '../models/index.js';
 import { QueryTypes } from 'sequelize';
 import Redis from 'ioredis';
 
+// Khởi tạo Redis client phục vụ cho tác vụ xóa cache lịch chiếu của phim
 const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
 if (!redis) {
   console.warn('⚠️ [Redis Cache] REDIS_URL not configured in showtimeService.');
@@ -10,6 +11,7 @@ if (!redis) {
 import axios from 'axios';
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 
+// Lấy danh sách lịch chiếu
 export const listShowtimes = async ({ date, movie_id, hall_id }) => {
   const where = {};
   const Op = sequelize.Sequelize.Op;
@@ -19,7 +21,7 @@ export const listShowtimes = async ({ date, movie_id, hall_id }) => {
   if (movie_id) conditions.push('movie_id = :movie_id') && (replacements.movie_id = movie_id);
   if (hall_id) conditions.push('hall_id = :hall_id') && (replacements.hall_id = hall_id);
   if (date) {
-    // filter by date (local midnights)
+    // Lọc theo ngày (local midnight)
     conditions.push("CONVERT(date, start_time) = :date") && (replacements.date = date);
   }
 
@@ -31,6 +33,7 @@ export const listShowtimes = async ({ date, movie_id, hall_id }) => {
   return rows;
 };
 
+// Lấy thông tin lịch chiếu theo ID
 export const getShowtimeById = async (id) => {
   const { Movie, CinemaHall, Cinema } = sequelize.models;
   const st = await Showtime.findByPk(id, {
@@ -51,10 +54,12 @@ export const getShowtimeById = async (id) => {
   return json;
 };
 
+// Kiểm tra thời gian các lịch chiếu có bị chồng chéo hay không
 const timesOverlap = (aStart, aEnd, bStart, bEnd) => {
   return (aStart < bEnd) && (aEnd > bStart);
 };
 
+// Phân tích định dạng thời gian địa phương
 const parseLocal = (val) => {
   if (!val) return null;
   if (val instanceof Date) return val;
@@ -73,6 +78,8 @@ const parseLocal = (val) => {
   return isNaN(dd.getTime()) ? null : dd;
 };
 
+// Tạo lịch chiếu mới
+// Thiết kế Cache: Khi tạo mới lịch chiếu, ta phải chủ động xóa cache lịch chiếu của bộ phim đó (showtimes:movie:${movie_id}) trên Redis.
 export const createShowtime = async (payload) => {
   const { movie_id, hall_id, start_time, end_time, base_price } = payload;
   if (!movie_id || !hall_id || !start_time || !end_time) {
@@ -83,7 +90,7 @@ export const createShowtime = async (payload) => {
   const newEnd = parseLocal(end_time);
   if (!(newStart < newEnd)) throw new Error('start_time must be before end_time');
 
-  // Check overlapping showtimes in same hall
+  // Kiểm tra trùng lịch chiếu trong cùng một phòng chiếu (CinemaHall)
   const existing = await Showtime.findAll({ where: { hall_id } });
   for (const ex of existing) {
     const exStart = parseLocal(ex.start_time) || new Date(ex.start_time);
@@ -97,6 +104,7 @@ export const createShowtime = async (payload) => {
 
   const created = await Showtime.create({ movie_id, hall_id, start_time: newStart.toISOString(), end_time: newEnd.toISOString(), base_price });
 
+  // Thực hiện xóa cache lịch chiếu của bộ phim trên Redis (Active Invalidation)
   if (redis) {
     try {
       await redis.del(`showtimes:movie:${movie_id}`);
@@ -109,6 +117,8 @@ export const createShowtime = async (payload) => {
   return created.toJSON();
 };
 
+// Cập nhật thông tin lịch chiếu
+// Thiết kế Cache: Khi cập nhật lịch chiếu, ta phải xóa cache lịch chiếu cũ của bộ phim, và nếu lịch chiếu bị đổi sang phim khác thì xóa thêm cache lịch chiếu của phim mới đó.
 export const updateShowtime = async (id, updates) => {
   const st = await Showtime.findByPk(id);
   if (!st) throw new Error('Showtime not found');
@@ -118,7 +128,7 @@ export const updateShowtime = async (id, updates) => {
 
   if (!(newStart < newEnd)) throw new Error('start_time must be before end_time');
 
-  // Check overlap for target hall (exclude self)
+  // Kiểm tra trùng lịch chiếu (ngoại trừ chính nó)
   const conflicting = await Showtime.findAll({ where: { hall_id: targetHallId } });
   for (const ex of conflicting) {
     if (ex.id === st.id) continue;
@@ -141,6 +151,7 @@ export const updateShowtime = async (id, updates) => {
 
   await st.save();
 
+  // Xóa cache lịch chiếu của phim cũ và phim mới trên Redis
   if (redis) {
     try {
       await redis.del(`showtimes:movie:${oldMovieId}`);
@@ -156,6 +167,8 @@ export const updateShowtime = async (id, updates) => {
   return st.toJSON();
 };
 
+// Xóa lịch chiếu
+// Thiết kế Cache: Xóa lịch chiếu khỏi DB thành công, sau đó xóa cache lịch chiếu của bộ phim đó khỏi Redis.
 export const deleteShowtime = async (id) => {
   const st = await Showtime.findByPk(id);
   if (!st) return false;
@@ -178,6 +191,7 @@ export const deleteShowtime = async (id) => {
   const movieId = st.movie_id;
   await st.destroy();
 
+  // Tiến hành xóa cache lịch chiếu trên Redis
   if (redis) {
     try {
       await redis.del(`showtimes:movie:${movieId}`);
