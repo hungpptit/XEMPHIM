@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XEMPHIM — Test Report | SWE_BE_1</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --bg-card2: #1c2230;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #7d8590;
+      --green: #3fb950;
+      --green-bg: rgba(63, 185, 80, 0.1);
+      --red: #f85149;
+      --red-bg: rgba(248, 81, 73, 0.1);
+      --yellow: #d29922;
+      --yellow-bg: rgba(210, 153, 34, 0.1);
+      --orange: #e3b341;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+      --accent: #238636;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a2332 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -20%;
+      width: 60%;
+      height: 200%;
+      background: radial-gradient(ellipse, rgba(35, 134, 54, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-inner { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+    .header-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--green-bg); border: 1px solid rgba(63, 185, 80, 0.3);
+      color: var(--green); border-radius: 20px; padding: 4px 12px; font-size: 0.75rem;
+      font-weight: 600; letter-spacing: 0.05em; margin-bottom: 1rem;
+    }
+    .header-badge::before { content: '●'; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .header h1 span { color: var(--green); }
+    .header-meta { color: var(--text-muted); font-size: 0.875rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .header-meta span { display: flex; align-items: center; gap: 6px; }
+
+    /* ── Layout ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+    /* ── Summary Cards ── */
+    .summary-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .summary-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem; text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .summary-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+    .summary-card .value {
+      font-size: 2rem; font-weight: 700; line-height: 1; margin-bottom: 0.25rem;
+    }
+    .summary-card .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .summary-card.green .value { color: var(--green); }
+    .summary-card.blue .value { color: var(--blue); }
+    .summary-card.yellow .value { color: var(--yellow); }
+    .summary-card.red .value { color: var(--red); }
+
+    /* ── Section ── */
+    .section { margin-bottom: 2.5rem; }
+    .section-title {
+      font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;
+      padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .section-title .icon { font-size: 1.2rem; }
+
+    /* ── Service Block ── */
+    .service-block {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; margin-bottom: 1rem; overflow: hidden;
+    }
+    .service-header {
+      padding: 1rem 1.25rem; display: flex; align-items: center;
+      justify-content: space-between; cursor: pointer;
+      background: var(--bg-card2); border-bottom: 1px solid var(--border);
+    }
+    .service-header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .service-name { font-weight: 600; font-size: 0.95rem; }
+    .service-file { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+    }
+    .badge.pass { background: var(--green-bg); color: var(--green); border: 1px solid rgba(63, 185, 80, 0.3); }
+    .badge.fail { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248, 81, 73, 0.3); }
+    .badge.warn { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(210, 153, 34, 0.3); }
+
+    /* ── Test Table ── */
+    .test-table { width: 100%; border-collapse: collapse; }
+    .test-table th {
+      text-align: left; padding: 0.6rem 1.25rem; font-size: 0.72rem;
+      text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+      border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+    }
+    .test-table td { padding: 0.65rem 1.25rem; font-size: 0.875rem; border-bottom: 1px solid rgba(48, 54, 61, 0.5); }
+    .test-table tr:last-child td { border-bottom: none; }
+    .test-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .test-num { font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 0.75rem; }
+    .test-name { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+    .test-suite { color: var(--purple); font-size: 0.75rem; margin-bottom: 2px; }
+    .status-pass { color: var(--green); font-weight: 600; }
+    .status-fail { color: var(--red); font-weight: 600; }
+    .duration { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+
+    /* ── Progress Bar ── */
+    .progress-wrap { padding: 1.25rem; }
+    .progress-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; }
+    .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #3fb950, #2ea043); transition: width 1s ease; }
+
+    /* ── Security Table ── */
+    .security-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+    .security-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .security-card-header {
+      padding: 0.75rem 1rem; background: var(--bg-card2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .security-card-header .svc-name { font-weight: 600; font-size: 0.875rem; font-family: 'JetBrains Mono', monospace; }
+    .vuln-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(48,54,61,0.4); font-size: 0.8rem; }
+    .vuln-row:last-child { border-bottom: none; }
+    .sev { font-weight: 600; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+    .sev.high { background: var(--red-bg); color: var(--red); }
+    .sev.moderate { background: var(--yellow-bg); color: var(--yellow); }
+    .sev.low { background: rgba(100,100,100,0.15); color: var(--text-muted); }
+    .sev.clean { background: var(--green-bg); color: var(--green); }
+
+    /* ── Code block ── */
+    .code-block {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+      padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+      color: #a9d1ff; overflow-x: auto; margin-top: 0.5rem;
+    }
+    .code-block .comment { color: #7d8590; }
+    .code-block .cmd { color: #3fb950; }
+
+    /* ── Recommendations ── */
+    .rec-list { list-style: none; }
+    .rec-list li {
+      padding: 0.75rem 1rem; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.875rem;
+    }
+    .rec-list li .rec-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .rec-list li.high-pri { border-left: 3px solid var(--red); }
+    .rec-list li.med-pri { border-left: 3px solid var(--yellow); }
+    .rec-list li.low-pri { border-left: 3px solid var(--text-muted); }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid var(--border); padding: 1.5rem 2rem;
+      text-align: center; color: var(--text-muted); font-size: 0.8rem;
+      margin-top: 2rem;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 1.5rem 1rem; }
+      .container { padding: 1rem; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-badge">✅ ALL TESTS PASSING</div>
+    <h1>🎬 XEMPHIM — <span>Test Report</span></h1>
+    <div class="header-meta">
+      <span>📅 Generated: 2026-08-22</span>
+      <span>🌿 Branch: SWE_BE_1</span>
+      <span>🏷️ Version: 1.0.0</span>
+      <span>🧪 Framework: Jest 29</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── Summary Cards ── -->
+  <div class="summary-grid">
+    <div class="summary-card green">
+      <div class="value">25</div>
+      <div class="label">Tests Passed</div>
+    </div>
+    <div class="summary-card blue">
+      <div class="value">3</div>
+      <div class="label">Test Suites</div>
+    </div>
+    <div class="summary-card green">
+      <div class="value">100%</div>
+      <div class="label">Pass Rate</div>
+    </div>
+    <div class="summary-card red">
+      <div class="value">0</div>
+      <div class="label">Tests Failed</div>
+    </div>
+    <div class="summary-card yellow">
+      <div class="value">17</div>
+      <div class="label">Vulnerabilities</div>
+    </div>
+    <div class="summary-card blue">
+      <div class="value">0</div>
+      <div class="label">Critical CVEs</div>
+    </div>
+  </div>
+
+  <!-- ── Unit Tests Section ── -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🧪</span> Unit Test Results</div>
+
+    <!-- Booking Service -->
+    <div class="service-block">
+      <div class="service-header">
+        <div class="service-header-left">
+          <div>
+            <div class="service-name">📦 booking-service</div>
+            <div class="service-file">tests/bookingService.test.js</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="color:var(--text-muted);font-size:0.8rem;">16.3s</span>
+          <span class="badge pass">✅ 4 / 4 PASS</span>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Pass Rate</span><span style="color:var(--green);font-weight:600;">100%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      </div>
+      <table class="test-table">
+        <thead><tr><th>#</th><th>Suite / Test Case</th><th>Status</th><th>Duration</th></tr></thead>
+        <tbody>
+          <tr><td class="test-num">1</td><td><div class="test-suite">getBookingStatus</div><div class="test-name">should return booking status if booking exists</div></td><td class="status-pass">✅ PASS</td><td class="duration">9ms</td></tr>
+          <tr><td class="test-num">2</td><td><div class="test-suite">getBookingStatus</div><div class="test-name">should return null if booking does not exist</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">3</td><td><div class="test-suite">cancelBooking</div><div class="test-name">should successfully cancel a locked booking</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+          <tr><td class="test-num">4</td><td><div class="test-suite">cancelBooking</div><div class="test-name">should fail to cancel if booking is already confirmed</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Payment Service -->
+    <div class="service-block">
+      <div class="service-header">
+        <div class="service-header-left">
+          <div>
+            <div class="service-name">💳 payment-service</div>
+            <div class="service-file">tests/zalopayService.test.js</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="color:var(--text-muted);font-size:0.8rem;">0.775s</span>
+          <span class="badge pass">✅ 13 / 13 PASS</span>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Pass Rate</span><span style="color:var(--green);font-weight:600;">100%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      </div>
+      <table class="test-table">
+        <thead><tr><th>#</th><th>Suite / Test Case</th><th>Status</th><th>Duration</th></tr></thead>
+        <tbody>
+          <tr><td class="test-num">1</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns TRUE when computed MAC matches received MAC</div></td><td class="status-pass">✅ PASS</td><td class="duration">26ms</td></tr>
+          <tr><td class="test-num">2</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns FALSE when MAC does not match (tampered data)</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">3</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns FALSE when receivedMac is empty string</div></td><td class="status-pass">✅ PASS</td><td class="duration">5ms</td></tr>
+          <tr><td class="test-num">4</td><td><div class="test-suite">verifyCallback</div><div class="test-name">handles CryptoJS exception gracefully → returns false</div></td><td class="status-pass">✅ PASS</td><td class="duration">20ms</td></tr>
+          <tr><td class="test-num">5</td><td><div class="test-suite">createOrder</div><div class="test-name">creates ZaloPay order successfully → success=true</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">6</td><td><div class="test-suite">createOrder</div><div class="test-name">returns success=false when ZaloPay return_code ≠ 1</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">7</td><td><div class="test-suite">createOrder</div><div class="test-name">throws error when ZaloPay API is unreachable</div></td><td class="status-pass">✅ PASS</td><td class="duration">5ms</td></tr>
+          <tr><td class="test-num">8</td><td><div class="test-suite">createOrder</div><div class="test-name">rounds decimal amount to integer before sending</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">9</td><td><div class="test-suite">createOrder</div><div class="test-name">calls HMAC-SHA256 to generate MAC signature</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">10</td><td><div class="test-suite">refundOrder</div><div class="test-name">returns success=true on return_code 1 (immediate refund)</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">11</td><td><div class="test-suite">refundOrder</div><div class="test-name">returns success=true on return_code 3 (processing)</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">12</td><td><div class="test-suite">refundOrder</div><div class="test-name">returns success=false on return_code -1 (failure)</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">13</td><td><div class="test-suite">refundOrder</div><div class="test-name">throws error when ZaloPay refund API unreachable</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Movie Service -->
+    <div class="service-block">
+      <div class="service-header">
+        <div class="service-header-left">
+          <div>
+            <div class="service-name">🎥 movie-service</div>
+            <div class="service-file">tests/moviesService.test.js</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="color:var(--text-muted);font-size:0.8rem;">23.3s</span>
+          <span class="badge pass">✅ 8 / 8 PASS</span>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Pass Rate</span><span style="color:var(--green);font-weight:600;">100%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      </div>
+      <table class="test-table">
+        <thead><tr><th>#</th><th>Suite / Test Case</th><th>Status</th><th>Duration</th></tr></thead>
+        <tbody>
+          <tr><td class="test-num">1</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns movie from DB when cache MISS</div></td><td class="status-pass">✅ PASS</td><td class="duration">13ms</td></tr>
+          <tr><td class="test-num">2</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns null when movie does not exist in DB</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">3</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns cached movie without hitting DB (cache HIT)</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+          <tr><td class="test-num">4</td><td><div class="test-suite">getMovieById</div><div class="test-name">stores movie in Redis cache after DB fetch (TTL=3600s)</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">5</td><td><div class="test-suite">invalidateListCache</div><div class="test-name">scans and deletes all movies:list* keys from Redis</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">6</td><td><div class="test-suite">invalidateListCache</div><div class="test-name">does not throw if Redis DEL fails</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">7</td><td><div class="test-suite">listMovies</div><div class="test-name">returns paginated movies when page and limit provided</div></td><td class="status-pass">✅ PASS</td><td class="duration">15010ms</td></tr>
+          <tr><td class="test-num">8</td><td><div class="test-suite">listMovies</div><div class="test-name">returns cached result when paginated movies in cache</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Security Audit Section ── -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔐</span> Security Audit — npm audit</div>
+    <div class="security-grid">
+      <div class="security-card">
+        <div class="security-card-header">
+          <span class="svc-name">user-service</span>
+          <span class="badge warn">⚠️ 3 vulns</span>
+        </div>
+        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
+        <div class="vuln-row"><span>Various (2 issues)</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Fix: <code>npm audit fix</code></span></div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-header">
+          <span class="svc-name">booking-service</span>
+          <span class="badge fail">🔴 7 vulns</span>
+        </div>
+        <div class="vuln-row"><span>axios 1.0–1.17 (DoS, pollution)</span><span class="sev high">HIGH</span></div>
+        <div class="vuln-row"><span>brace-expansion ≤1.1.17 (DoS)</span><span class="sev high">HIGH</span></div>
+        <div class="vuln-row"><span>form-data 4.0–4.0.5 (CRLF)</span><span class="sev high">HIGH</span></div>
+        <div class="vuln-row"><span>js-yaml 3.x (CPU DoS)</span><span class="sev high">HIGH</span></div>
+        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
+        <div class="vuln-row"><span>uuid &lt;11.1.1</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Fix: <code>npm audit fix</code></span></div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-header">
+          <span class="svc-name">payment-service</span>
+          <span class="badge pass">✅ Clean</span>
+        </div>
+        <div class="vuln-row" style="justify-content:center;color:var(--green);padding:1.5rem;">
+          <span>🎉 No vulnerabilities found!</span>
+        </div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-header">
+          <span class="svc-name">movie-service</span>
+          <span class="badge pass">✅ Clean</span>
+        </div>
+        <div class="vuln-row" style="justify-content:center;color:var(--green);padding:1.5rem;">
+          <span>🎉 No vulnerabilities found!</span>
+        </div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-header">
+          <span class="svc-name">seat-service</span>
+          <span class="badge warn">⚠️ 5 vulns</span>
+        </div>
+        <div class="vuln-row"><span>axios 1.0–1.17 (DoS, pollution)</span><span class="sev high">HIGH</span></div>
+        <div class="vuln-row"><span>form-data 4.0–4.0.5 (CRLF)</span><span class="sev high">HIGH</span></div>
+        <div class="vuln-row"><span>uuid &lt;11.1.1</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Fix: <code>npm audit fix</code></span></div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-header">
+          <span class="svc-name">notification-service</span>
+          <span class="badge warn">⚠️ 2 vulns</span>
+        </div>
+        <div class="vuln-row"><span>nodemailer ≤9.0.0 (SMTP injection)</span><span class="sev high">HIGH</span></div>
+        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
+        <div class="vuln-row" style="color:var(--yellow);font-size:0.75rem;"><span>Fix: <code>npm audit fix --force</code> (breaking)</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <div style="font-size:0.875rem;color:var(--text-muted);margin-bottom:0.5rem;">Fix commands:</div>
+      <div class="code-block">
+<span class="comment"># Fix non-breaking vulnerabilities</span>
+<span class="cmd">npm audit fix --prefix services/user-service</span>
+<span class="cmd">npm audit fix --prefix services/booking-service</span>
+<span class="cmd">npm audit fix --prefix services/seat-service</span>
+<br>
+<span class="comment"># notification-service — test after fixing (nodemailer breaking change)</span>
+<span class="cmd">npm audit fix --force --prefix services/notification-service</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Recommendations ── -->
+  <div class="section">
+    <div class="section-title"><span class="icon">💡</span> Recommendations</div>
+    <ul class="rec-list">
+      <li class="high-pri"><span class="rec-icon">🔴</span><div><strong>Run npm audit fix</strong> for booking-service, seat-service, user-service to patch axios, brace-expansion, and form-data vulnerabilities.</div></li>
+      <li class="high-pri"><span class="rec-icon">🔴</span><div><strong>Update nodemailer</strong> in notification-service (SMTP injection risk). Test email functionality after update.</div></li>
+      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add unit tests</strong> for <code>lockSeats()</code> and <code>confirmPayment()</code> in booking-service — these are the most critical business logic functions.</div></li>
+      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add API/HTTP tests</strong> using supertest for gateway endpoints (register, login, booking creation).</div></li>
+      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add test coverage threshold</strong> to CI pipeline: minimum 70% coverage for service logic functions.</div></li>
+      <li class="low-pri"><span class="rec-icon">⚪</span><div><strong>Integration tests</strong>: Test full booking flow (lock → ZaloPay QR → payment callback → confirm → email).</div></li>
+      <li class="low-pri"><span class="rec-icon">⚪</span><div><strong>Load testing</strong>: Simulate concurrent seat booking to validate Redis distributed lock under pressure.</div></li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>XEMPHIM Test Report</strong> · Branch: SWE_BE_1 · Generated: 2026-08-22 · Author: Phạm Tuấn Hưng
+</div>
+
+</body>
+</html>
