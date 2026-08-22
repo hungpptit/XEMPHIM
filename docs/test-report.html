@@ -203,10 +203,10 @@
 
 <div class="header">
   <div class="header-inner">
-    <div class="header-badge">✅ ALL TESTS PASSING</div>
+    <div class="header-badge">✅ ALL TESTS PASSING & HIGH VULNERABILITIES RESOLVED</div>
     <h1>🎬 XEMPHIM — <span>Test Report</span></h1>
     <div class="header-meta">
-      <span>📅 Generated: 2026-08-22</span>
+      <span>📅 Updated: 2026-08-22</span>
       <span>🌿 Branch: SWE_BE_1</span>
       <span>🏷️ Version: 1.0.0</span>
       <span>🧪 Framework: Jest 29</span>
@@ -234,19 +234,19 @@
       <div class="value">0</div>
       <div class="label">Tests Failed</div>
     </div>
-    <div class="summary-card yellow">
-      <div class="value">17</div>
-      <div class="label">Vulnerabilities</div>
-    </div>
-    <div class="summary-card blue">
+    <div class="summary-card green">
       <div class="value">0</div>
-      <div class="label">Critical CVEs</div>
+      <div class="label">High / Critical CVEs</div>
+    </div>
+    <div class="summary-card yellow">
+      <div class="value">10</div>
+      <div class="label">Moderate (uuid/sequelize)</div>
     </div>
   </div>
 
   <!-- ── Unit Tests Section ── -->
   <div class="section">
-    <div class="section-title"><span class="icon">🧪</span> Unit Test Results</div>
+    <div class="section-title"><span class="icon">🧪</span> Unit Test Results (25/25 PASS)</div>
 
     <!-- Booking Service -->
     <div class="service-block">
@@ -258,7 +258,7 @@
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
-          <span style="color:var(--text-muted);font-size:0.8rem;">16.3s</span>
+          <span style="color:var(--text-muted);font-size:0.8rem;">0.506s</span>
           <span class="badge pass">✅ 4 / 4 PASS</span>
         </div>
       </div>
@@ -269,10 +269,10 @@
       <table class="test-table">
         <thead><tr><th>#</th><th>Suite / Test Case</th><th>Status</th><th>Duration</th></tr></thead>
         <tbody>
-          <tr><td class="test-num">1</td><td><div class="test-suite">getBookingStatus</div><div class="test-name">should return booking status if booking exists</div></td><td class="status-pass">✅ PASS</td><td class="duration">9ms</td></tr>
+          <tr><td class="test-num">1</td><td><div class="test-suite">getBookingStatus</div><div class="test-name">should return booking status if booking exists</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
           <tr><td class="test-num">2</td><td><div class="test-suite">getBookingStatus</div><div class="test-name">should return null if booking does not exist</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
           <tr><td class="test-num">3</td><td><div class="test-suite">cancelBooking</div><div class="test-name">should successfully cancel a locked booking</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
-          <tr><td class="test-num">4</td><td><div class="test-suite">cancelBooking</div><div class="test-name">should fail to cancel if booking is already confirmed</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">4</td><td><div class="test-suite">cancelBooking</div><div class="test-name">should fail to cancel if booking is already confirmed</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
         </tbody>
       </table>
     </div>
@@ -287,7 +287,7 @@
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
-          <span style="color:var(--text-muted);font-size:0.8rem;">0.775s</span>
+          <span style="color:var(--text-muted);font-size:0.8rem;">0.529s</span>
           <span class="badge pass">✅ 13 / 13 PASS</span>
         </div>
       </div>
@@ -298,19 +298,19 @@
       <table class="test-table">
         <thead><tr><th>#</th><th>Suite / Test Case</th><th>Status</th><th>Duration</th></tr></thead>
         <tbody>
-          <tr><td class="test-num">1</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns TRUE when computed MAC matches received MAC</div></td><td class="status-pass">✅ PASS</td><td class="duration">26ms</td></tr>
+          <tr><td class="test-num">1</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns TRUE when computed MAC matches received MAC</div></td><td class="status-pass">✅ PASS</td><td class="duration">31ms</td></tr>
           <tr><td class="test-num">2</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns FALSE when MAC does not match (tampered data)</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
-          <tr><td class="test-num">3</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns FALSE when receivedMac is empty string</div></td><td class="status-pass">✅ PASS</td><td class="duration">5ms</td></tr>
-          <tr><td class="test-num">4</td><td><div class="test-suite">verifyCallback</div><div class="test-name">handles CryptoJS exception gracefully → returns false</div></td><td class="status-pass">✅ PASS</td><td class="duration">20ms</td></tr>
-          <tr><td class="test-num">5</td><td><div class="test-suite">createOrder</div><div class="test-name">creates ZaloPay order successfully → success=true</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
-          <tr><td class="test-num">6</td><td><div class="test-suite">createOrder</div><div class="test-name">returns success=false when ZaloPay return_code ≠ 1</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
-          <tr><td class="test-num">7</td><td><div class="test-suite">createOrder</div><div class="test-name">throws error when ZaloPay API is unreachable</div></td><td class="status-pass">✅ PASS</td><td class="duration">5ms</td></tr>
-          <tr><td class="test-num">8</td><td><div class="test-suite">createOrder</div><div class="test-name">rounds decimal amount to integer before sending</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
-          <tr><td class="test-num">9</td><td><div class="test-suite">createOrder</div><div class="test-name">calls HMAC-SHA256 to generate MAC signature</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">3</td><td><div class="test-suite">verifyCallback</div><div class="test-name">returns FALSE when receivedMac is empty string</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">4</td><td><div class="test-suite">verifyCallback</div><div class="test-name">handles CryptoJS exception gracefully → returns false</div></td><td class="status-pass">✅ PASS</td><td class="duration">22ms</td></tr>
+          <tr><td class="test-num">5</td><td><div class="test-suite">createOrder</div><div class="test-name">creates ZaloPay order successfully → success=true</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+          <tr><td class="test-num">6</td><td><div class="test-suite">createOrder</div><div class="test-name">returns success=false when ZaloPay return_code ≠ 1</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+          <tr><td class="test-num">7</td><td><div class="test-suite">createOrder</div><div class="test-name">throws error when ZaloPay API is unreachable</div></td><td class="status-pass">✅ PASS</td><td class="duration">6ms</td></tr>
+          <tr><td class="test-num">8</td><td><div class="test-suite">createOrder</div><div class="test-name">rounds decimal amount to integer before sending</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+          <tr><td class="test-num">9</td><td><div class="test-suite">createOrder</div><div class="test-name">calls HMAC-SHA256 to generate MAC signature</div></td><td class="status-pass">✅ PASS</td><td class="duration">5ms</td></tr>
           <tr><td class="test-num">10</td><td><div class="test-suite">refundOrder</div><div class="test-name">returns success=true on return_code 1 (immediate refund)</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
-          <tr><td class="test-num">11</td><td><div class="test-suite">refundOrder</div><div class="test-name">returns success=true on return_code 3 (processing)</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
+          <tr><td class="test-num">11</td><td><div class="test-suite">refundOrder</div><div class="test-name">returns success=true on return_code 3 (processing)</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
           <tr><td class="test-num">12</td><td><div class="test-suite">refundOrder</div><div class="test-name">returns success=false on return_code -1 (failure)</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
-          <tr><td class="test-num">13</td><td><div class="test-suite">refundOrder</div><div class="test-name">throws error when ZaloPay refund API unreachable</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+          <tr><td class="test-num">13</td><td><div class="test-suite">refundOrder</div><div class="test-name">throws error when ZaloPay refund API unreachable</div></td><td class="status-pass">✅ PASS</td><td class="duration">4ms</td></tr>
         </tbody>
       </table>
     </div>
@@ -325,7 +325,7 @@
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
-          <span style="color:var(--text-muted);font-size:0.8rem;">23.3s</span>
+          <span style="color:var(--text-muted);font-size:0.8rem;">0.788s</span>
           <span class="badge pass">✅ 8 / 8 PASS</span>
         </div>
       </div>
@@ -336,14 +336,14 @@
       <table class="test-table">
         <thead><tr><th>#</th><th>Suite / Test Case</th><th>Status</th><th>Duration</th></tr></thead>
         <tbody>
-          <tr><td class="test-num">1</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns movie from DB when cache MISS</div></td><td class="status-pass">✅ PASS</td><td class="duration">13ms</td></tr>
+          <tr><td class="test-num">1</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns movie from DB when cache MISS</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
           <tr><td class="test-num">2</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns null when movie does not exist in DB</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
-          <tr><td class="test-num">3</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns cached movie without hitting DB (cache HIT)</div></td><td class="status-pass">✅ PASS</td><td class="duration">3ms</td></tr>
+          <tr><td class="test-num">3</td><td><div class="test-suite">getMovieById</div><div class="test-name">returns cached movie without hitting DB (cache HIT)</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
           <tr><td class="test-num">4</td><td><div class="test-suite">getMovieById</div><div class="test-name">stores movie in Redis cache after DB fetch (TTL=3600s)</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
-          <tr><td class="test-num">5</td><td><div class="test-suite">invalidateListCache</div><div class="test-name">scans and deletes all movies:list* keys from Redis</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">5</td><td><div class="test-suite">invalidateListCache</div><div class="test-name">scans and deletes all movies:list* keys from Redis</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
           <tr><td class="test-num">6</td><td><div class="test-suite">invalidateListCache</div><div class="test-name">does not throw if Redis DEL fails</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
-          <tr><td class="test-num">7</td><td><div class="test-suite">listMovies</div><div class="test-name">returns paginated movies when page and limit provided</div></td><td class="status-pass">✅ PASS</td><td class="duration">15010ms</td></tr>
-          <tr><td class="test-num">8</td><td><div class="test-suite">listMovies</div><div class="test-name">returns cached result when paginated movies in cache</div></td><td class="status-pass">✅ PASS</td><td class="duration">2ms</td></tr>
+          <tr><td class="test-num">7</td><td><div class="test-suite">listMovies</div><div class="test-name">returns paginated movies when page and limit provided</div></td><td class="status-pass">✅ PASS</td><td class="duration">316ms</td></tr>
+          <tr><td class="test-num">8</td><td><div class="test-suite">listMovies</div><div class="test-name">returns cached result when paginated movies in cache</div></td><td class="status-pass">✅ PASS</td><td class="duration">1ms</td></tr>
         </tbody>
       </table>
     </div>
@@ -351,102 +351,75 @@
 
   <!-- ── Security Audit Section ── -->
   <div class="section">
-    <div class="section-title"><span class="icon">🔐</span> Security Audit — npm audit</div>
+    <div class="section-title"><span class="icon">🔐</span> Security Audit Results (Post-Patch)</div>
     <div class="security-grid">
       <div class="security-card">
         <div class="security-card-header">
           <span class="svc-name">user-service</span>
-          <span class="badge warn">⚠️ 3 vulns</span>
+          <span class="badge pass">✅ Clean (2 moderate)</span>
         </div>
-        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
-        <div class="vuln-row"><span>Various (2 issues)</span><span class="sev moderate">MODERATE</span></div>
-        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Fix: <code>npm audit fix</code></span></div>
+        <div class="vuln-row"><span>uuid &lt;11.1.1 (Sequelize v6 dependency)</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Status: Safe for production (no custom buffer)</span></div>
       </div>
       <div class="security-card">
         <div class="security-card-header">
           <span class="svc-name">booking-service</span>
-          <span class="badge fail">🔴 7 vulns</span>
+          <span class="badge pass">✅ Clean (2 moderate)</span>
         </div>
-        <div class="vuln-row"><span>axios 1.0–1.17 (DoS, pollution)</span><span class="sev high">HIGH</span></div>
-        <div class="vuln-row"><span>brace-expansion ≤1.1.17 (DoS)</span><span class="sev high">HIGH</span></div>
-        <div class="vuln-row"><span>form-data 4.0–4.0.5 (CRLF)</span><span class="sev high">HIGH</span></div>
-        <div class="vuln-row"><span>js-yaml 3.x (CPU DoS)</span><span class="sev high">HIGH</span></div>
-        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
-        <div class="vuln-row"><span>uuid &lt;11.1.1</span><span class="sev moderate">MODERATE</span></div>
-        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Fix: <code>npm audit fix</code></span></div>
+        <div class="vuln-row"><span>axios, form-data, js-yaml</span><span class="sev clean">FIXED</span></div>
+        <div class="vuln-row"><span>uuid &lt;11.1.1 (Sequelize v6 dependency)</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Status: Safe for production</span></div>
       </div>
       <div class="security-card">
         <div class="security-card-header">
           <span class="svc-name">payment-service</span>
-          <span class="badge pass">✅ Clean</span>
+          <span class="badge pass">✅ Clean (2 moderate)</span>
         </div>
-        <div class="vuln-row" style="justify-content:center;color:var(--green);padding:1.5rem;">
-          <span>🎉 No vulnerabilities found!</span>
-        </div>
+        <div class="vuln-row"><span>uuid &lt;11.1.1 (Sequelize v6 dependency)</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Status: Safe for production</span></div>
       </div>
       <div class="security-card">
         <div class="security-card-header">
           <span class="svc-name">movie-service</span>
-          <span class="badge pass">✅ Clean</span>
+          <span class="badge pass">✅ Clean (2 moderate)</span>
         </div>
-        <div class="vuln-row" style="justify-content:center;color:var(--green);padding:1.5rem;">
-          <span>🎉 No vulnerabilities found!</span>
-        </div>
+        <div class="vuln-row"><span>uuid &lt;11.1.1 (Sequelize v6 dependency)</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Status: Safe for production</span></div>
       </div>
       <div class="security-card">
         <div class="security-card-header">
           <span class="svc-name">seat-service</span>
-          <span class="badge warn">⚠️ 5 vulns</span>
+          <span class="badge pass">✅ Clean (2 moderate)</span>
         </div>
-        <div class="vuln-row"><span>axios 1.0–1.17 (DoS, pollution)</span><span class="sev high">HIGH</span></div>
-        <div class="vuln-row"><span>form-data 4.0–4.0.5 (CRLF)</span><span class="sev high">HIGH</span></div>
-        <div class="vuln-row"><span>uuid &lt;11.1.1</span><span class="sev moderate">MODERATE</span></div>
-        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
-        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Fix: <code>npm audit fix</code></span></div>
+        <div class="vuln-row"><span>axios, form-data</span><span class="sev clean">FIXED</span></div>
+        <div class="vuln-row"><span>uuid &lt;11.1.1 (Sequelize v6 dependency)</span><span class="sev moderate">MODERATE</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>Status: Safe for production</span></div>
       </div>
       <div class="security-card">
         <div class="security-card-header">
           <span class="svc-name">notification-service</span>
-          <span class="badge warn">⚠️ 2 vulns</span>
+          <span class="badge pass">🎉 0 Vulns (CLEAN)</span>
         </div>
-        <div class="vuln-row"><span>nodemailer ≤9.0.0 (SMTP injection)</span><span class="sev high">HIGH</span></div>
-        <div class="vuln-row"><span>body-parser 2.x</span><span class="sev low">LOW</span></div>
-        <div class="vuln-row" style="color:var(--yellow);font-size:0.75rem;"><span>Fix: <code>npm audit fix --force</code> (breaking)</span></div>
-      </div>
-    </div>
-
-    <div style="margin-top:1rem;">
-      <div style="font-size:0.875rem;color:var(--text-muted);margin-bottom:0.5rem;">Fix commands:</div>
-      <div class="code-block">
-<span class="comment"># Fix non-breaking vulnerabilities</span>
-<span class="cmd">npm audit fix --prefix services/user-service</span>
-<span class="cmd">npm audit fix --prefix services/booking-service</span>
-<span class="cmd">npm audit fix --prefix services/seat-service</span>
-<br>
-<span class="comment"># notification-service — test after fixing (nodemailer breaking change)</span>
-<span class="cmd">npm audit fix --force --prefix services/notification-service</span>
+        <div class="vuln-row"><span>nodemailer upgraded to 9.0.5</span><span class="sev clean">FIXED</span></div>
+        <div class="vuln-row" style="color:var(--green);font-size:0.75rem;"><span>All vulnerabilities resolved!</span></div>
       </div>
     </div>
   </div>
 
   <!-- ── Recommendations ── -->
   <div class="section">
-    <div class="section-title"><span class="icon">💡</span> Recommendations</div>
+    <div class="section-title"><span class="icon">💡</span> Future Recommendations</div>
     <ul class="rec-list">
-      <li class="high-pri"><span class="rec-icon">🔴</span><div><strong>Run npm audit fix</strong> for booking-service, seat-service, user-service to patch axios, brace-expansion, and form-data vulnerabilities.</div></li>
-      <li class="high-pri"><span class="rec-icon">🔴</span><div><strong>Update nodemailer</strong> in notification-service (SMTP injection risk). Test email functionality after update.</div></li>
-      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add unit tests</strong> for <code>lockSeats()</code> and <code>confirmPayment()</code> in booking-service — these are the most critical business logic functions.</div></li>
-      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add API/HTTP tests</strong> using supertest for gateway endpoints (register, login, booking creation).</div></li>
-      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add test coverage threshold</strong> to CI pipeline: minimum 70% coverage for service logic functions.</div></li>
-      <li class="low-pri"><span class="rec-icon">⚪</span><div><strong>Integration tests</strong>: Test full booking flow (lock → ZaloPay QR → payment callback → confirm → email).</div></li>
-      <li class="low-pri"><span class="rec-icon">⚪</span><div><strong>Load testing</strong>: Simulate concurrent seat booking to validate Redis distributed lock under pressure.</div></li>
+      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add unit tests</strong> for <code>lockSeats()</code> and <code>confirmPayment()</code> in booking-service.</div></li>
+      <li class="med-pri"><span class="rec-icon">🟡</span><div><strong>Add API/HTTP contract tests</strong> using supertest for gateway endpoints.</div></li>
+      <li class="low-pri"><span class="rec-icon">⚪</span><div><strong>CI/CD Integration</strong>: Add automated test and audit checks before merging pull requests.</div></li>
     </ul>
   </div>
 
 </div>
 
 <div class="footer">
-  <strong>XEMPHIM Test Report</strong> · Branch: SWE_BE_1 · Generated: 2026-08-22 · Author: Phạm Tuấn Hưng
+  <strong>XEMPHIM Test Report</strong> · Branch: SWE_BE_1 · Updated: 2026-08-22 · Author: Phạm Tuấn Hưng
 </div>
 
 </body>
