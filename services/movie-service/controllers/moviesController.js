@@ -81,9 +81,10 @@ export const getShowtimesByMovie = async (req, res) => {
     const movieId = parseInt(req.params.id, 10);
     if (Number.isNaN(movieId)) return res.status(400).json({ message: 'Invalid movie id' });
     const rows = await moviesService.getShowtimesForMovie(movieId);
-    res.json(rows.map(r => r.toJSON()));
+    res.json(rows.map(r => (typeof r.toJSON === 'function' ? r.toJSON() : r)));
   } catch (err) {
     console.error('Error getting showtimes for movie:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+

@@ -13,7 +13,6 @@ import GenreModel from './genre.js';
 import MovieGenreModel from './movie_genre.js';
 import ShowtimeModel from './showtime.js';
 import CinemaHallModel from './cinema_hall.js';
-import SeatModel from './seat.js';
 import CinemaModel from './cinema.js';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
@@ -44,7 +43,6 @@ const Genre = GenreModel(sequelize, DataTypes);
 const MovieGenre = MovieGenreModel(sequelize, DataTypes);
 const Showtime = ShowtimeModel(sequelize, DataTypes);
 const CinemaHall = CinemaHallModel(sequelize, DataTypes);
-const Seat = SeatModel(sequelize, DataTypes);
 const Cinema = CinemaModel(sequelize, DataTypes);
 
 // Associations
@@ -53,9 +51,6 @@ CinemaHall.belongsTo(Cinema, { foreignKey: 'cinema_id' });
 
 Movie.hasMany(Showtime, { foreignKey: 'movie_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
 Showtime.belongsTo(Movie, { foreignKey: 'movie_id' });
-
-CinemaHall.hasMany(Seat, { foreignKey: 'hall_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-Seat.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
 
 Showtime.belongsTo(CinemaHall, { foreignKey: 'hall_id' });
 CinemaHall.hasMany(Showtime, { foreignKey: 'hall_id', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
@@ -68,6 +63,6 @@ export {
   MovieGenre,
   Showtime,
   CinemaHall,
-  Seat,
   Cinema
 };
+

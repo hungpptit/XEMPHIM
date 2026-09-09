@@ -22,6 +22,18 @@ export const getShowtime = async (req, res) => {
   }
 };
 
+export const getShowtimesBatch = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const rows = await showtimeService.getShowtimesByIds(ids);
+    res.json(rows);
+  } catch (err) {
+    console.error('[Showtime Controller] Error getting showtimes batch:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
 export const createShowtime = async (req, res) => {
   try {
     const payload = req.body;

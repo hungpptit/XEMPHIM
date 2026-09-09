@@ -11,6 +11,7 @@
     "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage --coverageReporters=json-summary --json --outputFile=test-results.json"
   },
   "dependencies": {
+    "amqplib": "^2.0.1",
     "axios": "^1.7.9",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

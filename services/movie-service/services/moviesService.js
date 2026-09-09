@@ -305,14 +305,17 @@ export const getShowtimesForMovie = async (movieId) => {
     order: [['start_time', 'ASC']]
   });
 
+  const plainShowtimes = showtimes.map(st => (typeof st.toJSON === 'function' ? st.toJSON() : st));
+
   if (redis) {
     try {
-      await redis.set(cacheKey, JSON.stringify(showtimes), 'EX', 600); // cache trong 10 phút
+      await redis.set(cacheKey, JSON.stringify(plainShowtimes), 'EX', 600); // cache trong 10 phút
       console.log(`⚡ [Redis Cache] Miss & Set: getShowtimesForMovie(${movieId})`);
     } catch (err) {
       console.warn('⚠️ [Redis Cache] Error writing cache:', err.message);
     }
   }
 
-  return showtimes;
+  return plainShowtimes;
 };
+

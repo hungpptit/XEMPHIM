@@ -167,3 +167,102 @@ export const bulkCreateSeats = async (seatsArray) => {
   const created = await Seat.bulkCreate(seatsArray);
   return created.map(s => s.toJSON());
 };
+
+export const getSeatsByHall = async (hallId) => {
+  const seats = await Seat.findAll({
+    where: { hall_id: hallId, is_active: true },
+    order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
+  });
+  return seats.map(s => s.toJSON());
+};
+
+export const getSeatLayoutByHall = async (hallId) => {
+  const seats = await Seat.findAll({
+    where: { hall_id: hallId },
+    order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
+  });
+  const rowNames = [...new Set(seats.map(s => s.row_name))].sort();
+  const maxSeatsPerRow = seats.reduce((max, s) => s.seat_number > max ? s.seat_number : max, 0);
+
+  const layout = {};
+  for (const rowLetter of rowNames) {
+    layout[rowLetter] = [];
+    for (let j = 1; j <= maxSeatsPerRow; j++) {
+      const seat = seats.find(s => s.row_name === rowLetter && s.seat_number === j);
+      if (seat) {
+        layout[rowLetter].push({
+          id: seat.id,
+          number: seat.seat_number,
+          type: seat.seat_type,
+          modifier: seat.price_modifier,
+          active: seat.is_active
+        });
+      } else {
+        layout[rowLetter].push({
+          id: null,
+          number: j,
+          type: 'none',
+          active: false
+        });
+      }
+    }
+  }
+
+  return {
+    hallId: Number(hallId),
+    rows: rowNames.length,
+    seatsPerRow: maxSeatsPerRow,
+    totalSeats: seats.length,
+    seats: seats.map(s => s.toJSON()),
+    seatLayout: layout,
+    layout
+  };
+};
+
+export const deleteSeatsByHall = async (hallId) => {
+  const count = await Seat.destroy({ where: { hall_id: hallId } });
+  return { deleted: count };
+};
+
+export const initSeatsForHall = async (hallId, { rows = 10, seatsPerRow = 12, vipRows = 2 }) => {
+  const rowsNum = parseInt(rows, 10);
+  const seatsPerRowNum = parseInt(seatsPerRow, 10);
+  const vipRowsNum = parseInt(vipRows, 10) || 0;
+
+  const seatsToCreate = [];
+  const rows_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const startVipRowIndex = rowsNum - vipRowsNum;
+
+  for (let i = 0; i < rowsNum; i++) {
+    const rowLetter = rows_letters[i];
+    const isVipRow = i >= startVipRowIndex;
+
+    for (let j = 1; j <= seatsPerRowNum; j++) {
+      seatsToCreate.push({
+        hall_id: Number(hallId),
+        row_name: rowLetter,
+        seat_number: j,
+        seat_type: isVipRow ? 'vip' : 'regular',
+        price_modifier: isVipRow ? 1.20 : 1.00,
+        is_active: true
+      });
+    }
+  }
+
+  const created = await Seat.bulkCreate(seatsToCreate);
+  return created.map(s => s.toJSON());
+};
+
+export const updateSeatTypeByHall = async (hallId, { seatType, priceModifier }) => {
+  await Seat.update(
+    {
+      seat_type: seatType,
+      price_modifier: priceModifier
+    },
+    {
+      where: { hall_id: hallId }
+    }
+  );
+  return { success: true };
+};
+

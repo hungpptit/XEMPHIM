@@ -85,27 +85,24 @@ export const zalopayCallbackHandler = async (req, res) => {
       console.error('⚠️ [ZaloPay Callback] Failed to update Payment in DB:', dbErr.message);
     }
 
-    // 2. Gọi API của Booking Service để hoàn tất xác nhận đặt vé và gửi mail thông báo
+    // 2. Phát sự kiện bất đồng bộ payment.successful vào RabbitMQ (SAGA Pattern)
+    // Tách rời hoàn toàn khỏi Booking Service, không chờ đợi hay phụ thuộc vòng tròn
     try {
-      const response = await axios.post(`${BOOKING_SERVICE}/api/bookings/${booking_id}/confirm-payment`, {
-        payment_method: 'zalopay',
-        payment_payload: {
-          transaction_ref: zp_trans_id,
-          app_trans_id: app_trans_id,
-          response_code: '1',
-          amount: amount
-        }
+      const { publishPaymentSuccess } = await import('../services/rabbitmqService.js');
+      await publishPaymentSuccess({
+        booking_id,
+        zp_trans_id,
+        app_trans_id,
+        amount,
+        payment_method: 'zalopay'
       });
-      if (response.data && response.data.booking) {
-        console.log(`✅ [ZaloPay Callback] Booking ${booking_id} confirmed via booking-service`);
-        return res.json({ return_code: 1, return_message: 'success' });
-      } else {
-        return res.json({ return_code: 0, return_message: 'Failed to confirm booking status' });
-      }
-    } catch (apiErr) {
-      console.error('❌ [ZaloPay Callback] Failed calling Booking Service confirmPayment API:', apiErr.message);
-      return res.json({ return_code: 0, return_message: apiErr.message });
+      console.log(`📤 [ZaloPay Callback] Event 'payment.successful' published for booking ${booking_id}`);
+      return res.json({ return_code: 1, return_message: 'success' });
+    } catch (eventErr) {
+      console.error('❌ [ZaloPay Callback] Failed to dispatch payment event:', eventErr.message);
+      return res.json({ return_code: 1, return_message: 'payment recorded' });
     }
+
   } catch (error) {
     console.error('💥 [ZaloPay Callback] Error:', error);
     return res.status(500).json({ return_code: 0, return_message: 'Internal server error' });

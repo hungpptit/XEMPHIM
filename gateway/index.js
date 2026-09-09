@@ -67,6 +67,8 @@ app.use((req, res, next) => {
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'gateway_ok' }));
 
+import CircuitBreaker from 'opossum';
+
 // Route definitions pointing to microservices
 const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://localhost:4001';
 const MOVIE_SERVICE = process.env.MOVIE_SERVICE_URL || 'http://localhost:4002';
@@ -74,33 +76,73 @@ const SEAT_SERVICE = process.env.SEAT_SERVICE_URL || 'http://localhost:4003';
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 const PAYMENT_SERVICE = process.env.PAYMENT_SERVICE_URL || 'http://localhost:4005';
 
+// Circuit Breaker configuration for resilience
+const breakerOptions = {
+  timeout: 6000,
+  errorThresholdPercentage: 50,
+  resetTimeout: 10000
+};
+
+const createBreaker = (serviceName) => {
+  const breaker = new CircuitBreaker(async (fn) => fn(), breakerOptions);
+  breaker.on('open', () => console.warn(`🔴 [Circuit Breaker] Circuit OPEN for ${serviceName}`));
+  breaker.on('halfOpen', () => console.log(`🟡 [Circuit Breaker] Circuit HALF-OPEN for ${serviceName}`));
+  breaker.on('close', () => console.log(`🟢 [Circuit Breaker] Circuit CLOSED for ${serviceName}`));
+  return breaker;
+};
+
+const breakers = {
+  user: createBreaker('user-service'),
+  movie: createBreaker('movie-service'),
+  seat: createBreaker('seat-service'),
+  booking: createBreaker('booking-service'),
+  payment: createBreaker('payment-service')
+};
+
+const withCircuitBreaker = (serviceKey) => (req, res, next) => {
+  const breaker = breakers[serviceKey];
+  if (breaker && breaker.opened) {
+    return res.status(503).json({
+      success: false,
+      message: `Dịch vụ tạm thời không khả dụng (${serviceKey}-service circuit breaker đang mở). Vui lòng thử lại sau giây lát.`
+    });
+  }
+  next();
+};
+
 const proxyOptions = {
   proxyReqPathResolver: (req) => {
     return req.originalUrl;
   },
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     return proxyReqOpts;
+  },
+  proxyErrorHandler: (err, res, next) => {
+    console.error('[Proxy Error]', err.message);
+    res.status(502).json({ message: 'Bad Gateway: Microservice might be down.', error: err.message });
   }
 };
 
-// Proxy mount routes
-app.use('/api/auth', proxy(USER_SERVICE, proxyOptions));
-app.use('/api/users', proxy(USER_SERVICE, proxyOptions));
-app.use('/api/movies', proxy(MOVIE_SERVICE, proxyOptions));
-app.use('/api/showtimes', proxy(MOVIE_SERVICE, proxyOptions));
-app.use('/api/admin/users', proxy(USER_SERVICE, proxyOptions));
-app.use('/api/admin/stats', proxy(BOOKING_SERVICE, proxyOptions));
-app.use('/api/admin', proxy(MOVIE_SERVICE, proxyOptions));
-app.use('/api/seats', proxy(SEAT_SERVICE, proxyOptions));
-app.use('/api/bookings', proxy(BOOKING_SERVICE, proxyOptions));
-app.use('/api/payments', proxy(PAYMENT_SERVICE, proxyOptions));
-app.use('/api/zalopay', proxy(PAYMENT_SERVICE, proxyOptions));
+// Proxy mount routes with Circuit Breaker protection
+app.use('/api/auth', withCircuitBreaker('user'), proxy(USER_SERVICE, proxyOptions));
+app.use('/api/users', withCircuitBreaker('user'), proxy(USER_SERVICE, proxyOptions));
+app.use('/api/movies', withCircuitBreaker('movie'), proxy(MOVIE_SERVICE, proxyOptions));
+app.use('/api/showtimes', withCircuitBreaker('movie'), proxy(MOVIE_SERVICE, proxyOptions));
+app.use('/api/admin/users', withCircuitBreaker('user'), proxy(USER_SERVICE, proxyOptions));
+app.use('/api/admin/stats', withCircuitBreaker('booking'), proxy(BOOKING_SERVICE, proxyOptions));
+app.use('/api/admin/seats', withCircuitBreaker('seat'), proxy(SEAT_SERVICE, proxyOptions));
+app.use('/api/admin', withCircuitBreaker('movie'), proxy(MOVIE_SERVICE, proxyOptions));
+app.use('/api/seats', withCircuitBreaker('seat'), proxy(SEAT_SERVICE, proxyOptions));
+app.use('/api/bookings', withCircuitBreaker('booking'), proxy(BOOKING_SERVICE, proxyOptions));
+app.use('/api/payments', withCircuitBreaker('payment'), proxy(PAYMENT_SERVICE, proxyOptions));
+app.use('/api/zalopay', withCircuitBreaker('payment'), proxy(PAYMENT_SERVICE, proxyOptions));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('[Gateway Error]', err.message);
   res.status(502).json({ message: 'Bad Gateway: Microservice might be down.' });
 });
+
 
 app.listen(port, () => {
   console.log(`🛡️ API Gateway running on port ${port}`);

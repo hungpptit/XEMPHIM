@@ -1,0 +1,211 @@
+version: '3.8'
+
+networks:
+  xemphim-network:
+    driver: bridge
+
+services:
+  # ==========================================
+  # Infrastructure Services
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: xemphim-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: xemphim-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Core Microservices
+  # ==========================================
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: xemphim-user-service
+    ports:
+      - "4001:4001"
+    environment:
+      PORT: 4001
+      DB_HOST: host.docker.internal
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASS: "123"
+      USER_DB_NAME: XemPhim_User
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  movie-service:
+    build:
+      context: ./services/movie-service
+      dockerfile: Dockerfile
+    container_name: xemphim-movie-service
+    ports:
+      - "4002:4002"
+    environment:
+      PORT: 4002
+      DB_HOST: host.docker.internal
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASS: "123"
+      MOVIE_DB_NAME: XemPhim_Movie
+      SEAT_SERVICE_URL: http://seat-service:4003
+      BOOKING_SERVICE_URL: http://booking-service:4004
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  seat-service:
+    build:
+      context: ./services/seat-service
+      dockerfile: Dockerfile
+    container_name: xemphim-seat-service
+    ports:
+      - "4003:4003"
+    environment:
+      PORT: 4003
+      DB_HOST: host.docker.internal
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASS: "123"
+      SEAT_DB_NAME: XemPhim_Seat
+      MOVIE_SERVICE_URL: http://movie-service:4002
+      BOOKING_SERVICE_URL: http://booking-service:4004
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  booking-service:
+    build:
+      context: ./services/booking-service
+      dockerfile: Dockerfile
+    container_name: xemphim-booking-service
+    ports:
+      - "4004:4004"
+    environment:
+      PORT: 4004
+      DB_HOST: host.docker.internal
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASS: "123"
+      BOOKING_DB_NAME: XemPhim_Booking
+      USER_SERVICE_URL: http://user-service:4001
+      MOVIE_SERVICE_URL: http://movie-service:4002
+      SEAT_SERVICE_URL: http://seat-service:4003
+      PAYMENT_SERVICE_URL: http://payment-service:4005
+      NOTIFICATION_SERVICE_URL: http://notification-service:4006
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+      - rabbitmq
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: xemphim-payment-service
+    ports:
+      - "4005:4005"
+    environment:
+      PORT: 4005
+      DB_HOST: host.docker.internal
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASS: "123"
+      PAYMENT_DB_NAME: XemPhim_Payment
+      BOOKING_SERVICE_URL: http://booking-service:4004
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      APP_ID: "2554"
+      KEY1: "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn"
+      KEY2: "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf"
+      ZALOPAY_ENDPOINT: https://sb-openapi.zalopay.vn
+    depends_on:
+      - rabbitmq
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: xemphim-notification-service
+    ports:
+      - "4006:4006"
+    environment:
+      PORT: 4006
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      EMAIL_USER: phamtuanhung242004@gmail.com
+      EMAIL_PASS: "sdem dueh eehd gwza"
+    depends_on:
+      - rabbitmq
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  # ==========================================
+  # API Gateway & Frontend
+  # ==========================================
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: xemphim-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      GATEWAY_PORT: 8080
+      JWT_SECRET: dev-secret
+      USER_SERVICE_URL: http://user-service:4001
+      MOVIE_SERVICE_URL: http://movie-service:4002
+      SEAT_SERVICE_URL: http://seat-service:4003
+      BOOKING_SERVICE_URL: http://booking-service:4004
+      PAYMENT_SERVICE_URL: http://payment-service:4005
+    depends_on:
+      - user-service
+      - movie-service
+      - seat-service
+      - booking-service
+      - payment-service
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: xemphim-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway
+    networks:
+      - xemphim-network
+    restart: unless-stopped

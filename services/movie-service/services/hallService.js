@@ -6,7 +6,7 @@ const SEAT_SERVICE = process.env.SEAT_SERVICE_URL || 'http://localhost:4003';
  * Quản lý các phòng chiếu
  */
 
-export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id, vipRows }) => {
+export const createHall = async (CinemaHall, Seat_Ignored, { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id, vipRows }) => {
   try {
     const targetCinemaId = cinema_id || cinemaId;
     if (!targetCinemaId) {
@@ -38,67 +38,20 @@ export const createHall = async (CinemaHall, Seat, { name, rows, seatsPerRow, ha
       cinema_id: targetCinemaId
     });
 
-    // Auto-generate seats for this hall
-    if (Seat) {
-      const seatsToCreate = [];
-      const rows_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-      // VIP rows are usually in the middle. Let's calculate start row for VIP.
-      // If user specifies e.g. 2 VIP rows, we'll try to put them in the middle-back.
-      // For simplicity, let's just make the LAST 'vipRowsNum' rows VIP.
-      const startVipRowIndex = rowsNum - vipRowsNum;
-
-      for (let i = 0; i < rowsNum; i++) {
-        const rowLetter = rows_letters[i];
-        const isVipRow = i >= startVipRowIndex;
-        
-        for (let j = 1; j <= seatsPerRowNum; j++) {
-          seatsToCreate.push({
-            hall_id: hall.id,
-            row_name: rowLetter,
-            seat_number: j,
-            seat_type: isVipRow ? 'vip' : 'regular',
-            price_modifier: isVipRow ? 1.20 : 1.00, // VIP modifier is 1.2, regular is 1.0
-            is_active: true
-          });
-        }
-      }
-
-      // Instead of bulkCreate, use a loop of individual creates to ensure stability and get better errors
-      console.log(`[Hall Service] Creating ${seatsToCreate.length} seats for hall ${hall.id} locally...`);
-      
-      const createdSeats = [];
-      for (const seatData of seatsToCreate) {
-        try {
-          const s = await Seat.create(seatData);
-          createdSeats.push(s);
-        } catch (seatErr) {
-          console.error(`[Hall Service] Failed to create seat ${seatData.row_name}${seatData.seat_number}:`, seatErr.message);
-          // Continue to next seat but keep track of error
-        }
-      }
-      
-      console.log(`[Hall Service] Successfully created ${createdSeats.length}/${seatsToCreate.length} seats locally.`);
-      
-      if (createdSeats.length === 0 && seatsToCreate.length > 0) {
-        throw new Error('Không thể tạo được bất kỳ ghế nào cho phòng chiếu. Vui lòng kiểm tra log backend.');
-      }
-
-      console.log(`[Hall Service] Synchronizing seats with seat-service...`);
-      try {
-        await axios.post(`${SEAT_SERVICE}/api/seats/bulk`, seatsToCreate.map(s => ({
-          hall_id: hall.id,
-          row_name: s.row_name,
-          seat_number: s.seat_number,
-          seat_type: s.seat_type,
-          price_modifier: s.price_modifier,
-          is_active: s.is_active
-        })));
-        console.log(`[Hall Service] Successfully synchronized seats to seat-service.`);
-      } catch (syncErr) {
-        console.error(`[Hall Service] Failed to synchronize seats to seat-service:`, syncErr.message);
-        throw new Error('Lỗi đồng bộ ghế sang Seat Service: ' + syncErr.message);
-      }
+    // Delegate seat creation directly to seat-service (Single Source of Truth)
+    console.log(`[Hall Service] Requesting seat-service to initialize seats for hall ${hall.id}...`);
+    try {
+      await axios.post(`${SEAT_SERVICE}/api/seats/hall/${hall.id}/init`, {
+        rows: rowsNum,
+        seatsPerRow: seatsPerRowNum,
+        vipRows: vipRowsNum
+      });
+      console.log(`[Hall Service] Successfully initialized seats in seat-service.`);
+    } catch (syncErr) {
+      console.error(`[Hall Service] Failed to initialize seats in seat-service:`, syncErr.message);
+      // Rollback hall creation if seat initialization fails
+      await hall.destroy();
+      throw new Error('Lỗi khởi tạo ghế tại Seat Service: ' + syncErr.message);
     }
 
     return hall;
@@ -212,7 +165,7 @@ export const updateHall = async (CinemaHall, Cinema, hallId, updates) => {
   }
 };
 
-export const deleteHall = async (CinemaHall, Seat, Showtime, hallId) => {
+export const deleteHall = async (CinemaHall, Seat_Ignored, Showtime, hallId) => {
   const hall = await CinemaHall.findByPk(hallId);
   if (!hall) {
     throw new Error('Phòng chiếu không tồn tại');
@@ -225,8 +178,13 @@ export const deleteHall = async (CinemaHall, Seat, Showtime, hallId) => {
   }
 
   try {
-    // Delete all seats in this hall
-    await Seat.destroy({ where: { hall_id: hallId } });
+    // Delete all seats in this hall via seat-service
+    try {
+      await axios.delete(`${SEAT_SERVICE}/api/seats/hall/${hallId}`);
+      console.log(`[Hall Service] Deleted seats in seat-service for hall ${hallId}`);
+    } catch (seatErr) {
+      console.warn(`[Hall Service] Warning deleting seats in seat-service:`, seatErr.message);
+    }
     
     // Delete the hall
     await hall.destroy();
@@ -236,7 +194,7 @@ export const deleteHall = async (CinemaHall, Seat, Showtime, hallId) => {
   }
 };
 
-export const getHallDetail = async (CinemaHall, Seat, Cinema, { hallId }) => {
+export const getHallDetail = async (CinemaHall, Seat_Ignored, Cinema, { hallId }) => {
   const hall = await CinemaHall.findByPk(hallId, {
     attributes: ['id', 'name', 'cinema_id', 'total_seats'],
     include: [{ model: Cinema, attributes: ['name'] }]
@@ -246,54 +204,32 @@ export const getHallDetail = async (CinemaHall, Seat, Cinema, { hallId }) => {
   }
 
   try {
-    const seats = await Seat.findAll({
-      where: { hall_id: hallId },
-      order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
-    });
-
-    // Dynamically calculate rows and seats_per_row from seats
-    const rowNames = [...new Set(seats.map(s => s.row_name))].sort();
-    const rows = rowNames.length;
-    const seatsPerRow = seats.reduce((max, s) => s.seat_number > max ? s.seat_number : max, 0);
+    let seatData = { layout: {}, seats: [], rows: 0, seatsPerRow: 0 };
+    try {
+      const res = await axios.get(`${SEAT_SERVICE}/api/seats/hall/${hallId}/layout`);
+      if (res.data && res.data.data) {
+        seatData = res.data.data;
+      }
+    } catch (seatErr) {
+      console.warn(`[Hall Service] Could not fetch seat layout from seat-service:`, seatErr.message);
+    }
 
     return {
       id: hall.id,
       name: hall.name,
       cinema_id: hall.cinema_id,
       cinema_name: hall.Cinema?.name || '',
-      rows: rows,
-      seats_per_row: seatsPerRow,
+      rows: seatData.rows || 0,
+      seats_per_row: seatData.seatsPerRow || 0,
       total_seats: hall.total_seats,
       hall_type: 'Standard',
       description: '',
       is_active: true,
-      seats: seats,
-      seatLayout: generateSeatLayout(seats, rows, seatsPerRow, rowNames)
+      seats: seatData.seats || [],
+      seatLayout: seatData.seatLayout || seatData.layout || {}
     };
   } catch (error) {
     throw new Error('Lỗi khi lấy chi tiết phòng: ' + error.message);
   }
 };
 
-// Helper function to generate seat layout
-const generateSeatLayout = (seats, rows, seatsPerRow, rowNames) => {
-  const layout = {};
-  const rowLetters = rowNames.length > 0 ? rowNames : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-  for (let i = 0; i < rows; i++) {
-    const rowLetter = rowLetters[i];
-    layout[rowLetter] = [];
-    for (let j = 1; j <= seatsPerRow; j++) {
-      const seat = seats.find(s => s.row_name === rowLetter && s.seat_number === j);
-      layout[rowLetter].push({
-        id: seat?.id,
-        number: j,
-        type: seat?.seat_type || 'Standard',
-        modifier: seat?.price_modifier || 0,
-        is_active: seat?.is_active ?? true
-      });
-    }
-  }
-
-  return layout;
-};

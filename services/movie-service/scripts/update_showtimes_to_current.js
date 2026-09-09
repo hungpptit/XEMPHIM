@@ -43,10 +43,12 @@ async function main() {
       const st = allShowtimes[i];
       const movie = st.Movie || null;
 
+      // Distribute showtimes across the next 7 days (0 to 6 days from today)
       const dayOffset = i % 7;
       const targetDate = new Date(now);
       targetDate.setDate(targetDate.getDate() + dayOffset);
 
+      // Distribute showtimes into typical movie slots: 09:00, 11:30, 14:00, 16:30, 19:00, 21:30
       const timeSlots = [
         { h: 9, m: 0 },
         { h: 11, m: 30 },
@@ -67,6 +69,7 @@ async function main() {
         0
       );
 
+      // If slot for today is already past, push it to tomorrow
       if (newStart <= now) {
         newStart.setDate(newStart.getDate() + 1);
       }
@@ -74,6 +77,7 @@ async function main() {
       const durationMinutes = movie?.duration_minutes || 120;
       const newEnd = new Date(newStart.getTime() + durationMinutes * 60 * 1000);
 
+      // Update movie status to 'now_showing' if needed
       if (movie && movie.status !== 'now_showing' && movie.status !== 'coming_soon') {
         await movie.update({ status: 'now_showing' });
       }

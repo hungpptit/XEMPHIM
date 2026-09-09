@@ -38,24 +38,33 @@ export const getRevenueStats = async (appModels, filters = {}) => {
       include: [{ model: BookingSeat, attributes: ['id', 'price'] }]
     });
 
-    // 3. Fetch showtime details in parallel from movie-service
+    // 3. Fetch showtime details via Batch API from movie-service (O(1) request thay vì N+1 calls)
     const showtimeIds = [...new Set(bookings.map(b => b.showtime_id).filter(Boolean))];
-    const showtimes = await Promise.all(
-      showtimeIds.map(async (sid) => {
-        try {
-          const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${sid}`);
-          return res.data;
-        } catch (err) {
-          console.error(`Failed to fetch showtime ${sid} for stats:`, err.message);
-          return null;
-        }
-      })
-    );
+    let showtimes = [];
+    if (showtimeIds.length > 0) {
+      try {
+        const res = await axios.post(`${MOVIE_SERVICE}/api/showtimes/batch`, { ids: showtimeIds });
+        showtimes = Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        console.error('Failed to fetch batch showtimes for stats, trying parallel fallback:', err.message);
+        showtimes = await Promise.all(
+          showtimeIds.map(async (sid) => {
+            try {
+              const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${sid}`);
+              return res.data;
+            } catch (e) {
+              return null;
+            }
+          })
+        );
+      }
+    }
 
     const showtimeMap = showtimes.filter(Boolean).reduce((acc, st) => {
       acc[st.id] = st;
       return acc;
     }, {});
+
 
     // 4. Aggregate revenue and tickets count
     let totalRevenue = 0;

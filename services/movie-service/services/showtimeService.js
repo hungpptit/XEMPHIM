@@ -54,6 +54,30 @@ export const getShowtimeById = async (id) => {
   return json;
 };
 
+// Lấy thông tin lịch chiếu hàng loạt theo mảng IDs (Giải quyết triệt để N+1 query liên service)
+export const getShowtimesByIds = async (ids = []) => {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const { Movie, CinemaHall, Cinema } = sequelize.models;
+  const rows = await Showtime.findAll({
+    where: { id: ids },
+    include: [
+      { model: Movie, attributes: ['id', 'title', 'duration_minutes', 'poster_url'] },
+      { 
+        model: CinemaHall, 
+        attributes: ['id', 'name', 'cinema_id'],
+        include: [{ model: Cinema, attributes: ['id', 'name', 'address', 'city'] }]
+      }
+    ]
+  });
+  return rows.map(st => {
+    const json = st.toJSON();
+    json.movie_title = json.Movie?.title || 'Unknown Movie';
+    json.hall_name = json.CinemaHall?.name || 'Unknown Hall';
+    json.cinema_name = json.CinemaHall?.Cinema?.name || '';
+    return json;
+  });
+};
+
 // Kiểm tra thời gian các lịch chiếu có bị chồng chéo hay không
 const timesOverlap = (aStart, aEnd, bStart, bEnd) => {
   return (aStart < bEnd) && (aEnd > bStart);
