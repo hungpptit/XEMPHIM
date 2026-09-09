@@ -1,5 +1,5 @@
 import {
-    listSeats, getSeatById, createSeat, updateSeat, deleteSeat, bulkCreateSeats
+    listSeats, getSeatById, getSeatsByIds, createSeat, updateSeat, deleteSeat, bulkCreateSeats
 } from "../services/seatService.js";
 import { getSeatMapForShowtime } from '../services/seatService.js';
 
@@ -9,6 +9,19 @@ export const getAllSeats = async (req, res) =>{
         res.json(seats);
     }catch( err){
         res.status(500).json({message: err.message});
+    }
+};
+
+export const getSeatsBatchHandler = async (req, res) => {
+    try {
+        const { seat_ids } = req.body;
+        if (!Array.isArray(seat_ids)) {
+            return res.status(400).json({ message: 'seat_ids must be an array of IDs' });
+        }
+        const seats = await getSeatsByIds(seat_ids);
+        res.json(seats);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
 

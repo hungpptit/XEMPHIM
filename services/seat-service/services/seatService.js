@@ -48,6 +48,15 @@ export const getSeatById = async (id) => {
   return seat ? seat.toJSON() : null;
 };
 
+export const getSeatsByIds = async (ids) => {
+  if (!ids || !ids.length) return [];
+  const seats = await Seat.findAll({
+    where: { id: ids },
+    attributes: ['id', 'hall_id', 'row_name', 'seat_number', 'seat_type', 'price_modifier', 'is_active']
+  });
+  return seats.map(s => s.toJSON());
+};
+
 export const createSeat = async (payload) => {
   const seat = await Seat.create({
     hall_id: payload.hall_id,

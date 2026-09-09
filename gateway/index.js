@@ -18,9 +18,20 @@ if (!process.env.JWT_SECRET) {
   dotenv.config({ path: path.join(process.cwd(), '..', '.env') });
 }
 
+import crypto from 'crypto';
+
 const app = express();
 const port = process.env.GATEWAY_PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+
+// Correlation ID / Request ID middleware for Distributed Tracing
+app.use((req, res, next) => {
+  const requestId = req.headers['x-request-id'] || crypto.randomUUID();
+  req.id = requestId;
+  req.headers['x-request-id'] = requestId;
+  res.setHeader('x-request-id', requestId);
+  next();
+});
 
 // CORS configuration (allow frontend localhost:3000)
 const corsOptions = {
@@ -46,10 +57,10 @@ app.use((req, res, next) => {
         req.headers['x-user-id'] = String(decoded.id);
         req.headers['x-user-email'] = String(decoded.email || '');
         req.headers['x-user-role'] = String(decoded.role || 'user');
-        console.log(`🔑 Gateway authenticated user ID: ${decoded.id}`);
+        console.log(`[Gateway][${req.id}] 🔑 Authenticated user ID: ${decoded.id}`);
       }
     } catch (err) {
-      console.warn('⚠️ Invalid access token cookie in gateway');
+      console.warn(`[Gateway][${req.id}] ⚠️ Invalid access token cookie in gateway`);
     }
   }
   next();
@@ -58,9 +69,9 @@ app.use((req, res, next) => {
 // Swagger UI mount
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// Logging middleware
+// Logging middleware with Trace ID
 app.use((req, res, next) => {
-  console.log(`[Gateway] ${req.method} ${req.path} -> forwarding...`);
+  console.log(`[Gateway][${req.id}] ${req.method} ${req.originalUrl || req.path} -> forwarding...`);
   next();
 });
 
@@ -115,6 +126,9 @@ const proxyOptions = {
     return req.originalUrl;
   },
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+    if (srcReq.id) {
+      proxyReqOpts.headers['x-request-id'] = srcReq.id;
+    }
     return proxyReqOpts;
   },
   proxyErrorHandler: (err, res, next) => {

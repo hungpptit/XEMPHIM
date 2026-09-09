@@ -12,8 +12,11 @@ export const publishBookingFailed = async (payload) => {
     const conn = await amqp.connect(MQ_URL);
     const channel = await conn.createChannel();
     await channel.assertQueue(queue, { durable: true });
-    channel.sendToQueue(queue, Buffer.from(JSON.stringify(payload)), { persistent: true });
-    console.log(`📤 [SAGA Event] Published 'booking.failed' for booking ${payload.booking_id}: ${payload.reason}`);
+    channel.sendToQueue(queue, Buffer.from(JSON.stringify(payload)), {
+      persistent: true,
+      correlationId: payload.correlation_id
+    });
+    console.log(`[Trace: ${payload.correlation_id || 'N/A'}] 📤 [SAGA Event] Published 'booking.failed' for booking ${payload.booking_id}: ${payload.reason}`);
     await channel.close();
     await conn.close();
   } catch (err) {
@@ -41,8 +44,9 @@ export const startBookingConsumer = async () => {
 
       try {
         const payload = JSON.parse(msg.content.toString());
-        const { booking_id, payment_method, zp_trans_id, app_trans_id, amount } = payload;
-        console.log(`🎟 [Booking Consumer] Processing confirmation for booking ID: ${booking_id}`);
+        const { booking_id, payment_method, zp_trans_id, app_trans_id, amount, correlation_id } = payload;
+        const traceId = correlation_id || msg.properties?.correlationId || 'N/A';
+        console.log(`[Trace: ${traceId}] 🎟 [Booking Consumer] Processing confirmation for booking ID: ${booking_id}`);
 
         const result = await confirmPayment({
           booking_id,
@@ -56,15 +60,16 @@ export const startBookingConsumer = async () => {
         });
 
         if (!result.success) {
-          console.warn(`⚠️ [Booking Consumer] Booking confirmation failed: ${result.message}. Triggering SAGA compensation...`);
+          console.warn(`[Trace: ${traceId}] ⚠️ [Booking Consumer] Booking confirmation failed: ${result.message}. Triggering SAGA compensation...`);
           await publishBookingFailed({
+            correlation_id: traceId,
             booking_id,
             zp_trans_id,
             amount,
             reason: result.message
           });
         } else {
-          console.log(`✅ [Booking Consumer] Booking ${booking_id} successfully confirmed!`);
+          console.log(`[Trace: ${traceId}] ✅ [Booking Consumer] Booking ${booking_id} successfully confirmed!`);
         }
 
         channel.ack(msg);

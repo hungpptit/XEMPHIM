@@ -165,26 +165,54 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
       expire_at: Sequelize.literal(`DATEADD(SECOND, ${Number(holdSeconds)}, SYSUTCDATETIME())`)
     }, { transaction: t });
 
-    // Fetch showtime details from movie-service
+    // Fetch showtime details with Redis caching
     let showtime;
-    try {
-      const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${showtime_id}`);
-      showtime = res.data;
-    } catch (apiErr) {
-      console.error('Failed fetching showtime from movie-service:', apiErr.message);
-      throw new Error('Showtime Service offline or Showtime not found');
+    const showtimeCacheKey = `showtime:meta:${showtime_id}`;
+    if (redis) {
+      try {
+        const cached = await redis.get(showtimeCacheKey);
+        if (cached) {
+          showtime = JSON.parse(cached);
+        }
+      } catch (cacheErr) {
+        console.warn('⚠️ [Redis] Error reading showtime cache:', cacheErr.message);
+      }
     }
 
-    // Fetch seat details from seat-service
-    const seatRows = await Promise.all(targetSeatIds.map(async (seatId) => {
+    if (!showtime) {
       try {
-        const res = await axios.get(`${SEAT_SERVICE}/api/seats/${seatId}`);
-        return res.data;
-      } catch (err) {
-        console.error(`Failed to get seat details for seatId ${seatId}:`, err.message);
-        throw new Error(`Seat ${seatId} not found or Seat Service offline`);
+        const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${showtime_id}`);
+        showtime = res.data;
+        if (redis && showtime) {
+          await redis.set(showtimeCacheKey, JSON.stringify(showtime), 'EX', 300); // 5 mins TTL
+        }
+      } catch (apiErr) {
+        console.error('Failed fetching showtime from movie-service:', apiErr.message);
+        throw new Error('Showtime Service offline or Showtime not found');
       }
-    }));
+    }
+
+    // Fetch seat details from seat-service via Batch API
+    let seatRows = [];
+    try {
+      const res = await axios.post(`${SEAT_SERVICE}/api/seats/batch`, { seat_ids: targetSeatIds });
+      seatRows = res.data || [];
+    } catch (batchErr) {
+      console.warn('⚠️ [Seat Batch] Failed batch fetching, falling back to individual calls:', batchErr.message);
+      seatRows = await Promise.all(targetSeatIds.map(async (seatId) => {
+        try {
+          const res = await axios.get(`${SEAT_SERVICE}/api/seats/${seatId}`);
+          return res.data;
+        } catch (err) {
+          console.error(`Failed to get seat details for seatId ${seatId}:`, err.message);
+          throw new Error(`Seat ${seatId} not found or Seat Service offline`);
+        }
+      }));
+    }
+
+    if (seatRows.length !== targetSeatIds.length) {
+      throw new Error('Một hoặc nhiều ghế được chọn không tồn tại hoặc không hợp lệ');
+    }
 
     const bookingSeatCreates = seatRows.map(s => {
       const modifier = Number(s.price_modifier) || 1.0;

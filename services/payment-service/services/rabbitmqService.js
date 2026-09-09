@@ -17,14 +17,17 @@ export const publishPaymentSuccess = async (payload) => {
     const channel = await conn.createChannel();
 
     await channel.assertQueue(queue, { durable: true });
-    channel.sendToQueue(queue, Buffer.from(JSON.stringify(payload)), { persistent: true });
-    console.log(`📤 [RabbitMQ Payment] Published 'payment.successful' for booking ID: ${payload.booking_id}`);
+    channel.sendToQueue(queue, Buffer.from(JSON.stringify(payload)), {
+      persistent: true,
+      correlationId: payload.correlation_id
+    });
+    console.log(`[Trace: ${payload.correlation_id || 'N/A'}] 📤 [RabbitMQ Payment] Published 'payment.successful' for booking ID: ${payload.booking_id}`);
 
     await channel.close();
     await conn.close();
     return true;
   } catch (err) {
-    console.warn(`⚠️ [RabbitMQ Payment] RabbitMQ unavailable (${err.message}). Falling back to direct HTTP call.`);
+    console.warn(`[Trace: ${payload.correlation_id || 'N/A'}] ⚠️ [RabbitMQ Payment] RabbitMQ unavailable (${err.message}). Falling back to direct HTTP call.`);
     
     // HTTP Fallback to ensure reliability
     try {
@@ -36,11 +39,13 @@ export const publishPaymentSuccess = async (payload) => {
           response_code: '1',
           amount: payload.amount
         }
+      }, {
+        headers: { 'x-request-id': payload.correlation_id }
       });
-      console.log(`✅ [HTTP Fallback] Booking ${payload.booking_id} confirmed directly via HTTP fallback`);
+      console.log(`[Trace: ${payload.correlation_id || 'N/A'}] ✅ [HTTP Fallback] Booking ${payload.booking_id} confirmed directly via HTTP fallback`);
       return true;
     } catch (httpErr) {
-      console.error(`❌ [HTTP Fallback Error] Failed to confirm booking ${payload.booking_id}:`, httpErr.message);
+      console.error(`[Trace: ${payload.correlation_id || 'N/A'}] ❌ [HTTP Fallback Error] Failed to confirm booking ${payload.booking_id}:`, httpErr.message);
       return false;
     }
   }
@@ -66,7 +71,8 @@ export const startCompensatingConsumer = async () => {
 
       try {
         const data = JSON.parse(msg.content.toString());
-        console.warn(`🔄 [SAGA Compensating] Processing refund compensation for failed booking:`, data);
+        const traceId = data.correlation_id || msg.properties?.correlationId || 'N/A';
+        console.warn(`[Trace: ${traceId}] 🔄 [SAGA Compensating] Processing refund compensation for failed booking:`, data);
 
         if (data.zp_trans_id && data.amount) {
           const refundResult = await zalopayService.refundOrder({
@@ -75,7 +81,7 @@ export const startCompensatingConsumer = async () => {
             description: `Tự động hoàn tiền do giữ chỗ hết hạn hoặc lỗi: ${data.reason || 'Booking failed'}`,
             booking_id: data.booking_id
           });
-          console.log(`💸 [SAGA Compensating] Refund result:`, refundResult);
+          console.log(`[Trace: ${traceId}] 💸 [SAGA Compensating] Refund result:`, refundResult);
         }
 
         channel.ack(msg);

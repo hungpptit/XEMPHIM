@@ -42,11 +42,11 @@ services:
       - "4001:4001"
     environment:
       PORT: 4001
-      DB_HOST: host.docker.internal
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASS: "123"
-      USER_DB_NAME: XemPhim_User
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-1433}
+      DB_USER: ${DB_USER:-sa}
+      DB_PASS: ${DB_PASS:-123}
+      USER_DB_NAME: ${USER_DB_NAME:-XemPhim_User}
     networks:
       - xemphim-network
     restart: unless-stopped
@@ -60,11 +60,11 @@ services:
       - "4002:4002"
     environment:
       PORT: 4002
-      DB_HOST: host.docker.internal
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASS: "123"
-      MOVIE_DB_NAME: XemPhim_Movie
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-1433}
+      DB_USER: ${DB_USER:-sa}
+      DB_PASS: ${DB_PASS:-123}
+      MOVIE_DB_NAME: ${MOVIE_DB_NAME:-XemPhim_Movie}
       SEAT_SERVICE_URL: http://seat-service:4003
       BOOKING_SERVICE_URL: http://booking-service:4004
       REDIS_URL: redis://redis:6379
@@ -83,11 +83,11 @@ services:
       - "4003:4003"
     environment:
       PORT: 4003
-      DB_HOST: host.docker.internal
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASS: "123"
-      SEAT_DB_NAME: XemPhim_Seat
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-1433}
+      DB_USER: ${DB_USER:-sa}
+      DB_PASS: ${DB_PASS:-123}
+      SEAT_DB_NAME: ${SEAT_DB_NAME:-XemPhim_Seat}
       MOVIE_SERVICE_URL: http://movie-service:4002
       BOOKING_SERVICE_URL: http://booking-service:4004
       REDIS_URL: redis://redis:6379
@@ -106,11 +106,11 @@ services:
       - "4004:4004"
     environment:
       PORT: 4004
-      DB_HOST: host.docker.internal
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASS: "123"
-      BOOKING_DB_NAME: XemPhim_Booking
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-1433}
+      DB_USER: ${DB_USER:-sa}
+      DB_PASS: ${DB_PASS:-123}
+      BOOKING_DB_NAME: ${BOOKING_DB_NAME:-XemPhim_Booking}
       USER_SERVICE_URL: http://user-service:4001
       MOVIE_SERVICE_URL: http://movie-service:4002
       SEAT_SERVICE_URL: http://seat-service:4003
@@ -134,17 +134,17 @@ services:
       - "4005:4005"
     environment:
       PORT: 4005
-      DB_HOST: host.docker.internal
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASS: "123"
-      PAYMENT_DB_NAME: XemPhim_Payment
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-1433}
+      DB_USER: ${DB_USER:-sa}
+      DB_PASS: ${DB_PASS:-123}
+      PAYMENT_DB_NAME: ${PAYMENT_DB_NAME:-XemPhim_Payment}
       BOOKING_SERVICE_URL: http://booking-service:4004
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      APP_ID: "2554"
-      KEY1: "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn"
-      KEY2: "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf"
-      ZALOPAY_ENDPOINT: https://sb-openapi.zalopay.vn
+      APP_ID: ${ZALOPAY_APP_ID:-2554}
+      KEY1: ${ZALOPAY_KEY1:-sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn}
+      KEY2: ${ZALOPAY_KEY2:-trMrHtvjo6myautxDUiAcYsVtaeQ8nhf}
+      ZALOPAY_ENDPOINT: ${ZALOPAY_ENDPOINT:-https://sb-openapi.zalopay.vn}
     depends_on:
       - rabbitmq
     networks:
@@ -161,8 +161,8 @@ services:
     environment:
       PORT: 4006
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      EMAIL_USER: phamtuanhung242004@gmail.com
-      EMAIL_PASS: "sdem dueh eehd gwza"
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
     depends_on:
       - rabbitmq
     networks:

@@ -89,14 +89,16 @@ export const zalopayCallbackHandler = async (req, res) => {
     // Tách rời hoàn toàn khỏi Booking Service, không chờ đợi hay phụ thuộc vòng tròn
     try {
       const { publishPaymentSuccess } = await import('../services/rabbitmqService.js');
+      const correlationId = req.headers['x-request-id'] || `REQ-${uuidv4().substring(0, 8)}`;
       await publishPaymentSuccess({
+        correlation_id: correlationId,
         booking_id,
         zp_trans_id,
         app_trans_id,
         amount,
         payment_method: 'zalopay'
       });
-      console.log(`📤 [ZaloPay Callback] Event 'payment.successful' published for booking ${booking_id}`);
+      console.log(`[Trace: ${correlationId}] 📤 [ZaloPay Callback] Event 'payment.successful' published for booking ${booking_id}`);
       return res.json({ return_code: 1, return_message: 'success' });
     } catch (eventErr) {
       console.error('❌ [ZaloPay Callback] Failed to dispatch payment event:', eventErr.message);

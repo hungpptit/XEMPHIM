@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getAllSeats,
   getSeat,
+  getSeatsBatchHandler,
   createNewSeat,
   updateSeatById,
   deleteSeatById,
@@ -17,6 +18,7 @@ import {
 const router = express.Router();
 
 router.get('/', getAllSeats);
+router.post('/batch', getSeatsBatchHandler);
 router.get('/showtimes/:showtimeId/seats', getSeatMap);
 router.post('/bulk', createBulkSeats);
 
