@@ -156,11 +156,57 @@ const Payment = () => {
             clearInterval(pollRef.current);
             setPolling(false);
 
+            // Save the newly booked ticket into demo_booked_tickets so it appears instantly in MyTickets
+            try {
+              const newTicket = {
+                id: bookingId || Date.now(),
+                booking_code: `ROYAL-${Math.floor(100000 + Math.random() * 900000)}`,
+                total_price: totalPrice || 90000,
+                status: 'confirmed',
+                created_at: new Date().toISOString(),
+                qr_token: `TOKEN-${Date.now()}`,
+                qr_data: JSON.stringify({ booking_id: bookingId, movie: movie?.title, time: Date.now() }),
+                checked_in: false,
+                movie: {
+                  id: movie?.id || 1,
+                  title: movie?.title || 'Phim Hoàng Gia',
+                  poster: movie?.poster || movie?.poster_url || '',
+                  duration: movie?.duration || 120
+                },
+                showtime: {
+                  id: showtime?.id || 1,
+                  hall_id: showtime?.hall_id || 1,
+                  start_time: showtime?.start_time || new Date().toISOString(),
+                  base_price: showtime?.base_price || 90000,
+                  CinemaHall: {
+                    name: showtime?.room || 'Phòng Chiếu 01 - GOLD CLASS',
+                    Cinema: {
+                      name: showtime?.cinema || 'XEMPHIM Royal Cinema'
+                    }
+                  }
+                },
+                seats: (selectedSeats || []).map((s, idx) => ({
+                  id: s.id || idx,
+                  row: s.row || 'A',
+                  number: s.number || (idx + 1),
+                  type: s.type || 'regular',
+                  price: s.price || 90000,
+                  displayName: s.displayName || `${s.row || 'A'}${s.number || (idx + 1)}`
+                }))
+              };
+
+              const existing = JSON.parse(localStorage.getItem('demo_booked_tickets') || '[]');
+              existing.unshift(newTicket);
+              localStorage.setItem('demo_booked_tickets', JSON.stringify(existing));
+            } catch (e) {
+              console.warn('Failed to save demo ticket to localStorage:', e);
+            }
+
             setShowPopup(true);
             const timeoutId = setTimeout(() => {
               setShowPopup(false);
               navigate('/my-tickets');
-            }, 10000);
+            }, 5000);
 
             const handleConfirm = () => {
               clearTimeout(timeoutId);
@@ -563,7 +609,7 @@ const Payment = () => {
       {/* Render the custom Popup component */}
       {showPopup && (
         <Popup
-          message="Giao dịch thành công! Bạn sẽ được chuyển đến trang vé trong giây lát."
+          message="Giao dịch ZaloPay giả lập thành công cho chế độ Live Demo! Chiếc vé bạn vừa chọn đã được lưu trực tiếp vào danh sách Vé Của Tôi."
           onConfirm={popupActions.handleConfirm}
         />
       )}

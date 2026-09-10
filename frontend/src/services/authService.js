@@ -3,25 +3,30 @@ import { mockUser } from '../mock/mockData';
 
 // Helper: fetch current user from /me
 const getCurrentUser = async () => {
+  // 1. If user explicitly logged out, return null immediately
+  if (typeof window !== 'undefined' && localStorage.getItem('demo_logged_out') === 'true') {
+    return null;
+  }
+
+  // 2. If user logged in with custom account, return that session
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('demo_user');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {}
+    }
+  }
+
+  // 3. Try real backend API
   try {
     const res = await API.get('/auth/me');
     if (res.data?.user) return res.data.user;
   } catch (err) {
-    // If fails, continue to fallback
+    // If backend fails, fallback below
   }
 
-  // Check if user explicitly logged out
-  if (localStorage.getItem('demo_logged_out') === 'true') {
-    return null;
-  }
-
-  // Demo fallback: Return stored demo session
-  const stored = localStorage.getItem('demo_user');
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch (e) {}
-  }
+  // 4. Default demo user initially
   return mockUser;
 };
 

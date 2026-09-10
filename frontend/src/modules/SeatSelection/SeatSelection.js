@@ -6,7 +6,7 @@ const SeatSelection = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const movie = location.state?.movie || null;
   const showtime = location.state?.showtime || null;
 
@@ -15,7 +15,7 @@ const SeatSelection = () => {
     if (!location.state?.fromLogin) {
       sessionStorage.removeItem('pending_booking_context');
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // Always start with empty seats [] unless explicitly returning from Login for the same showtime
   const [selectedSeats, setSelectedSeats] = useState(() => {
@@ -107,9 +107,9 @@ const SeatSelection = () => {
         if (isInitial) setLoading(true);
         const { bookingAPI } = await import('../../services/api');
         const response = await bookingAPI.getSeatMap(showtimeId);
-        
+
         if (!active) return;
-        
+
         const seatData = response.data || response;
         if (seatData && seatData.seatMap) {
           const newMap = mapBackendSeatMap(seatData);
@@ -214,7 +214,7 @@ const SeatSelection = () => {
           showtime_id: showtime?.id,
           seat_ids: selectedSeats.map(s => Number(s.id))
         };
-        
+
         // Validate payload
         if (!currentUserId) {
           try {
@@ -223,7 +223,7 @@ const SeatSelection = () => {
               showtime,
               selectedSeats
             }));
-          } catch (e) {}
+          } catch (e) { }
 
           const currentPath = location.pathname + location.search;
           showError('Vui lòng đăng nhập để hoàn tất đặt vé. Hệ thống đã lưu lại ghế bạn chọn.');
@@ -234,21 +234,21 @@ const SeatSelection = () => {
           }, 1200);
           return;
         }
-        
+
         if (!showtime?.id) {
           showError('Thông tin suất chiếu không hợp lệ');
           return;
         }
-        
+
         // Lock seats via backend API
         const { bookingAPI } = await import('../../services/api');
         const res = await bookingAPI.lockSeats(payload);
         const responseData = res.data || res;
-        
+
         if (responseData && responseData.success && responseData.booking) {
           const booking = responseData.booking;
-          
-          try { sessionStorage.removeItem('pending_booking_context'); } catch (e) {}
+
+          try { sessionStorage.removeItem('pending_booking_context'); } catch (e) { }
 
           navigate('/payment', {
             state: {
@@ -269,9 +269,9 @@ const SeatSelection = () => {
             }
             return `Mã ghế ${cid}`;
           });
-          
+
           showError(`Ghế đã bị người khác chọn/khóa chờ thanh toán: ${conflictNames.join(', ')}. Vui lòng chọn ghế khác.`);
-          
+
           // refresh seat map
           const showtimeId = showtime?.id || id;
           const freshRes = await bookingAPI.getSeatMap(showtimeId);
@@ -293,9 +293,9 @@ const SeatSelection = () => {
             }
             return `Mã ghế ${cid}`;
           });
-          
+
           showError(`Ghế đã bị người khác chọn/khóa: ${conflictNames.join(', ')}. Vui lòng chọn ghế khác.`);
-          
+
           try {
             const showtimeId = showtime?.id || id;
             const { bookingAPI } = await import('../../services/api');
@@ -304,7 +304,7 @@ const SeatSelection = () => {
             if (freshData && freshData.seatMap) {
               setSeatMap(mapBackendSeatMap(freshData));
             }
-          } catch (refreshErr) {}
+          } catch (refreshErr) { }
         } else {
           showError('Không thể giữ ghế lúc này, vui lòng thử lại sau');
         }
@@ -392,9 +392,8 @@ const SeatSelection = () => {
         <div className="w-3 sm:w-6" />
 
         {/* Center Block (Core Sweet Spot) */}
-        <div className={`flex items-center gap-1.5 sm:gap-2 px-2 py-1 rounded-xl transition-all ${
-          isVipRow ? 'bg-[#f2ca50]/5 border border-[#f2ca50]/20 shadow-[0_0_15px_rgba(242,202,80,0.05)]' : ''
-        }`}>
+        <div className={`flex items-center gap-1.5 sm:gap-2 px-2 py-1 rounded-xl transition-all ${isVipRow ? 'bg-[#f2ca50]/5 border border-[#f2ca50]/20 shadow-[0_0_15px_rgba(242,202,80,0.05)]' : ''
+          }`}>
           {centerSeats.map(seat => renderSeatButton(seat))}
         </div>
 
@@ -529,17 +528,17 @@ const SeatSelection = () => {
           {/* Curved Ambient Golden Screen Element (Stitch SVG Specification) */}
           <div className="w-full max-w-3xl mx-auto flex flex-col items-center mb-12 relative">
             <div className="w-full h-8 sm:h-12 relative flex justify-center items-start">
-              <svg 
-                className="w-full h-full text-[#f2ca50]" 
-                fill="none" 
-                preserveAspectRatio="none" 
+              <svg
+                className="w-full h-full text-[#f2ca50]"
+                fill="none"
+                preserveAspectRatio="none"
                 viewBox="0 0 1000 70"
               >
-                <path 
-                  d="M 0 55 Q 500 -10 1000 55" 
-                  fill="transparent" 
-                  stroke="#f2ca50" 
-                  strokeLinecap="round" 
+                <path
+                  d="M 0 55 Q 500 -10 1000 55"
+                  fill="transparent"
+                  stroke="#f2ca50"
+                  strokeLinecap="round"
                   strokeWidth="4"
                 />
               </svg>
@@ -637,7 +636,7 @@ const SeatSelection = () => {
 
               <div className="flex justify-between items-center py-1.5 border-b border-white/5">
                 <span className="text-[#9CA3AF] flex items-center gap-1.5">
-                  <span>👥</span> Ghế đã chọn:
+                  Ghế đã chọn:
                 </span>
                 <span className="font-bold text-white text-base">
                   {selectedSeats.length}
@@ -676,11 +675,10 @@ const SeatSelection = () => {
               <button
                 onClick={handleContinue}
                 disabled={selectedSeats.length === 0}
-                className={`w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(242,202,80,0.35)] transition-all ${
-                  selectedSeats.length > 0
-                    ? 'bg-gradient-to-r from-[#ffe088] via-[#f2ca50] to-[#d4af37] text-[#241a00] hover:brightness-105 active:scale-95 cursor-pointer'
-                    : 'bg-[#292a2d] text-[#9ca3af] cursor-not-allowed'
-                }`}
+                className={`w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(242,202,80,0.35)] transition-all ${selectedSeats.length > 0
+                  ? 'bg-gradient-to-r from-[#ffe088] via-[#f2ca50] to-[#d4af37] text-[#241a00] hover:brightness-105 active:scale-95 cursor-pointer'
+                  : 'bg-[#292a2d] text-[#9ca3af] cursor-not-allowed'
+                  }`}
               >
                 <span>TIẾP TỤC THANH TOÁN</span>
                 <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -698,7 +696,7 @@ const SeatSelection = () => {
               <h3 className="font-['Playfair_Display'] text-xl font-bold text-[#f2ca50]">
                 Thông tin đặt vé
               </h3>
-              <button 
+              <button
                 onClick={() => setShowSummaryModal(false)}
                 className="text-gray-400 hover:text-white p-1 rounded-lg text-lg cursor-pointer"
               >
@@ -728,7 +726,7 @@ const SeatSelection = () => {
                 <span className="font-medium text-[#f2ca50]">{showtime?.room || 'Phòng chiếu 03 - GOLD CLASS'}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-white/5">
-                <span className="text-[#9CA3AF]">👥 Ghế đã chọn:</span>
+                <span className="text-[#9CA3AF]">Ghế đã chọn:</span>
                 <span className="font-bold text-white">{selectedSeats.length}</span>
               </div>
 
@@ -816,11 +814,10 @@ const SeatSelection = () => {
           <button
             onClick={handleContinue}
             disabled={selectedSeats.length === 0}
-            className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(242,202,80,0.35)] transition-all ${
-              selectedSeats.length > 0
-                ? 'bg-gradient-to-r from-[#ffe088] via-[#f2ca50] to-[#d4af37] text-[#241a00] hover:brightness-105 active:scale-95 cursor-pointer'
-                : 'bg-[#292a2d] text-[#9ca3af] cursor-not-allowed'
-            }`}
+            className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(242,202,80,0.35)] transition-all ${selectedSeats.length > 0
+              ? 'bg-gradient-to-r from-[#ffe088] via-[#f2ca50] to-[#d4af37] text-[#241a00] hover:brightness-105 active:scale-95 cursor-pointer'
+              : 'bg-[#292a2d] text-[#9ca3af] cursor-not-allowed'
+              }`}
           >
             <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
             <span>Tiến Hành Giữ Ghế ({getTotalPrice().toLocaleString('vi-VN')}đ)</span>

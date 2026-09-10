@@ -307,6 +307,18 @@ export default function Profile() {
                     <span>Vào Trang Quản Trị</span>
                   </Link>
                 )}
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await authService.logout();
+                    navigate('/');
+                  }}
+                  className="px-6 py-3 rounded-xl bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-500/30 font-semibold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">logout</span>
+                  <span>Đăng Xuất</span>
+                </button>
               </div>
             </div>
           </div>

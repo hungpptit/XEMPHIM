@@ -101,7 +101,11 @@ export function getFallbackResponse(url = '', method = 'get', body = null) {
 
   // /bookings/user/:userId
   if (cleanUrl.includes('/bookings/user/')) {
-    return { bookings: mockBookings };
+    let localBooked = [];
+    try {
+      localBooked = JSON.parse(localStorage.getItem('demo_booked_tickets') || '[]');
+    } catch (e) {}
+    return { bookings: [...localBooked, ...mockBookings] };
   }
 
   // /bookings/:id
@@ -111,7 +115,15 @@ export function getFallbackResponse(url = '', method = 'get', body = null) {
 
   // 4. Quản lý tài khoản & người dùng
   if (cleanUrl.includes('/auth/me') || cleanUrl.includes('/auth/profile') || cleanUrl.includes('/users/')) {
-    return { user: mockUser };
+    if (typeof window !== 'undefined' && localStorage.getItem('demo_logged_out') === 'true') {
+      return { user: null };
+    }
+    let storedUser = null;
+    try {
+      const s = localStorage.getItem('demo_user');
+      if (s) storedUser = JSON.parse(s);
+    } catch (e) {}
+    return { user: storedUser || mockUser };
   }
 
   if (cleanUrl.includes('/auth/login') || cleanUrl.includes('/auth/register')) {

@@ -41,9 +41,9 @@ const MyTickets = () => {
         showtime: {
           date: new Date(booking.showtime.start_time).toISOString().slice(0, 10),
           time: new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          cinema: booking.showtime.CinemaHall?.Cinema
+          cinema: booking.showtime?.CinemaHall?.Cinema
             ? `${booking.showtime.CinemaHall.Cinema.name} - ${booking.showtime.CinemaHall.name}`
-            : `Rạp ${booking.showtime.hall_id}`
+            : (booking.showtime?.cinema || `Rạp Hoàng Gia ${booking.showtime?.hall_id || 1}`)
         },
         selectedSeats: booking.seats,
         totalPrice: booking.total_price,
