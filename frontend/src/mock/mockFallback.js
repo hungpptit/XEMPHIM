@@ -67,14 +67,8 @@ export function getFallbackResponse(url = '', method = 'get', body = null) {
   }
 
   // Polling trạng thái thanh toán (/bookings/:id/status)
+  // Luôn giữ trạng thái 'locked' chờ thanh toán thật, hết hạn giữ chỗ sẽ tự động out
   if (cleanUrl.includes('/status')) {
-    const count = (demoPollCounters.get('poll') || 0) + 1;
-    demoPollCounters.set('poll', count);
-    // Sau 2 lần poll (khoảng 4-6s) thì giả lập thanh toán ZaloPay quét thành công
-    if (count >= 2) {
-      demoPollCounters.delete('poll');
-      return { status: 'confirmed', success: true };
-    }
     return { status: 'locked', success: true };
   }
 
@@ -101,11 +95,7 @@ export function getFallbackResponse(url = '', method = 'get', body = null) {
 
   // /bookings/user/:userId
   if (cleanUrl.includes('/bookings/user/')) {
-    let localBooked = [];
-    try {
-      localBooked = JSON.parse(localStorage.getItem('demo_booked_tickets') || '[]');
-    } catch (e) {}
-    return { bookings: [...localBooked, ...mockBookings] };
+    return { bookings: mockBookings };
   }
 
   // /bookings/:id
