@@ -207,53 +207,98 @@ const MyTickets = () => {
 
   if (loading) {
     return (
-      <div className={styles.myTickets}>
-        <div className="container">
-          <div className={styles.loadingContainer}>
-            <div className="loading"></div>
-            <p>Đang tải vé của bạn...</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#121316] flex flex-col items-center justify-center gap-4 text-white">
+        <div className="w-12 h-12 border-4 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin"></div>
+        <p className="font-['Playfair_Display'] tracking-widest text-[#f2ca50] uppercase text-sm">
+          Đang tải danh sách vé...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className={styles.myTickets}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Vé Của Tôi</h1>
-        <p className={styles.subtitle}>Quản lý và xem thông tin các vé đã đặt</p>
-      </div>
+    <div className="w-full bg-[#121316] min-h-screen text-[#e3e2e6] pt-24 pb-24">
+      <div className="max-w-[1360px] mx-auto px-4 md:px-8 flex flex-col gap-8">
+        {/* Header & Membership Tier Badge */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[rgba(212,175,55,0.2)]">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#F3C644] text-[20px]">workspace_premium</span>
+              <span className="font-mono text-xs text-[#d5c78e] tracking-widest uppercase font-bold">
+                VÉ CỦA TÔI • CINEMA TICKETS
+              </span>
+            </div>
+            <h1 className="font-['Playfair_Display'] text-3xl sm:text-4xl text-white font-bold tracking-wide">
+              VÉ XEM PHIM CỦA TÔI
+            </h1>
+            <p className="text-xs sm:text-sm text-[#9CA3AF] italic">
+              Quản lý thẻ vé vào phòng chiếu VIP và mã QR Fast-track Check-in
+            </p>
+          </div>
 
-      <div className={styles.content}>
+          {/* Real Total Tickets Count Badge */}
+          <div className="flex items-center gap-3 bg-[#1b1b1f] border border-[rgba(212,175,55,0.3)] px-4 py-2 rounded-2xl shadow-xl">
+            <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#f2ca50]">
+              <span className="material-symbols-outlined text-[20px]">confirmation_number</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-mono text-xs text-[#f2ca50] font-bold uppercase tracking-wider">
+                {tickets.length} Vé Đã Đặt
+              </span>
+              <span className="text-[11px] text-[#9CA3AF]">Tất cả giao dịch</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Filters */}
         {tickets.length > 0 && (
-          <div className={styles.filterTabs}>
+          <div className="flex flex-wrap items-center gap-2 bg-[#0d0e11] p-1.5 rounded-2xl w-fit border border-gray-800">
             <button 
-              className={`${styles.filterTab} ${filter === 'all' ? styles.active : ''}`}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                filter === 'all' 
+                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                  : 'text-[#9CA3AF] hover:text-white'
+              }`}
               onClick={() => setFilter('all')}
             >
               Tất cả ({tickets.length})
             </button>
             <button 
-              className={`${styles.filterTab} ${filter === 'confirmed' ? styles.active : ''}`}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                filter === 'confirmed' 
+                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                  : 'text-[#9CA3AF] hover:text-white'
+              }`}
               onClick={() => setFilter('confirmed')}
             >
               Còn hiệu lực ({tickets.filter(t => getTicketStatus(t) === 'confirmed').length})
             </button>
             <button 
-              className={`${styles.filterTab} ${filter === 'expired' ? styles.active : ''}`}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                filter === 'expired' 
+                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                  : 'text-[#9CA3AF] hover:text-white'
+              }`}
               onClick={() => setFilter('expired')}
             >
               Đã chiếu ({tickets.filter(t => getTicketStatus(t) === 'expired').length})
             </button>
             <button 
-              className={`${styles.filterTab} ${filter === 'cancelled' ? styles.active : ''}`}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                filter === 'cancelled' 
+                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                  : 'text-[#9CA3AF] hover:text-white'
+              }`}
               onClick={() => setFilter('cancelled')}
             >
               Đã hủy ({tickets.filter(t => getTicketStatus(t) === 'cancelled').length})
             </button>
             <button 
-              className={`${styles.filterTab} ${filter === 'refunded' ? styles.active : ''}`}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                filter === 'refunded' 
+                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                  : 'text-[#9CA3AF] hover:text-white'
+              }`}
               onClick={() => setFilter('refunded')}
             >
               Đã hoàn tiền ({tickets.filter(t => getTicketStatus(t) === 'refunded').length})
@@ -261,143 +306,190 @@ const MyTickets = () => {
           </div>
         )}
 
+        {/* Empty State */}
         {filteredTickets.length === 0 ? (
-          <div className={styles.emptyState}>
-            <FaTicketAlt className={styles.emptyIcon} />
-            <h2 className={styles.emptyTitle}>
-              {tickets.length === 0 ? 'Chưa có vé nào' : 'Không có vé nào phù hợp'}
+          <div className="p-12 text-center bg-[#12161F] rounded-2xl border border-[rgba(212,175,55,0.2)] flex flex-col items-center gap-4">
+            <span className="material-symbols-outlined text-5xl text-[#D4AF37]">confirmation_number</span>
+            <h2 className="font-['Playfair_Display'] text-xl font-bold text-white">
+              {tickets.length === 0 ? 'Bạn Chưa Có Vé Xem Phim Nào' : 'Không Tìm Thấy Vé Phù Hợp'}
             </h2>
-            <p className={styles.emptyDesc}>
+            <p className="text-xs text-[#9CA3AF] max-w-md">
               {tickets.length === 0 
-                ? 'Bạn chưa đặt vé nào. Hãy khám phá các bộ phim hấp dẫn và đặt vé ngay!'
-                : 'Không tìm thấy vé nào phù hợp với bộ lọc hiện tại.'
-              }
+                ? 'Hãy khám phá các tác phẩm điện ảnh kinh điển và đặt vé phòng chiếu VIP ngay hôm nay!'
+                : 'Không có vé nào trong mục này. Vui lòng chọn tab khác để xem.'}
             </p>
             {tickets.length === 0 && (
               <button 
-                className={styles.browseBtn}
                 onClick={() => navigate('/')}
+                className="mt-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] text-xs font-bold uppercase tracking-wider shadow-lg"
               >
-                <FaFilm />
-                Khám phá phim
+                Khám Phá Phim Ngay
               </button>
             )}
           </div>
         ) : (
-          <div className={styles.ticketsGrid}>
+          /* VIP Boarding Pass Tickets Grid */
+          <div className="flex flex-col gap-8">
             {filteredTickets.map((ticket) => {
               const status = getTicketStatus(ticket);
-              
+              const isConfirmed = status === 'confirmed';
+
               return (
-                <div key={ticket.id} className={styles.ticketCard}>
-                  <div className={styles.ticketHeader}>
-                    <div className={styles.ticketNumber}>
-                      Vé #{ticket.id.slice(-8).toUpperCase()}
-                    </div>
-                    <div className={`${styles.ticketStatus} ${styles[status]}`}>
-                      {getStatusLabel(status)}
-                    </div>
-                  </div>
+                <div 
+                  key={ticket.id} 
+                  className="relative rounded-2xl bg-[#12161F] border border-[rgba(212,175,55,0.25)] shadow-2xl overflow-hidden"
+                >
+                  {/* Top Golden Light Strip */}
+                  <div className="h-1 bg-gradient-to-r from-[#AA771C] via-[#f2ca50] to-[#AA771C]"></div>
 
-                  <div className={styles.ticketBody}>
-                    <img 
-                      src={ticket.movie.poster}
-                      alt={ticket.movie.title}
-                      className={styles.moviePoster}
-                    />
+                  <div className="grid grid-cols-1 lg:grid-cols-12 relative">
+                    {/* LEFT PASS BODY (8 cols) */}
+                    <div className="lg:col-span-8 p-6 sm:p-8 flex flex-col justify-between gap-6 border-b lg:border-b-0 lg:border-r border-dashed border-gray-800">
+                      {/* Top Pass Status Bar */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-gray-800/60">
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-xs font-bold text-[#f2ca50] tracking-widest uppercase bg-[#1b1b1f] px-3 py-1 rounded-full border border-[rgba(212,175,55,0.2)]">
+                            PASS NO. BK-{ticket.id.slice(-6).toUpperCase()}
+                          </span>
+                          <span className="text-xs text-[#9CA3AF]">
+                            Mã vé: #{ticket.id}
+                          </span>
+                        </div>
 
-                    <div className={styles.ticketInfo}>
-                      <h3 className={styles.movieTitle}>{ticket.movie.title}</h3>
-                      
-                      <div className={styles.infoGrid}>
-                        <div className={styles.infoItem}>
-                          <div className={styles.infoLabel}>Ngày chiếu</div>
-                          <div className={styles.infoValue}>
-                            <FaCalendar className={styles.infoIcon} />
-                            {ticket.showtime.date}
-                          </div>
-                        </div>
-                        
-                        <div className={styles.infoItem}>
-                          <div className={styles.infoLabel}>Giờ chiếu</div>
-                          <div className={styles.infoValue}>
-                            <FaClock className={styles.infoIcon} />
-                            {ticket.showtime.time}
-                          </div>
-                        </div>
-                        
-                        <div className={styles.infoItem}>
-                          <div className={styles.infoLabel}>Rạp</div>
-                          <div className={styles.infoValue}>
-                            <FaMapMarkerAlt className={styles.infoIcon} />
-                            {ticket.showtime.cinema}
-                          </div>
-                        </div>
-                        
-                        <div className={styles.infoItem}>
-                          <div className={styles.infoLabel}>Số ghế</div>
-                          <div className={styles.infoValue}>
-                            <FaUsers className={styles.infoIcon} />
-                            {ticket.selectedSeats.length} ghế
-                          </div>
+                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                          isConfirmed 
+                            ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30' 
+                            : status === 'cancelled' || status === 'refunded'
+                            ? 'bg-red-950/70 text-red-300 border border-red-500/30'
+                            : 'bg-gray-800 text-gray-400'
+                        }`}>
+                          <span className="material-symbols-outlined text-[16px]">
+                            {isConfirmed ? 'verified' : 'info'}
+                          </span>
+                          <span>{getStatusLabel(status)}</span>
                         </div>
                       </div>
 
-                      <div className={styles.seatsInfo}>
-                        <div className={styles.infoLabel}>Ghế đã đặt</div>
-                        <div className={styles.seatsList}>
-                          {ticket.selectedSeats.map(seat => (
-                            <span key={seat.id} className={styles.seatItem}>
-                              {seat.displayName || `${seat.row}${seat.number}`}
-                            </span>
-                          ))}
+                      {/* Main Film Content */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                        <div className="relative w-24 sm:w-28 aspect-[2/3] shrink-0 rounded-xl overflow-hidden shadow-xl bg-[#0d0e11] border border-[rgba(212,175,55,0.2)]">
+                          <img 
+                            src={ticket.movie?.poster} 
+                            alt={ticket.movie?.title} 
+                            className="w-full h-full object-cover" 
+                          />
+                          <span className="absolute bottom-1 left-1.5 font-mono text-[9px] text-[#f2ca50] font-bold bg-black/80 px-1.5 py-0.5 rounded">
+                            VIP 2D
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <h2 className="font-['Playfair_Display'] text-xl sm:text-2xl text-white font-bold tracking-wide">
+                            {ticket.movie?.title}
+                          </h2>
+                          <div className="flex items-center gap-2 text-xs text-[#9CA3AF]">
+                            <span>{ticket.showtime?.cinema}</span>
+                          </div>
+                          <p className="text-xs text-[#d5c78e] mt-1">
+                            Trải nghiệm công nghệ IMAX • Âm thanh vòm Dolby Atmos • Phục vụ phòng VIP
+                          </p>
                         </div>
                       </div>
 
-                      <div className={styles.totalPrice}>
-                        {ticket.totalPrice.toLocaleString()}đ
+                      {/* Detail Ledger Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-[#0d0e11] border border-gray-800/80">
+                        <div className="flex flex-col">
+                          <span className="text-[11px] text-[#9CA3AF] uppercase">Suất Chiếu</span>
+                          <span className="font-['Playfair_Display'] text-base font-bold text-white mt-0.5">{ticket.showtime?.time}</span>
+                          <span className="text-[11px] text-[#f2ca50]">{ticket.showtime?.date}</span>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <span className="text-[11px] text-[#9CA3AF] uppercase">Phòng Chiếu</span>
+                          <span className="text-sm font-semibold text-white mt-0.5">Phòng VIP 01</span>
+                          <span className="text-[11px] text-[#9CA3AF]">IMPERIAL SUITE</span>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <span className="text-[11px] text-[#9CA3AF] uppercase">Ghế Đã Đặt</span>
+                          <span className="font-['Playfair_Display'] text-sm font-bold text-[#F3C644] mt-0.5">
+                            {ticket.selectedSeats.map(s => s.displayName || `${s.row}${s.number}`).join(', ')}
+                          </span>
+                          <span className="text-[11px] text-[#9CA3AF]">{ticket.selectedSeats.length} Ghế VIP</span>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <span className="text-[11px] text-[#9CA3AF] uppercase">Tổng Tiền</span>
+                          <span className="font-['Playfair_Display'] text-sm font-bold text-[#f2ca50] mt-0.5">
+                            {ticket.totalPrice.toLocaleString()}đ
+                          </span>
+                          <span className="text-[11px] text-emerald-400">ĐÃ THANH TOÁN</span>
+                        </div>
                       </div>
 
-                      <div className={styles.ticketActions}>
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap items-center gap-3 pt-2">
                         <button 
-                          className={styles.detailBtn}
-                          onClick={() => navigate(`/movies/${ticket.movie.id}`)}
+                          onClick={() => navigate(`/movies/${ticket.movie?.id}`)}
+                          className="px-4 py-2 rounded-xl bg-[#1b1b1f] hover:bg-[#252830] text-[#e3e2e6] border border-gray-700 text-xs font-semibold transition-colors flex items-center gap-1.5"
                         >
-                          <FaEye />
-                          <span>Chi tiết phim</span>
-                          <FaChevronRight className={styles.detailChevron} />
+                          <FaEye className="text-[#f2ca50]" />
+                          <span>Chi Tiết Phim</span>
                         </button>
-                        
+
                         {canCancelTicket(ticket) && (
                           <button 
-                            className={styles.cancelBtn}
                             onClick={() => handleCancelTicket(ticket.id)}
+                            className="px-4 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-700/40 text-xs font-semibold transition-colors flex items-center gap-1.5"
                           >
                             <FaTimes />
-                            Hủy vé
+                            <span>Hủy Vé</span>
                           </button>
                         )}
-                        
+
                         {canRefundTicket(ticket) && (
                           <button 
-                            className={styles.refundBtn}
                             onClick={() => handleRefundTicket(ticket)}
+                            className="px-4 py-2 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-700/40 text-xs font-semibold transition-colors flex items-center gap-1.5"
                           >
                             <FaTimes />
-                            Hoàn tiền
+                            <span>Hoàn Tiền</span>
                           </button>
                         )}
                       </div>
                     </div>
 
-                    {status === 'confirmed' && (
-                      <div className={styles.qrSection}>
-                        {renderQRCode(ticket)}
-                        <div className={styles.qrLabel}>
-                          Quét mã QR này tại rạp để vào xem phim
+                    {/* RIGHT PASS: Check-in QR Canvas (4 cols) */}
+                    <div className="lg:col-span-4 p-6 sm:p-8 flex flex-col items-center justify-center text-center bg-[#0d0e11]/60">
+                      {isConfirmed ? (
+                        <div className="flex flex-col items-center gap-4">
+                          <span className="text-xs font-mono text-[#f2ca50] uppercase tracking-widest font-bold">
+                            MÃ CHECK-IN TẠI RẠP
+                          </span>
+
+                          <div className="p-3.5 bg-white rounded-2xl shadow-2xl border-2 border-[#D4AF37]">
+                            <QRCodeCanvas
+                              value={ticket.qrToken || ticket.qrData || `TICKET:${ticket.id}:${ticket.movie?.id}`}
+                              size={160}
+                              level="H"
+                              includeMargin={false}
+                            />
+                          </div>
+
+                          <div className="flex flex-col items-center gap-1 text-xs text-[#9CA3AF]">
+                            <span className="font-mono text-[#f2ca50] font-bold tracking-wider">
+                              FAST-TRACK ADMISSION
+                            </span>
+                            <span>Quét tại cổng soát vé trước giờ chiếu 10 phút</span>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 text-gray-500 py-8">
+                          <span className="material-symbols-outlined text-4xl">block</span>
+                          <span className="text-xs">Mã vé đã hết hạn hoặc bị hủy</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

@@ -20,35 +20,46 @@
 
 ---
 
-## 1. Triết lý Thiết kế & Design System (Tokens)
+## 1. Triết lý Thiết kế & Design System: VÀNG ĐEN LUXURY (ROYAL BLACK & GOLD)
 
-Hệ thống hướng tới phong cách **Dark Cinema Luxury (Đêm Điện Ảnh Sang Trọng)**: Nền đen sâu thẳm, hiệu ứng ánh sáng mờ ảo (Cinematic Glow), kết hợp viền thủy tinh (Glassmorphism) tạo cảm giác như đang bước vào phòng chiếu VIP.
+Hệ thống lấy cảm hứng từ phong cách **Ultra-Luxury Cinema Club (Rạp Chiếu Phim Hoàng Gia)**: 
+- Nền đen huyền bí sâu thẳm (**Obsidian & Onyx Black**).
+- Điểm nhấn chủ đạo màu vàng kim ánh kim loại (**Imperial Metallic Gold & Champagne Gold**).
+- Hiệu ứng phản chiếu kim loại sáng bóng, viền ánh vàng sang trọng (Golden Hairline Glow), tạo cảm giác phòng chiếu VIP thượng hạng chuẩn 5 sao.
 
-### 1.1. Bảng màu chuẩn (Color Palette)
-| Vai trò | Hex Code | Ứng dụng |
-|---|---|---|
-| **Deep Background** | `#0B0E14` | Nền toàn trang, đen sâu nhưng không bị chói mắt |
-| **Card Surface** | `#151A23` | Nền các thẻ phim, container, popup |
-| **Border & Divider** | `#232B3B` | Đường viền mảnh phân cách |
-| **Primary Accent** | `#FF334B` | Màu đỏ rạp chiếu (Nút CTA, viền phát sáng, tag phim hot) |
-| **Secondary Accent** | `#E50914` | Màu đỏ hover, gradient |
-| **Gold / VIP Seat** | `#F5A623` | Màu vàng ánh kim (Dành riêng cho Ghế VIP và Điểm Rating ⭐) |
-| **Success / Emerald**| `#10B981` | Trạng thái vé đã xác nhận, ghế đang chọn |
-| **Muted / Text Secondary** | `#9CA3AF` | Thời lượng phim, đạo diễn, phụ đề |
+### 1.1. Bảng màu chuẩn Vàng Đen Luxury (Color Palette)
+| Nhóm màu | Tên mã | Hex Code | Ứng dụng thực tế |
+|---|---|---|---|
+| **Nền siêu tối (Dark)** | Obsidian Black | `#08090C` | Nền toàn trang, đen sâu tĩnh lặng chuẩn rạp chiếu |
+| **Bề mặt thẻ (Surface)** | Onyx Surface | `#12161F` | Nền các Card phim, Drawer, Popup kính mờ |
+| **Viền kim loại (Borders)** | Gold Hairline | `rgba(212, 175, 55, 0.25)` | Viền mảnh phản quang ánh vàng sang trọng |
+| **Vàng chủ đạo (Primary)** | Metallic Gold | `#D4AF37` | **Màu thương hiệu chính**: Nút bấm CTA, Icon, Viền Active |
+| **Vàng sáng (Highlight)** | Champagne Gold | `#F5E6AB` | Màu chữ tiêu đề VIP, hiệu ứng hover lấp lánh |
+| **Vàng đậm (Deep Gold)** | Antique Bronze | `#AA771C` | Đổ bóng Gradient chiều sâu kim loại |
+| **Ghế VIP (Crown VIP)** | Imperial Gold | `#F3C644` | Ghế VIP hoàng gia (đính kèm biểu tượng vương miện 👑) |
+| **Ghế Đang chọn** | Bright Gold | `#FFD700` | Ghế đang click chọn (phát sáng viền `0 0 15px #FFD700`) |
+| **Ghế Trống (Available)** | Satin Silver | `#D1D5DB` | Màu bạc mờ tinh tế trên nền tối |
+| **Ghế Đã bán (Occupied)** | Muted Charcoal | `#2A2E39` | Màu xám tro chìm hẳn vào nền |
+| **Ghế Đang giữ (Locked)** | Amber Glow | `#FF8C00` | Màu hổ phách nhấp nháy đếm ngược 120s |
+| **Văn bản chính (Text 1)** | Pure White | `#FFFFFF` | Tiêu đề phim, thông tin giờ chiếu |
+| **Văn bản phụ (Text 2)** | Silver Smoke | `#9CA3AF` | Thể loại, đạo diễn, phụ đề |
 
-### 1.2. Typography (Phông chữ)
-- **Font Family**: Google Fonts `Outfit`, `Inter` hoặc `Plus Jakarta Sans`.
-- **Display Hero**: 36px – 48px, `font-weight: 800`, line-height: 1.15.
-- **Heading 1 / Title**: 24px – 28px, `font-weight: 700`.
-- **Heading 2 / Subtitle**: 18px – 20px, `font-weight: 600`.
-- **Body Regular**: 14px – 15px, `font-weight: 400`, color: `#D1D5DB`.
-- **Caption / Label**: 11px – 12px, `font-weight: 500`.
+### 1.2. Typography (Phông chữ Đẳng cấp)
+- **Font Family**: Google Fonts `Cinzel` hoặc `Playfair Display` (cho tiêu đề phim/logo mang hơi hướng điện ảnh cổ điển), kết hợp `Outfit` / `Inter` (cho các nút bấm, giờ chiếu, số ghế để tối ưu độ đọc).
+- **Display Hero**: 38px – 52px, `font-weight: 800`, chữ in hoa dập nổi với dải màu Gradient:
+  `background: linear-gradient(135deg, #FFFFFF 20%, #D4AF37 70%, #AA771C 100%); -webkit-background-clip: text;`
+- **Heading Title**: 24px – 28px, `font-weight: 700`, màu `#F5E6AB`.
+- **Button CTA Text**: 14px – 16px, `font-weight: 700`, màu đen `#08090C` trên nền Vàng Gold.
 
-### 1.3. Hiệu ứng thẩm mỹ (Visual Effects)
-- **Glassmorphism**: `background: rgba(21, 26, 35, 0.8); backdrop-filter: blur(16px);` (áp dụng cho Navbar, Bottom Drawer, Modal).
-- **Screen Curved Glow**: Ánh sáng phản chiếu từ màn chiếu hình cung tỏa xuống hàng ghế:
-  `box-shadow: 0px 10px 40px -5px rgba(255, 51, 75, 0.35);`
-- **Border Radius**: Thẻ phim `12px`, Nút bấm/Ghế ngồi `8px`, Modal `16px`.
+### 1.3. Hiệu ứng thẩm mỹ Vàng Kim (Visual Luxury Effects)
+- **Gold Metallic Gradient**:
+  `background: linear-gradient(135deg, #D4AF37 0%, #F5E6AB 50%, #B8860B 100%);`
+  Áp dụng cho các nút bấm chính (*"ĐẶT VÉ NGAY"*, *"THANH TOÁN"*).
+- **Curved Golden Cinema Screen**:
+  Màn chiếu rạp cong có dải ánh sáng vàng champagne tỏa xuống:
+  `box-shadow: 0px 12px 45px -5px rgba(212, 175, 55, 0.45); border-top: 3px solid #D4AF37;`
+- **Glassmorphism viền vàng**:
+  `background: rgba(18, 22, 31, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(212, 175, 55, 0.2);`
 
 ---
 
@@ -319,13 +330,14 @@ Khi bạn nhập mô tả vào Google Stitch hoặc công cụ sinh giao diện 
 ### 📋 Prompt Toàn Diện (Master Prompt for Stitch):
 
 ```text
-Design a luxury Dark Cinema web application UI for a movie ticket booking platform named "XEMPHIM".
-- Theme & Style: Dark mode, primary background #0B0E14, surface card #151A23, border #232B3B. Accent colors are Cinema Crimson Red (#FF334B) and VIP Gold Amber (#F5A623). Modern clean font (Inter or Outfit), subtle glassmorphism effects (backdrop-filter blur).
-- Screen 1 (Home Page): High-impact Hero Banner slider showcasing trending blockbuster with video teaser button and "Book Now". Followed by tabs for "Now Showing" and "Coming Soon", responsive grid of movie cards displaying poster, age rating, duration, and star ratings.
-- Screen 2 (Movie Detail): Large blurred movie backdrop, poster card, trailer modal, metadata tags, horizontal date-selector pills, and expandable cinema listings showing showtime buttons grouped by 2D/3D halls.
-- Screen 3 (Seat Selection): Interactive cinema layout. Glowing curved screen at the top, seat matrix with clear distinction between Regular, VIP, Selected, Reserved/Locked, and Occupied seats. Sticky bottom glassmorphism drawer showing selected seat names, total price calculation, and CTA button.
-- Screen 4 (ZaloPay QR Checkout): Order summary sidebar on the left, payment container on the right displaying a large scannable QR Code, transaction amount, and real-time countdown timer.
-- Screen 5 (My Tickets): Cinema boarding-pass ticket card with ticket notches, displaying movie details, showtime, seat numbers, dynamic QR code for theater check-in, and a "Refund" button.
+Design an ultra-luxury Royal Black & Gold web application UI for a premium cinema ticket booking platform named "XEMPHIM".
+- Theme & Visual Identity: Dominant Luxury Black & Gold aesthetic. Deep Obsidian Black background (#08090C), dark card surfaces (#12161F) with delicate metallic gold hairline borders (rgba(212, 175, 55, 0.25)). Primary accents in Imperial Metallic Gold (#D4AF37) and Champagne Gold (#F5E6AB). Subtle ambient gold dust particle effects and premium dark glassmorphism.
+- Typography: Elegant cinema typography pairing (Cinzel / Playfair for luxury titles, Inter/Outfit for clean interactive components). Gold embossed headers with metallic gradients.
+- Screen 1 (Home Page): High-impact cinematic Hero slider displaying trending blockbuster movie with gold-trimmed action buttons ("Book VIP Tickets" & "Watch Trailer"). Tabbed navigation for "Now Showing" and "Coming Soon". Luxury movie cards featuring posters with gold hover borders, star ratings, and age badges.
+- Screen 2 (Movie Detail): Immersive dark backdrop banner, high-res poster card, metadata chips, horizontal date-selector pills in brushed gold, and cinema theater showtimes grouped by VIP/IMAX/2D halls with gold price tags.
+- Screen 3 (Seat Selection): Premium cinema hall visualization. Top curved cinema screen emitting an atmospheric champagne-gold glow downward. Seat matrix distinguishing Satin Silver (available), Bright Gold with outer glow (selected), Imperial Crown Gold (VIP seats with crown 👑), Muted Charcoal (sold/occupied), and Amber (reserved). Sticky glassmorphism drawer at bottom with gold trim displaying selected seats, live price calculation, and a solid metallic gold CTA button.
+- Screen 4 (ZaloPay QR Checkout): Two-column luxury layout. Left: Order summary breakdown with gold typography. Right: High-contrast payment panel featuring a scannable dynamic QR Code framed with gold corner brackets, payment countdown timer, and live transaction status indicator.
+- Screen 5 (My Tickets): VIP cinema boarding-pass ticket card with vintage ticket notches, gold foil divider lines, movie poster thumbnail, booking code, and scannable check-in QR code for gate admission.
 ```
 
 ---

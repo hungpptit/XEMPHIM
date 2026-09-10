@@ -24,6 +24,8 @@ const MovieDetail = () => {
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCinemaId, setSelectedCinemaId] = useState('');
   const [seatCounts, setSeatCounts] = useState({});
+  const [cityFilterOpen, setCityFilterOpen] = useState(false);
+  const [cinemaFilterOpen, setCinemaFilterOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -230,228 +232,412 @@ const MovieDetail = () => {
 
   if (loading) {
     return (
-      <div className={styles.movieDetail}>
-        <div className="container">
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '50vh',
-            flexDirection: 'column',
-            gap: '20px'
-          }}>
-            <div className="loading"></div>
-            <p>Đang tải thông tin phim...</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#121316] flex flex-col items-center justify-center gap-4 text-white">
+        <div className="w-12 h-12 border-4 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin"></div>
+        <p className="font-['Playfair_Display'] tracking-widest text-[#f2ca50] uppercase text-sm">
+          Đang tải chi tiết phim thượng hạng...
+        </p>
       </div>
     );
   }
 
   if (!movie) {
     return (
-      <div className={styles.movieDetail}>
-        <div className="container">
-          <div style={{ textAlign: 'center', padding: '100px 0' }}>
-            <h2>Không tìm thấy phim</h2>
-            <Link to="/" className="btn">Về trang chủ</Link>
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#121316] flex flex-col items-center justify-center text-white px-4">
+        <h2 className="font-['Playfair_Display'] text-2xl font-bold text-[#f2ca50] mb-4">Không tìm thấy phim</h2>
+        <Link to="/" className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] font-bold text-sm uppercase">
+          Về Trang Chủ
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className={styles.movieDetail}>
-      <button
-        className={styles.backBtn}
-        onClick={() => navigate(-1)}
-      >
-        <FaArrowLeft />
-      </button>
+    <div className="w-full bg-[#121316] min-h-screen text-[#e3e2e6] pt-20 pb-24">
+      {/* Movie Hero Showcase */}
+      <section className="relative w-full overflow-hidden bg-[#0d0e11]">
+        {/* Background image & lighting */}
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-30 transform scale-105"
+          style={{ backgroundImage: `url(${movie.backdrop || movie.poster})` }}
+        ></div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#121316] via-[#121316]/85 to-transparent"></div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#121316] via-[#12161F]/75 to-transparent"></div>
 
-      {/* Movie Hero Section */}
-      <section
-        className={styles.movieHero}
-        style={{ backgroundImage: `url(${movie.backdrop})` }}
-      >
-        <div className={styles.heroContent}>
-          <div className={styles.movieInfo}>
-            <img
-              src={movie.poster}
-              alt={movie.title}
-              className={styles.moviePoster}
-            />
+        <div className="relative z-10 max-w-[1360px] mx-auto px-4 md:px-8 pt-10 pb-16">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs text-[#9CA3AF] uppercase tracking-wider mb-8">
+            <Link to="/" className="hover:text-[#f2ca50] transition-colors flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">home</span>
+              Trang Chủ
+            </Link>
+            <span>/</span>
+            <Link to="/#now-section" className="hover:text-[#f2ca50] transition-colors">
+              Phim Đang Chiếu
+            </Link>
+            <span>/</span>
+            <span className="text-[#f2ca50] font-bold">{movie.title}</span>
+          </div>
 
-            <div className={styles.movieDetails}>
-              <h1 className={styles.movieTitle}>{movie.title}</h1>
-
-              <div className={styles.movieMeta}>
-                <div className={styles.metaItem}>
-                  <FaClock className={styles.metaIcon} />
-                  {movie.duration} phút
-                </div>
-                <div className={styles.metaItem}>
-                  <FaCalendar className={styles.metaIcon} />
-                  {movie.releaseYear}
-                </div>
-                <div className={styles.rating}>
-                  <div className={styles.stars}>
-                    {renderStars(movie.rating)}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Col: Poster & Quick Action */}
+            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-4">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-[#12161F] p-1.5 bg-gradient-to-b from-[#D4AF37] via-[rgba(212,175,55,0.2)] to-transparent">
+                <div className="relative rounded-xl overflow-hidden aspect-[2/3] group">
+                  <img 
+                    src={movie.poster} 
+                    alt={movie.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute top-3 left-3 bg-[#08090C]/85 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg border border-[rgba(212,175,55,0.3)]">
+                    <span className="w-2 h-2 rounded-full bg-[#F3C644] animate-pulse"></span>
+                    <span className="font-mono text-[10px] font-bold text-[#F3C644] tracking-widest uppercase">
+                      VIP PREMIÈRE
+                    </span>
                   </div>
-                  {movie.rating}/10
+                  <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-[#12161F] via-[#12161F]/80 to-transparent flex items-center justify-between">
+                    <span className="text-xs text-[#f2ca50] font-semibold">IMAX 3D Laser • Dolby Atmos</span>
+                    <span className="material-symbols-outlined text-[#f2ca50] text-[18px]">verified</span>
+                  </div>
                 </div>
               </div>
 
-              <p className={styles.movieDescription}>
-                {movie.description}
-              </p>
+              {/* Action Buttons below Poster */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleTrailerPlay}
+                  className="flex-1 py-3 px-4 rounded-xl bg-[#1b1b1f] hover:bg-[#252830] text-[#f2ca50] border border-[rgba(212,175,55,0.3)] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[20px]">play_circle</span>
+                  XEM TRAILER
+                </button>
+                <button
+                  onClick={() => {
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(window.location.href);
+                      alert('Đã sao chép liên kết phim vào bộ nhớ tạm!');
+                    }
+                  }}
+                  title="Chia sẻ phim"
+                  className="w-12 h-12 rounded-xl bg-[#1b1b1f] hover:bg-[#252830] text-[#9CA3AF] hover:text-[#f2ca50] border border-[rgba(212,175,55,0.2)] flex items-center justify-center transition-all shadow-md"
+                >
+                  <span className="material-symbols-outlined text-[20px]">share</span>
+                </button>
+              </div>
+            </div>
 
-              <div className={styles.movieGenres}>
-                {movie.genres.map((genre, index) => (
-                  <span key={index} className={styles.genre}>
-                    {genre}
+            {/* Right Col: Title, 4 Indicators, Synopsis */}
+            <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-[#f2ca50]/10 text-[#f2ca50] font-mono text-xs uppercase tracking-widest font-semibold border border-[#f2ca50]/20">
+                    {movie.genres?.join(' • ') || 'Hành Động • Khoa Học Viễn Tưởng'}
                   </span>
-                ))}
+                  <span className="px-2.5 py-0.5 rounded bg-[#292a2d] text-[#d5c78e] font-mono text-xs uppercase">
+                    2D • 3D • IMAX • GOLD CLASS
+                  </span>
+                </div>
+
+                <h1 className="font-['Playfair_Display'] text-3xl sm:text-5xl text-white font-extrabold tracking-tight mt-1">
+                  {movie.title}
+                </h1>
+                <p className="text-sm text-[#d5c78e] italic font-serif">
+                  Phát hành: {movie.releaseYear || '2026'}
+                </p>
               </div>
 
-              <div className={styles.movieActions}>
-                {movie.isAvailable && (
-                  <Link
-                    to="#showtimes"
-                    className={`${styles.actionBtn} ${styles.bookBtn}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('showtimes').scrollIntoView({ behavior: 'smooth' });
-                    }}
-                  >
-                    <FaTicketAlt />
-                    Đặt vé ngay
-                  </Link>
-                )}
-                <button
-                  className={`${styles.actionBtn} ${styles.trailerBtn}`}
-                  onClick={handleTrailerPlay}
-                >
-                  <FaPlay />
-                  Xem trailer
-                </button>
+              {/* 4 Luxury Indicators */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-[#12161F]/90 backdrop-blur-md border border-[rgba(212,175,55,0.2)] shadow-xl">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] text-[#9CA3AF] uppercase tracking-wider">Đánh Giá Thượng Khách</span>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#f2ca50] text-[22px]">hotel_class</span>
+                    <span className="text-xl text-white font-bold">{movie.rating || '8.9'}</span>
+                    <span className="text-xs text-[#9CA3AF]">/10</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-[#9CA3AF]">LƯỢT VOTE VIP</span>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] text-[#9CA3AF] uppercase tracking-wider">Thời Lượng Chiếu</span>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#d5c78e] text-[22px]">schedule</span>
+                    <span className="text-xl text-white font-bold">{movie.duration} Phút</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-[#9CA3AF]">CHUẨN BẢN GỐC</span>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] text-[#9CA3AF] uppercase tracking-wider">Độ Tuổi Giới Hạn</span>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#FF8C00] text-[22px]">explicit</span>
+                    <span className="text-xl text-[#F3C644] font-bold">T16</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-[#9CA3AF]">TRÊN 16 TUỔI</span>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] text-[#9CA3AF] uppercase tracking-wider">Âm Thanh & Ngôn Ngữ</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[#f2ca50] text-[22px]">language</span>
+                    <span className="text-sm text-white font-semibold">Phụ đề & Lồng tiếng</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-[#f2ca50]">TIÊU CHUẨN QUỐC TẾ</span>
+                </div>
+              </div>
+
+              {/* Story Synopsis */}
+              <div className="flex flex-col gap-3 bg-[#1b1b1f]/70 border border-[rgba(212,175,55,0.15)] p-6 rounded-2xl shadow-lg">
+                <h2 className="font-['Playfair_Display'] text-lg text-[#f2ca50] flex items-center gap-2 uppercase tracking-wide">
+                  <span className="material-symbols-outlined text-[20px]">auto_stories</span>
+                  Cốt Truyện Điện Ảnh
+                </h2>
+                <p className="text-sm text-[#e3e2e6] leading-relaxed text-justify">
+                  {movie.description}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 mt-1 bg-[#12161F]/60 p-4 rounded-xl border border-gray-800/80">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs text-[#9CA3AF] min-w-[80px] uppercase tracking-wider">Đạo Diễn:</span>
+                    <span className="text-xs text-white font-semibold">{movie.director || 'Chưa cập nhật'}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs text-[#9CA3AF] min-w-[80px] uppercase tracking-wider">Diễn Viên:</span>
+                    <span className="text-xs text-white">{movie.actors || 'Chưa cập nhật'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Trailer Section */}
-      <section id="trailer" className={styles.trailerSection}>
-        <div className="container">
-          <h2 className={styles.sectionTitle}>Trailer</h2>
-          <div className={styles.trailerContainer}>
+      {/* Trailer Video Section */}
+      {movie.trailerUrl && (
+        <section id="trailer" className="max-w-[1360px] mx-auto px-4 md:px-8 mt-12">
+          <div className="flex items-center gap-3 pb-3 border-b border-[rgba(212,175,55,0.15)] mb-6">
+            <span className="w-2.5 h-6 bg-[#D4AF37] rounded-full"></span>
+            <h2 className="font-['Playfair_Display'] text-2xl font-bold text-white uppercase tracking-wide">
+              Trailer Điện Ảnh
+            </h2>
+          </div>
+          <div className="relative aspect-video max-w-4xl mx-auto rounded-2xl overflow-hidden border border-[rgba(212,175,55,0.25)] shadow-2xl bg-black">
             <iframe
-              className={styles.trailerVideo}
+              className="w-full h-full"
               src={movie.trailerUrl}
               title={`${movie.title} Trailer`}
               allowFullScreen
             ></iframe>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Showtimes Section */}
       {movie.isAvailable && (
-        <section id="showtimes" className={styles.contentSection}>
-          <div className="container">
-            <h2 className={styles.sectionTitle}>Lịch Chiếu</h2>
+        <section id="showtimes" className="max-w-[1360px] mx-auto px-4 md:px-8 mt-16">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[rgba(212,175,55,0.15)] mb-8">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-7 bg-gradient-to-b from-[#D4AF37] to-[#B8860B] rounded-full"></span>
+              <div>
+                <h2 className="font-['Playfair_Display'] text-2xl font-bold text-white uppercase tracking-wider">
+                  Lịch Chiếu & Suất Chiếu
+                </h2>
+                <p className="text-xs text-[#9CA3AF]">Chọn suất chiếu phù hợp để tiến hành chọn ghế VIP</p>
+              </div>
+            </div>
 
-            {/* Filter Section */}
+            {/* Filter Section by City and Cinema with Custom Rounded Dropdowns */}
             {rawShowtimes.length > 0 && (
-              <div className={styles.filterSection}>
-                <div className={styles.filterGroup}>
-                  <label htmlFor="city-select">
-                    <FaMapMarkerAlt style={{ color: 'var(--color-gold)' }} /> Thành Phố:
-                  </label>
-                  <select
-                    id="city-select"
-                    value={selectedCity}
-                    onChange={(e) => {
-                      setSelectedCity(e.target.value);
-                      setSelectedCinemaId(''); // Reset cinema when city changes
+              <div className="flex flex-wrap items-center gap-3">
+                {/* City Filter */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCityFilterOpen(!cityFilterOpen);
+                      setCinemaFilterOpen(false);
                     }}
-                    className={styles.filterSelect}
+                    className="flex items-center gap-2 bg-[#1b1b1f] hover:bg-[#252830] px-3.5 py-1.5 rounded-xl border border-[rgba(212,175,55,0.25)] hover:border-[#D4AF37] transition-all cursor-pointer text-xs"
                   >
-                    <option value="">Tất cả thành phố</option>
-                    {availableCities.map(city => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </select>
-                </div>
+                    <span className="material-symbols-outlined text-[#f2ca50] text-[16px]">location_on</span>
+                    <span className="text-[#e3e2e6] font-medium">{selectedCity || 'Tất cả thành phố'}</span>
+                    <span className={`material-symbols-outlined text-[16px] text-[#9CA3AF] transition-transform duration-200 ${cityFilterOpen ? 'rotate-180 text-[#f2ca50]' : ''}`}>
+                      expand_more
+                    </span>
+                  </button>
 
-                <div className={styles.filterGroup}>
-                  <label htmlFor="cinema-select">
-                    <FaBuilding style={{ color: 'var(--color-gold)' }} /> Rạp Chiếu:
-                  </label>
-                  <select
-                    id="cinema-select"
-                    value={selectedCinemaId}
-                    onChange={(e) => setSelectedCinemaId(e.target.value)}
-                    className={styles.filterSelect}
-                  >
-                    <option value="">Tất cả rạp</option>
-                    {availableCinemas
-                      .filter(c => !selectedCity || c.city === selectedCity)
-                      .map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} ({c.address})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {filteredGroupedShowtimes.length === 0 ? (
-              <div className={styles.noShowtimes}>
-                {rawShowtimes.length === 0
-                  ? 'Hiện tại phim này chưa có suất chiếu. Vui lòng quay lại sau!'
-                  : 'Không có suất chiếu nào phù hợp với bộ lọc địa điểm đã chọn. Vui lòng thử chọn rạp hoặc thành phố khác.'}
-              </div>
-            ) : (
-              <div className={styles.showtimesGrid}>
-                {filteredGroupedShowtimes.map((day, dayIndex) => (
-                  <div key={dayIndex} className={styles.dateSection}>
-                    <div className={styles.dateHeader}>
-                      <FaCalendar />
-                      {day.dateLabel} ({day.date})
-                    </div>
-
-                    <div className={styles.timesGrid}>
-                      {day.times.map((slot, slotIndex) => (
-                        <div
-                          key={slotIndex}
-                          className={`${styles.timeSlot} ${slot.availableSeats === 0 ? styles.unavailable : ''}`}
-                          onClick={() => (slot.availableSeats === null || slot.availableSeats > 0) && handleTimeSlotClick(day.date, slot)}
-                          title={slot.address ? `Địa chỉ: ${slot.address}` : ''}
+                  {cityFilterOpen && (
+                    <div className="absolute left-0 mt-2 w-48 bg-[#12161F]/95 backdrop-blur-xl border border-[rgba(212,175,55,0.25)] rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.7)] p-1.5 z-40">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCity('');
+                          setSelectedCinemaId('');
+                          setCityFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-between ${
+                          selectedCity === ''
+                            ? 'bg-gradient-to-r from-[rgba(212,175,55,0.2)] to-transparent text-[#f2ca50] font-bold'
+                            : 'text-gray-300 hover:bg-[#1b1b1f] hover:text-white'
+                        }`}
+                      >
+                        <span>Tất cả thành phố</span>
+                        {selectedCity === '' && (
+                          <span className="material-symbols-outlined text-[#f2ca50] text-[16px]">check</span>
+                        )}
+                      </button>
+                      {availableCities.map((city) => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCity(city);
+                            setSelectedCinemaId('');
+                            setCityFilterOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-between ${
+                            selectedCity === city
+                              ? 'bg-gradient-to-r from-[rgba(212,175,55,0.2)] to-transparent text-[#f2ca50] font-bold'
+                              : 'text-gray-300 hover:bg-[#1b1b1f] hover:text-white'
+                          }`}
                         >
-                          <div className={styles.showTime}>{slot.time}</div>
-                          <div className={styles.cinemaInfo}>
-                            <FaMapMarkerAlt style={{ marginRight: '5px' }} />
-                            {slot.cinema}
-                          </div>
-                          <div className={styles.seatInfo}>
-                            <FaUsers style={{ marginRight: '5px' }} />
-                            {slot.availableSeats !== null
-                              ? `${slot.availableSeats}/${slot.totalSeats} ghế trống`
-                              : 'Đang tải số ghế...'
-                            }
-                          </div>
-                        </div>
+                          <span>{city}</span>
+                          {selectedCity === city && (
+                            <span className="material-symbols-outlined text-[#f2ca50] text-[16px]">check</span>
+                          )}
+                        </button>
                       ))}
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
+
+                {/* Cinema Filter */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCinemaFilterOpen(!cinemaFilterOpen);
+                      setCityFilterOpen(false);
+                    }}
+                    className="flex items-center gap-2 bg-[#1b1b1f] hover:bg-[#252830] px-3.5 py-1.5 rounded-xl border border-[rgba(212,175,55,0.25)] hover:border-[#D4AF37] transition-all cursor-pointer text-xs"
+                  >
+                    <span className="material-symbols-outlined text-[#f2ca50] text-[16px]">theater_comedy</span>
+                    <span className="text-[#e3e2e6] font-medium">
+                      {availableCinemas.find(c => String(c.id) === String(selectedCinemaId))?.name || 'Tất cả cụm rạp'}
+                    </span>
+                    <span className={`material-symbols-outlined text-[16px] text-[#9CA3AF] transition-transform duration-200 ${cinemaFilterOpen ? 'rotate-180 text-[#f2ca50]' : ''}`}>
+                      expand_more
+                    </span>
+                  </button>
+
+                  {cinemaFilterOpen && (
+                    <div className="absolute left-0 mt-2 w-56 bg-[#12161F]/95 backdrop-blur-xl border border-[rgba(212,175,55,0.25)] rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.7)] p-1.5 z-40 max-h-60 overflow-y-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCinemaId('');
+                          setCinemaFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-between ${
+                          selectedCinemaId === ''
+                            ? 'bg-gradient-to-r from-[rgba(212,175,55,0.2)] to-transparent text-[#f2ca50] font-bold'
+                            : 'text-gray-300 hover:bg-[#1b1b1f] hover:text-white'
+                        }`}
+                      >
+                        <span>Tất cả cụm rạp</span>
+                        {selectedCinemaId === '' && (
+                          <span className="material-symbols-outlined text-[#f2ca50] text-[16px]">check</span>
+                        )}
+                      </button>
+                      {availableCinemas
+                        .filter(c => !selectedCity || c.city === selectedCity)
+                        .map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCinemaId(c.id);
+                              setCinemaFilterOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-between ${
+                              String(selectedCinemaId) === String(c.id)
+                                ? 'bg-gradient-to-r from-[rgba(212,175,55,0.2)] to-transparent text-[#f2ca50] font-bold'
+                                : 'text-gray-300 hover:bg-[#1b1b1f] hover:text-white'
+                            }`}
+                          >
+                            <span className="truncate">{c.name}</span>
+                            {String(selectedCinemaId) === String(c.id) && (
+                              <span className="material-symbols-outlined text-[#f2ca50] text-[16px]">check</span>
+                            )}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
+
+          {filteredGroupedShowtimes.length === 0 ? (
+            <div className="p-8 text-center bg-[#12161F] rounded-2xl border border-[rgba(212,175,55,0.2)] text-[#9CA3AF] text-sm">
+              {rawShowtimes.length === 0
+                ? 'Hiện tại phim này chưa có suất chiếu. Vui lòng quay lại sau!'
+                : 'Không có suất chiếu nào phù hợp với bộ lọc địa điểm đã chọn. Vui lòng thử chọn rạp hoặc thành phố khác.'}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-8">
+              {filteredGroupedShowtimes.map((day, dayIndex) => (
+                <div key={dayIndex} className="bg-[#12161F] p-6 rounded-2xl border border-[rgba(212,175,55,0.2)] shadow-xl">
+                  {/* Date Header */}
+                  <div className="flex items-center gap-2 pb-4 border-b border-gray-800 text-[#f2ca50] font-semibold text-sm mb-6">
+                    <span className="material-symbols-outlined text-[18px]">calendar_today</span>
+                    <span className="font-['Playfair_Display'] tracking-wide">{day.dateLabel}</span>
+                    <span className="text-[#9CA3AF] font-normal">({day.date})</span>
+                  </div>
+
+                  {/* Showtime Pills Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {day.times.map((slot, slotIndex) => {
+                      const isUnavailable = slot.availableSeats === 0;
+                      return (
+                        <div
+                          key={slotIndex}
+                          onClick={() => !isUnavailable && handleTimeSlotClick(day.date, slot)}
+                          className={`p-4 rounded-xl border transition-all duration-300 ${
+                            isUnavailable 
+                              ? 'bg-[#15181E] border-gray-800/60 opacity-50 cursor-not-allowed'
+                              : 'bg-[#1b1b1f] border-[rgba(212,175,55,0.25)] hover:border-[#D4AF37] hover:bg-[#222735] hover:shadow-[0_4px_20px_rgba(212,175,55,0.2)] cursor-pointer'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-['Playfair_Display'] text-xl font-bold text-[#f2ca50]">
+                              {slot.time}
+                            </span>
+                            <span className="text-[10px] font-mono uppercase bg-[#08090C] text-[#F3C644] px-2 py-0.5 rounded border border-[#F3C644]/30">
+                              VIP 2D
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-white font-medium truncate mb-1">
+                            {slot.cinema}
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] text-[#9CA3AF] pt-2 border-t border-gray-800/80">
+                            <span>
+                              {slot.availableSeats !== null
+                                ? `${slot.availableSeats}/${slot.totalSeats} ghế trống`
+                                : 'Đang kiểm tra ghế...'}
+                            </span>
+                            <span className="text-[#D4AF37] font-semibold">Chọn ghế ➔</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>
