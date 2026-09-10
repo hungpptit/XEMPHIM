@@ -109,6 +109,44 @@ export default function Login() {
         <button type="submit" disabled={loading}>
           {loading ? 'Đang xác thực...' : 'Đăng nhập'}
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setEmail('demo.recruiter@xemphim.vn');
+            setPassword('12345678');
+            setTimeout(() => {
+              authService.login({ email: 'demo.recruiter@xemphim.vn', password: 'password123' }).then(({ user }) => {
+                if (redirectTarget) {
+                  navigate(redirectTarget, { replace: true, state: returnState });
+                } else {
+                  navigate('/', { replace: true });
+                }
+              });
+            }, 100);
+          }}
+          style={{
+            marginTop: '10px',
+            width: '100%',
+            padding: '10px',
+            background: 'rgba(212, 175, 55, 0.08)',
+            border: '1px dashed #D4AF37',
+            borderRadius: '8px',
+            color: '#D4AF37',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>bolt</span>
+          <span>1-Click Đăng nhập nhanh (Dành cho Nhà Tuyển Dụng)</span>
+        </button>
+
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 12, fontSize: '13px', color: '#9CA3AF' }}>
           <span>Chưa có tài khoản?</span>
           <button type="button" className={styles.secondaryBtn} onClick={goToRegister}>

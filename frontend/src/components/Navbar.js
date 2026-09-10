@@ -30,8 +30,58 @@ const Navbar = () => {
     return () => { mounted = false; window.removeEventListener('authChanged', onAuth); };
   }, []);
 
-  const isActiveLink = (path) => {
-    return location.pathname === path ? styles.active : '';
+  const [activeSection, setActiveSection] = useState('home');
+
+  // ScrollSpy to highlight active section on scroll or click
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      setActiveSection('');
+      return;
+    }
+
+    if (location.hash === '#now-section') {
+      setActiveSection('now');
+    } else if (location.hash === '#coming-section') {
+      setActiveSection('coming');
+    } else {
+      setActiveSection('home');
+    }
+
+    const onScroll = () => {
+      if (location.pathname !== '/') return;
+      const nowEl = document.getElementById('now-section');
+      const comingEl = document.getElementById('coming-section');
+      const scrollPos = window.scrollY + 200;
+
+      if (comingEl && scrollPos >= comingEl.offsetTop) {
+        setActiveSection('coming');
+      } else if (nowEl && scrollPos >= nowEl.offsetTop) {
+        setActiveSection('now');
+      } else {
+        setActiveSection('home');
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [location.pathname, location.hash]);
+
+  const handleNavClick = (targetId, e) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      if (targetId === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.history.pushState(null, '', '/');
+        setActiveSection('home');
+      } else {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          window.history.pushState(null, '', `#${targetId}`);
+          setActiveSection(targetId === 'now-section' ? 'now' : 'coming');
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -112,28 +162,43 @@ const Navbar = () => {
         <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
           <Link 
             to="/" 
-            className={`text-sm uppercase tracking-wider font-semibold transition-colors ${
-              location.pathname === '/' ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.3)]' : 'text-[#9CA3AF] hover:text-white'
+            onClick={(e) => handleNavClick('home', e)}
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 cursor-pointer ${
+              location.pathname === '/' && activeSection === 'home'
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
             }`}
           >
             Trang Chủ
           </Link>
           <a 
             href="/#now-section" 
-            className="text-sm uppercase tracking-wider font-semibold text-[#9CA3AF] hover:text-white transition-colors"
+            onClick={(e) => handleNavClick('now-section', e)}
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 cursor-pointer ${
+              location.pathname === '/' && activeSection === 'now'
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
+            }`}
           >
             Phim Đang Chiếu
           </a>
           <a 
             href="/#coming-section" 
-            className="text-sm uppercase tracking-wider font-semibold text-[#9CA3AF] hover:text-white transition-colors"
+            onClick={(e) => handleNavClick('coming-section', e)}
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 cursor-pointer ${
+              location.pathname === '/' && activeSection === 'coming'
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
+            }`}
           >
             Phim Sắp Chiếu
           </a>
           <Link 
             to="/my-tickets" 
-            className={`text-sm uppercase tracking-wider font-semibold transition-colors ${
-              location.pathname === '/my-tickets' ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.3)]' : 'text-[#9CA3AF] hover:text-white'
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 ${
+              location.pathname === '/my-tickets' 
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
             }`}
           >
             Vé Của Tôi
@@ -265,7 +330,7 @@ const Navbar = () => {
                 onClick={handleLogin}
                 className="px-4 py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F5E6AB] to-[#B8860B] text-[#08090C] text-xs font-bold uppercase tracking-wider hover:brightness-110 shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all"
               >
-                Đăng Nhập VIP
+                Đăng Nhập
               </button>
             )}
           </div>

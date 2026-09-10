@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>XEMPHIM | Royal Cinema Club</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&amp;family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface": "#121316",
+          "on-primary-fixed-variant": "#574500",
+          "on-tertiary-fixed-variant": "#614000",
+          "surface-bright": "#38393d",
+          "surface-container": "#1f1f23",
+          "border-gold-glass": "rgba(212, 175, 55, 0.20)",
+          "surface-container-high": "#292a2d",
+          "primary-fixed-dim": "#e9c349",
+          "seat-occupied-charcoal": "#2A2E39",
+          "secondary-fixed": "#f1e3a8",
+          "on-secondary-fixed": "#211b00",
+          "surface-container-highest": "#343538",
+          "seat-vip-imperial": "#F3C644",
+          "on-primary-fixed": "#241a00",
+          "error": "#ffb4ab",
+          "text-silver-smoke": "#9CA3AF",
+          "surface-onyx-glass": "rgba(18, 22, 31, 0.85)",
+          "on-error-container": "#ffdad6",
+          "primary-container": "#d4af37",
+          "on-secondary-fixed-variant": "#50471a",
+          "seat-available-silver": "#D1D5DB",
+          "tertiary-fixed": "#ffddb0",
+          "tertiary": "#ffc469",
+          "surface-variant": "#343538",
+          "secondary-container": "#50471a",
+          "on-tertiary-container": "#5f3e00",
+          "surface-container-lowest": "#0d0e11",
+          "surface-container-low": "#1b1b1f",
+          "text-pure-white": "#FFFFFF",
+          "surface-onyx": "#12161F",
+          "seat-locked-amber": "#FF8C00",
+          "secondary-fixed-dim": "#d5c78e",
+          "background": "#121316",
+          "on-primary-container": "#554300",
+          "tertiary-fixed-dim": "#f9bc5c",
+          "surface-dim": "#121316",
+          "on-secondary": "#383006",
+          "inverse-on-surface": "#2f3034",
+          "on-tertiary-fixed": "#281800",
+          "primary": "#f2ca50",
+          "surface-tint": "#e9c349",
+          "accent-bronze-dark": "#B8860B",
+          "inverse-surface": "#e3e2e6",
+          "on-background": "#e3e2e6",
+          "primary-fixed": "#ffe088",
+          "on-primary": "#3c2f00",
+          "on-surface-variant": "#d0c5af",
+          "on-surface": "#e3e2e6",
+          "secondary": "#d5c78e",
+          "seat-selected-gold": "#FFD700",
+          "outline-variant": "#4d4635",
+          "inverse-primary": "#735c00",
+          "error-container": "#93000a",
+          "on-tertiary": "#442c00",
+          "on-error": "#690005",
+          "on-secondary-container": "#c3b57e",
+          "tertiary-container": "#e3a84b",
+          "glow-screen-gold": "rgba(212, 175, 55, 0.45)",
+          "outline": "#99907c",
+          "border-gold-hairline": "rgba(212, 175, 55, 0.25)"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "margin-desktop": "3rem",
+          "space-xs": "0.5rem",
+          "space-3xl": "4.5rem",
+          "gutter-mobile": "1rem",
+          "space-lg": "1.5rem",
+          "space-2xl": "3rem",
+          "space-sm": "0.75rem",
+          "margin-mobile": "1.25rem",
+          "space-2xs": "0.25rem",
+          "seat-gap": "0.375rem",
+          "space-md": "1rem",
+          "gutter-desktop": "1.5rem",
+          "space-xl": "2rem",
+          "seat-aisle-gap": "1.25rem"
+        },
+        "fontFamily": {
+          "title-lg": [
+            "Outfit"
+          ],
+          "title-md": [
+            "Outfit"
+          ],
+          "headline-lg-mobile": [
+            "Playfair Display"
+          ],
+          "label-meta": [
+            "Outfit"
+          ],
+          "label-cta": [
+            "Outfit"
+          ],
+          "display-hero": [
+            "Playfair Display"
+          ],
+          "body-sm": [
+            "Outfit"
+          ],
+          "body-lg": [
+            "Outfit"
+          ],
+          "label-code": [
+            "Outfit"
+          ],
+          "headline-lg": [
+            "Playfair Display"
+          ],
+          "headline-md": [
+            "Playfair Display"
+          ],
+          "body-md": [
+            "Outfit"
+          ],
+          "display-hero-mobile": [
+            "Playfair Display"
+          ],
+          "headline-sm": [
+            "Playfair Display"
+          ]
+        },
+        "fontSize": {
+          "title-lg": [
+            "18px",
+            {
+              "lineHeight": "26px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "title-md": [
+            "16px",
+            {
+              "lineHeight": "22px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg-mobile": [
+            "22px",
+            {
+              "lineHeight": "30px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "label-meta": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.05em",
+              "fontWeight": "600"
+            }
+          ],
+          "label-cta": [
+            "15px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.08em",
+              "fontWeight": "700"
+            }
+          ],
+          "display-hero": [
+            "48px",
+            {
+              "lineHeight": "56px",
+              "letterSpacing": "0.04em",
+              "fontWeight": "800"
+            }
+          ],
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "18px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "400"
+            }
+          ],
+          "label-code": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.12em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-md": [
+            "20px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "400"
+            }
+          ],
+          "display-hero-mobile": [
+            "34px",
+            {
+              "lineHeight": "42px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "800"
+            }
+          ],
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface font-body-md text-body-md text-on-surface selection:bg-primary selection:text-on-primary"><header class="fixed top-0 w-full z-50 bg-surface-onyx-glass backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.85)]"><div class="h-20 max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><a class="flex items-center gap-space-sm group" data-path="phim-dang-chieu" href="#"><img alt="XEMPHIM Royal Gold Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKmG1zq_LtL7bVgBlnRMO1GMps3ilm3LA5en432LtGrBeA_iYyyjyaLdiV1kauX6-6zQQrZOHZiQ4PyJQu_cAHsyw2dGz1KiznWqyCIoKH1UEIOgOq50txFgR8iSuqmclR3G5wJTWyQvc5ohkv5ezLF7n097Qb-qi7F7lP5lg0CyAmCnxP0QmEQJuoKmDLuXV34HPrSg9LX0quRx4UCA0gcYvgDEVFo6bzDqUNksYncKA-8a7c5aAq0A"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm font-bold tracking-widest text-primary uppercase">XEMPHIM</span><span class="font-label-code text-label-code tracking-widest text-secondary uppercase -mt-1">Royal Lounge</span></div></a><div class="hidden lg:flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-space-2xs rounded-full"><span class="material-symbols-outlined text-primary text-[18px]">location_on</span><select class="bg-transparent text-on-surface font-label-meta text-label-meta cursor-pointer focus:outline-none pr-space-xs"><option class="bg-surface-container-highest text-on-surface" value="hn">Hà Nội</option><option class="bg-surface-container-highest text-on-surface" value="hcm">TP. Hồ Chí Minh</option></select></div></div><nav class="hidden xl:flex items-center gap-space-lg" data-active-classes="text-primary font-bold shadow-[0_2px_10px_rgba(212,175,55,0.3)]"><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="phim-dang-chieu" href="#">Phim Đang Chiếu</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="phim-sap-chieu" href="#">Phim Sắp Chiếu</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="cum-rap-vip" href="#">Cụm Rạp VIP</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="uu-dai-hoang-gia" href="#">Ưu Đãi Hoàng Gia</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="ve-cua-toi" href="#">Vé Của Tôi</a></nav><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center bg-surface-container-lowest rounded-full px-space-md py-space-2xs"><span class="material-symbols-outlined text-primary text-[18px] mr-space-xs">search</span><input class="bg-transparent text-on-surface placeholder-text-silver-smoke font-body-sm text-body-sm focus:outline-none w-36 lg:w-44" placeholder="Tìm phim, sự kiện VIP..." type="text"/></div><div class="relative flex items-center gap-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-surface-container-lowest text-[10px] text-seat-vip-imperial shadow-[0_0_8px_rgba(243,198,68,0.8)]">👑</span></div></div></div></header><main class="w-full pt-20 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Cinematic Hero Showcase -->
+<section class="relative w-full overflow-hidden bg-surface-container-lowest -mt-20">
+<div class="relative min-h-[720px] lg:min-h-[840px] w-full flex items-end">
+<!-- High-Resolution Backdrop Scrim & Imagery -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center scale-105 transition-transform duration-1000 ease-out" data-alt="Breathtaking cinematic still from Avatar Fire and Ash, showing Na'vi warriors in bioluminescent ash and volcanic embers against deep oceanic tides, glowing neon turquoise and imperial gold hues, hyper-realistic 8k film still" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD32jaeZ8v8fOiQgROmtxqPD4DiwPPpigu0aG3yuYmsyCsFrOHK2iPCKe7fBeIWhg7VNp3SX9MWuizWwpCEAnabm9Y9sGnOIpGm5Epw8Bv0o_ARp4P8eqkR_4iwELOhEKI4WtBRkInBUgQg1yw5m0wzVgciKvVBWSm0UWbI4CzqnD0tl20limzvb9wy77RU6TpjoNy6CG8pNoMkJ4uG1F_QVCLuiPuvoCFkfTrxEDFesu2KmB9ZwYnfvA')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/75 to-surface-container-lowest/50"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest via-surface-container-lowest/80 to-transparent"></div>
+<!-- Ambient Gold Glow Halo -->
+<div class="absolute bottom-16 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-[130px] pointer-events-none"></div>
+</div>
+<!-- Hero Cinematic Meta & CTA Stack -->
+<div class="relative z-10 max-w-[1360px] mx-auto w-full px-margin-mobile md:px-margin-desktop pt-36 pb-space-3xl flex flex-col justify-end">
+<div class="max-w-3xl flex flex-col gap-space-md">
+<!-- Exclusive VIP Badges -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="inline-flex items-center gap-1 bg-surface-container-high text-seat-vip-imperial px-space-sm py-space-2xs rounded-full font-label-code text-label-code uppercase tracking-widest shadow-md">
+<span class="text-xs">👑</span> PREMIÈRE EXCLUSIVE
+            </span>
+<span class="bg-surface-onyx-glass backdrop-blur-md text-primary font-label-code text-label-code px-space-sm py-space-2xs rounded-full uppercase tracking-wider">
+              IMAX LASER 3D
+            </span>
+<span class="bg-surface-container-low text-text-silver-smoke font-label-code text-label-code px-space-sm py-space-2xs rounded-full uppercase tracking-wider">
+              DOLBY ATMOS
+            </span>
+</div>
+<!-- Movie Title -->
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-meta text-label-meta text-primary tracking-[0.25em] uppercase font-bold">James Cameron’s Masterpiece</span>
+<h1 class="font-display-hero text-display-hero text-text-pure-white font-extrabold tracking-tight drop-shadow-2xl">
+              AVATAR: LỬA VÀ TRO TÀN
+            </h1>
+<p class="font-headline-sm text-headline-sm text-secondary italic font-light">
+              Avatar: Fire &amp; Ash • Dòng Chảy Bí Ẩn Nơi Đáy Biển Tro Tàn
+            </p>
+</div>
+<!-- Metadata Chips Row -->
+<div class="flex flex-wrap items-center gap-space-md text-text-silver-smoke font-body-sm text-body-sm py-space-2xs">
+<div class="flex items-center gap-1.5 bg-surface-container-high px-space-sm py-space-2xs rounded-md">
+<span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-title-md text-title-md text-text-pure-white font-bold">8.9</span>
+<span class="text-text-silver-smoke text-xs">/10 (3.2k đánh giá)</span>
+</div>
+<span class="text-surface-bright">•</span>
+<span>192 Phút</span>
+<span class="text-surface-bright">•</span>
+<span>Hành động, Phiêu lưu, Khoa học viễn tưởng</span>
+<span class="text-surface-bright">•</span>
+<span class="bg-error-container text-on-error-container font-label-code text-label-code px-space-xs py-0.5 rounded font-bold">T16</span>
+</div>
+<!-- Synopsis Preview -->
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 max-w-2xl">
+            Hậu duệ của tộc Na’vi đối mặt với tộc Tro Tàn hiếu chiến trong cuộc chiến sinh tồn khắc nghiệt. Trải nghiệm kiệt tác hình ảnh đỉnh cao với âm thanh vòm đa chiều độc quyền tại phòng chiếu Hoàng Gia.
+          </p>
+<!-- CTAs Bar -->
+<div class="flex flex-wrap items-center gap-space-md pt-space-sm">
+<button class="flex items-center justify-center gap-space-xs px-space-xl py-3.5 rounded-full bg-gradient-to-r from-primary-container via-primary to-accent-bronze-dark text-on-primary font-label-cta text-label-cta uppercase tracking-widest shadow-[0_4px_25px_rgba(212,175,55,0.4)] hover:shadow-[0_4px_35px_rgba(212,175,55,0.7)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" id="heroBookingBtn">
+<span class="material-symbols-outlined text-[20px]">confirmation_number</span>
+              Đặt Vé VIP Ngay
+            </button>
+<button class="flex items-center justify-center gap-space-xs px-space-lg py-3.5 rounded-full bg-surface-onyx-glass backdrop-blur-md text-primary font-label-cta text-label-cta uppercase tracking-wider hover:bg-surface-container-high transition-all duration-200" id="heroTrailerBtn">
+<span class="material-symbols-outlined text-[20px]">play_circle</span>
+              Xem Trailer 4K
+            </button>
+<div class="hidden sm:flex items-center gap-space-xs text-text-silver-smoke font-label-meta text-label-meta ml-space-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span>Chỉ còn 14 ghế Hạng Imperial VIP</span>
+</div>
+</div>
+</div>
+<!-- Slider Pagination Indicators -->
+<div class="flex items-center justify-between pt-space-xl mt-space-lg">
+<div class="flex items-center gap-space-xs">
+<span class="w-8 h-1.5 rounded-full bg-primary shadow-[0_0_10px_#D4AF37]"></span>
+<span class="w-2.5 h-1.5 rounded-full bg-surface-bright hover:bg-secondary cursor-pointer transition-colors"></span>
+<span class="w-2.5 h-1.5 rounded-full bg-surface-bright hover:bg-secondary cursor-pointer transition-colors"></span>
+<span class="w-2.5 h-1.5 rounded-full bg-surface-bright hover:bg-secondary cursor-pointer transition-colors"></span>
+</div>
+<div class="flex items-center gap-space-sm text-text-silver-smoke font-label-code text-label-code">
+<span class="text-primary font-bold">01</span>
+<span>/</span>
+<span>04 PHIM NỔI BẬT</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Booking Glass Bar Floating Engine -->
+<section class="relative z-20 -mt-10 max-w-[1360px] mx-auto w-full px-margin-mobile md:px-margin-desktop">
+<div class="w-full bg-surface-onyx-glass backdrop-blur-2xl rounded-2xl p-space-md lg:p-space-lg shadow-[0_20px_50px_rgba(0,0,0,0.85)]">
+<div class="flex items-center gap-space-xs mb-space-sm text-primary">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+<span class="font-label-cta text-label-cta uppercase tracking-widest text-primary">Đặt Vé Nhanh Hoàng Gia</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-space-sm items-center">
+<!-- Select Movie -->
+<div class="flex flex-col bg-surface-container-low rounded-xl px-space-md py-space-xs focus-within:bg-surface-container">
+<span class="font-label-code text-label-code text-text-silver-smoke uppercase">1. Chọn Phim</span>
+<select class="bg-transparent text-text-pure-white font-title-md text-title-md focus:outline-none cursor-pointer pt-0.5 truncate" id="quickMovieSelect">
+<option class="bg-surface-container-highest text-on-surface" value="avatar3">Avatar: Lửa Và Tro Tàn (3D)</option>
+<option class="bg-surface-container-highest text-on-surface" value="dune2">Dune: Hành Tinh Cát 2</option>
+<option class="bg-surface-container-highest text-on-surface" value="deadpool">Deadpool &amp; Wolverine</option>
+<option class="bg-surface-container-highest text-on-surface" value="despicable4">Kẻ Trộm Mặt Trăng 4</option>
+<option class="bg-surface-container-highest text-on-surface" value="mai">Mai (Bản Giới Hạn VIP)</option>
+</select>
+</div>
+<!-- Select Cinema -->
+<div class="flex flex-col bg-surface-container-low rounded-xl px-space-md py-space-xs focus-within:bg-surface-container">
+<span class="font-label-code text-label-code text-text-silver-smoke uppercase">2. Cụm Rạp VIP</span>
+<select class="bg-transparent text-text-pure-white font-title-md text-title-md focus:outline-none cursor-pointer pt-0.5 truncate" id="quickCinemaSelect">
+<option class="bg-surface-container-highest text-on-surface" value="cgv-batrieu">CGV Vincom Bà Triệu (Gold Class)</option>
+<option class="bg-surface-container-highest text-on-surface" value="bhd-bitexco">BHD Star Cineplex Bitexco (First Class)</option>
+<option class="bg-surface-container-highest text-on-surface" value="lotte-westlake">Lotte West Lake Cinema (Charlotte)</option>
+<option class="bg-surface-container-highest text-on-surface" value="beta-diamond">Beta Diamond Grand Suite</option>
+</select>
+</div>
+<!-- Select Date -->
+<div class="flex flex-col bg-surface-container-low rounded-xl px-space-md py-space-xs focus-within:bg-surface-container">
+<span class="font-label-code text-label-code text-text-silver-smoke uppercase">3. Ngày Chiếu</span>
+<select class="bg-transparent text-text-pure-white font-title-md text-title-md focus:outline-none cursor-pointer pt-0.5" id="quickDateSelect">
+<option class="bg-surface-container-highest text-on-surface" value="today">Hôm nay, 24/10</option>
+<option class="bg-surface-container-highest text-on-surface" value="tomorrow">Ngày mai, 25/10</option>
+<option class="bg-surface-container-highest text-on-surface" value="sat">Thứ Bảy, 26/10</option>
+<option class="bg-surface-container-highest text-on-surface" value="sun">Chủ Nhật, 27/10</option>
+</select>
+</div>
+<!-- Select Showtime -->
+<div class="flex flex-col bg-surface-container-low rounded-xl px-space-md py-space-xs focus-within:bg-surface-container">
+<span class="font-label-code text-label-code text-text-silver-smoke uppercase">4. Suất Chiếu</span>
+<select class="bg-transparent text-seat-vip-imperial font-title-md text-title-md font-bold focus:outline-none cursor-pointer pt-0.5" id="quickTimeSelect">
+<option class="bg-surface-container-highest text-on-surface" value="1830">18:30 - Phòng Imperial 01</option>
+<option class="bg-surface-container-highest text-on-surface" value="1945">19:45 - Gold Lounge 02</option>
+<option class="bg-surface-container-highest text-on-surface" value="2115">21:15 - IMAX Suite 03</option>
+<option class="bg-surface-container-highest text-on-surface" value="2240">22:40 - Velvet Bed 01</option>
+</select>
+</div>
+<!-- Action Submit -->
+<div class="w-full h-full flex items-end">
+<button class="w-full h-12 rounded-xl bg-primary text-on-primary font-label-cta text-label-cta uppercase tracking-wider font-bold shadow-[0_4px_18px_rgba(212,175,55,0.35)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.6)] hover:bg-primary-fixed transition-all flex items-center justify-center gap-space-xs" id="btnQuickBookGo">
+<span>Tìm Ghế Trống</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Movie Showcase Section with Filter Tabs -->
+<section class="w-full max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop py-space-3xl flex flex-col gap-space-xl">
+<!-- Header Controls: Tabs & Genre Selector -->
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-lg">
+<div class="flex flex-col gap-1">
+<span class="font-label-meta text-label-meta text-primary uppercase tracking-[0.2em]">Khám Phá Rạp Chiếu</span>
+<h2 class="font-headline-lg text-headline-lg text-text-pure-white font-bold">Kho Phim Đẳng Cấp Hoàng Gia</h2>
+</div>
+<!-- Tab Switchers (Now Showing vs Coming Soon) -->
+<div class="flex items-center gap-space-xs bg-surface-container-lowest p-1 rounded-full shadow-inner">
+<button class="px-space-lg py-space-xs rounded-full font-label-cta text-label-cta uppercase tracking-wider bg-primary text-on-primary font-bold shadow-[0_2px_12px_rgba(212,175,55,0.35)] transition-all" id="tabNowShowing">
+          Đang Chiếu (28)
+        </button>
+<button class="px-space-lg py-space-xs rounded-full font-label-cta text-label-cta uppercase tracking-wider text-text-silver-smoke hover:text-text-pure-white transition-all" id="tabComingSoon">
+          Sắp Chiếu (14)
+        </button>
+</div>
+</div>
+<!-- Genre Filter Pills -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-2 scrollbar-none text-text-silver-smoke font-label-meta text-label-meta">
+<button class="px-space-md py-space-2xs rounded-full bg-primary/10 text-primary font-bold whitespace-nowrap">Tất Cả Thể Loại</button>
+<button class="px-space-md py-space-2xs rounded-full bg-surface-container-low hover:bg-surface-container hover:text-text-pure-white transition-colors whitespace-nowrap">Hành Động</button>
+<button class="px-space-md py-space-2xs rounded-full bg-surface-container-low hover:bg-surface-container hover:text-text-pure-white transition-colors whitespace-nowrap">Khoa Học Viễn Tưởng</button>
+<button class="px-space-md py-space-2xs rounded-full bg-surface-container-low hover:bg-surface-container hover:text-text-pure-white transition-colors whitespace-nowrap">Tâm Lý - Tình Cảm</button>
+<button class="px-space-md py-space-2xs rounded-full bg-surface-container-low hover:bg-surface-container hover:text-text-pure-white transition-colors whitespace-nowrap">Hoạt Hình</button>
+<button class="px-space-md py-space-2xs rounded-full bg-surface-container-low hover:bg-surface-container hover:text-text-pure-white transition-colors whitespace-nowrap">Kinh Dị &amp; Ly Kỳ</button>
+</div>
+<!-- Movie Cards Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-space-lg">
+<!-- Movie Card 1: Kẻ Trộm Mặt Trăng 4 -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-2xl overflow-hidden shadow-xl hover:shadow-[0_12px_30px_rgba(212,175,55,0.25)] transition-all duration-300">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Despicable Me 4 animated film poster featuring Gru, the golden mega minions and playful mayhem with sharp 3D character renders" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFbX_P3i_OjbzvGMuqzh58QvUIIMhEzWWOqq8LvpBsDCyadXE9iiNKosp9o-x6OEUv6sFdlPzlM3cMfGZ5UF9_0l6xwUv5lq0Vw6XK5XcEy--x28iZjPwHeVMD7uJMxKCK8hxz0ppX0aYoG4wKDmzT0CWBToDNrQxhUhfZZJD2--cM8lAjK3AAxXkJY7Q8rnLK17TIEDWJ1Pl24LoTokoLfE9jeY3R7c9IXisiAQxNn_nPGl0PNt-Xfw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent opacity-80"></div>
+<!-- Badges -->
+<div class="absolute top-space-sm left-space-sm flex flex-col gap-1">
+<span class="bg-surface-onyx-glass backdrop-blur-md text-primary font-label-code text-label-code px-2 py-0.5 rounded uppercase font-bold">P - Mọi Lứa Tuổi</span>
+<span class="bg-surface-container-high text-secondary-fixed font-label-code text-label-code px-2 py-0.5 rounded font-bold uppercase">3D / 2D</span>
+</div>
+<div class="absolute top-space-sm right-space-sm bg-surface-onyx-glass backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-code text-label-code text-text-pure-white font-bold">8.4</span>
+</div>
+</div>
+<div class="p-space-md flex flex-col flex-1 justify-between gap-space-sm">
+<div class="flex flex-col gap-1">
+<span class="font-label-code text-label-code text-secondary uppercase tracking-wider">Hoạt Hình • Hài Hước</span>
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors line-clamp-1">Kẻ Trộm Mặt Trăng 4</h3>
+<span class="font-body-sm text-body-sm text-text-silver-smoke">Thời lượng: 95 Phút</span>
+</div>
+<div class="pt-space-xs flex items-center justify-between gap-space-xs">
+<button class="w-full py-2.5 rounded-xl bg-primary text-on-primary font-label-cta text-label-cta uppercase tracking-wider font-bold shadow-[0_2px_10px_rgba(212,175,55,0.25)] hover:bg-primary-fixed transition-all flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">book_online</span>
+              Đặt Vé
+            </button>
+</div>
+</div>
+</div>
+<!-- Movie Card 2: Dune: Hành Tinh Cát 2 -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-2xl overflow-hidden shadow-xl hover:shadow-[0_12px_30px_rgba(212,175,55,0.25)] transition-all duration-300">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Dune Part Two cinema poster with Paul Atreides and Chani traversing dramatic orange spice desert dunes with colossal sand worms in background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlhuNDrp18PQY_-ZoGKRy1YsseaAM4Ie1u6SM89IX75wHECjZEiMGelKH1iDwvhMhcoxO4LH1DHO_WdHZF9_acWWuK3VzLmLVHg9J6CRipaAJhVhcvK30K0XFEQVUONscMNtm2Umnx1rNejt_Qh6CzsUvQZNko9R_YE2lNwwF1ARbwW1JBN-faZCka4kEoqo_waEZbhGVfuDKyz0OelhqPl_OMNDWW5LxdThJAvkF-4oGa4QFhjAvW_Q"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent opacity-80"></div>
+<!-- Badges -->
+<div class="absolute top-space-sm left-space-sm flex flex-col gap-1">
+<span class="bg-surface-onyx-glass backdrop-blur-md text-error font-label-code text-label-code px-2 py-0.5 rounded uppercase font-bold">T16</span>
+<span class="bg-primary text-on-primary font-label-code text-label-code px-2 py-0.5 rounded font-bold uppercase shadow-sm">IMAX 70MM</span>
+</div>
+<div class="absolute top-space-sm right-space-sm bg-surface-onyx-glass backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-code text-label-code text-text-pure-white font-bold">9.1</span>
+</div>
+</div>
+<div class="p-space-md flex flex-col flex-1 justify-between gap-space-sm">
+<div class="flex flex-col gap-1">
+<span class="font-label-code text-label-code text-secondary uppercase tracking-wider">Viễn Tưởng • Sử Thi</span>
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors line-clamp-1">Dune: Hành Tinh Cát 2</h3>
+<span class="font-body-sm text-body-sm text-text-silver-smoke">Thời lượng: 166 Phút</span>
+</div>
+<div class="pt-space-xs flex items-center justify-between gap-space-xs">
+<button class="w-full py-2.5 rounded-xl bg-primary text-on-primary font-label-cta text-label-cta uppercase tracking-wider font-bold shadow-[0_2px_10px_rgba(212,175,55,0.25)] hover:bg-primary-fixed transition-all flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">book_online</span>
+              Đặt Vé
+            </button>
+</div>
+</div>
+</div>
+<!-- Movie Card 3: Deadpool & Wolverine -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-2xl overflow-hidden shadow-xl hover:shadow-[0_12px_30px_rgba(212,175,55,0.25)] transition-all duration-300">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Deadpool and Wolverine movie poster with red and bright yellow suits, adamantium claws reflecting neon lights, epic Marvel blockbuster styling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDMS5omVCdVwxiHQE4qtXAmHaghagWiHr6tDOWnYycUxYcjORlmc5kAdifCMzbh7yqPHk5MzyRHd4rSbfBDYhyw9Q8rjjKj3MMNLlyahwecZwvCrgIhFNGoY_azZqEMdyZZ4lQfcJ3zaz7iHFOYxdEQ3A1kCNTVFtxz7K4d7C8sNTx19TI83UE0mvIP5zlvEByQ-WJBhKCb0vP0xAoM60zlVX_LOYL0YbxsizfMEhTlbw_Ai2o8Wtw7Q"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent opacity-80"></div>
+<!-- Badges -->
+<div class="absolute top-space-sm left-space-sm flex flex-col gap-1">
+<span class="bg-error-container text-on-error-container font-label-code text-label-code px-2 py-0.5 rounded uppercase font-bold">T18</span>
+<span class="bg-surface-container-high text-secondary-fixed font-label-code text-label-code px-2 py-0.5 rounded font-bold uppercase">4DX / 2D</span>
+</div>
+<div class="absolute top-space-sm right-space-sm bg-surface-onyx-glass backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-code text-label-code text-text-pure-white font-bold">8.6</span>
+</div>
+</div>
+<div class="p-space-md flex flex-col flex-1 justify-between gap-space-sm">
+<div class="flex flex-col gap-1">
+<span class="font-label-code text-label-code text-secondary uppercase tracking-wider">Hành Động • Hài Hước</span>
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors line-clamp-1">Deadpool &amp; Wolverine</h3>
+<span class="font-body-sm text-body-sm text-text-silver-smoke">Thời lượng: 128 Phút</span>
+</div>
+<div class="pt-space-xs flex items-center justify-between gap-space-xs">
+<button class="w-full py-2.5 rounded-xl bg-primary text-on-primary font-label-cta text-label-cta uppercase tracking-wider font-bold shadow-[0_2px_10px_rgba(212,175,55,0.25)] hover:bg-primary-fixed transition-all flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">book_online</span>
+              Đặt Vé
+            </button>
+</div>
+</div>
+</div>
+<!-- Movie Card 4: Mai -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-2xl overflow-hidden shadow-xl hover:shadow-[0_12px_30px_rgba(212,175,55,0.25)] transition-all duration-300">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Emotional drama movie poster of Mai directed by Tran Thanh, warm cinematic lens flare, intimate emotional portrait with Saigon alley aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYocWHMgiSIJtl0m2Hzy2ajRuAlkLZSXMjzfP8pp4V9l51Fe7Cy4p7kOv-MIfb-dsJRxeML7uHs6NQY8-fFKZyOSFQnUa_X5sss9m1VajPVRI1YQa2cJgvUKXjmEqyTDL45H0eK8oZlNx77cKF9s1sHfZ3H_veCQvjRmqFgogHehl-5M6L2JI7EOrtKsctDkxfrcccLuLdRWKwhVmnbU45ho81lk6chMvwHzkYSibb256cpOtUHdZN_w"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent opacity-80"></div>
+<!-- Badges -->
+<div class="absolute top-space-sm left-space-sm flex flex-col gap-1">
+<span class="bg-error-container text-on-error-container font-label-code text-label-code px-2 py-0.5 rounded uppercase font-bold">T18</span>
+<span class="bg-surface-container-high text-primary font-label-code text-label-code px-2 py-0.5 rounded font-bold uppercase">Suite VIP</span>
+</div>
+<div class="absolute top-space-sm right-space-sm bg-surface-onyx-glass backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-code text-label-code text-text-pure-white font-bold">8.7</span>
+</div>
+</div>
+<div class="p-space-md flex flex-col flex-1 justify-between gap-space-sm">
+<div class="flex flex-col gap-1">
+<span class="font-label-code text-label-code text-secondary uppercase tracking-wider">Tâm Lý • Tình Cảm</span>
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors line-clamp-1">Mai</h3>
+<span class="font-body-sm text-body-sm text-text-silver-smoke">Thời lượng: 131 Phút</span>
+</div>
+<div class="pt-space-xs flex items-center justify-between gap-space-xs">
+<button class="w-full py-2.5 rounded-xl bg-primary text-on-primary font-label-cta text-label-cta uppercase tracking-wider font-bold shadow-[0_2px_10px_rgba(212,175,55,0.25)] hover:bg-primary-fixed transition-all flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">book_online</span>
+              Đặt Vé
+            </button>
+</div>
+</div>
+</div>
+<!-- Movie Card 5: Kung Fu Panda 4 -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-2xl overflow-hidden shadow-xl hover:shadow-[0_12px_30px_rgba(212,175,55,0.25)] transition-all duration-300">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Kung Fu Panda 4 cinema poster showing Po the Dragon Warrior wielding golden staff in dynamic martial arts pose with mystical Chinese misty mountains" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATQVX_KMwlasjkxjVDPFgt7ZHgrdo07UQ3v8evfTGZiA4E5oeXfsmak8L0EdbTpMaDumMk7ojV2xi_URmASGoUb4TBv2K_pqQzbn3DcU2AclPwDN7DdwztbbTLlS0afMW2Vb_g426Fwbcl4SSnzD6ICZqh_HlXYb4GlL01QedlRuMgvvVhoogqsJAILdXr3d8OukkbyVN7RQxL0dm8-qhAQS2R9_KgLotXekuKEN4H3QBfCsFzPXdCmA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent opacity-80"></div>
+<!-- Badges -->
+<div class="absolute top-space-sm left-space-sm flex flex-col gap-1">
+<span class="bg-surface-onyx-glass backdrop-blur-md text-primary font-label-code text-label-code px-2 py-0.5 rounded uppercase font-bold">P</span>
+<span class="bg-surface-container-high text-secondary-fixed font-label-code text-label-code px-2 py-0.5 rounded font-bold uppercase">2D / Lồng Tiếng</span>
+</div>
+<div class="absolute top-space-sm right-space-sm bg-surface-onyx-glass backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-code text-label-code text-text-pure-white font-bold">8.2</span>
+</div>
+</div>
+<div class="p-space-md flex flex-col flex-1 justify-between gap-space-sm">
+<div class="flex flex-col gap-1">
+<span class="font-label-code text-label-code text-secondary uppercase tracking-wider">Hoạt Hình • Võ Thuật</span>
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors line-clamp-1">Kung Fu Panda 4</h3>
+<span class="font-body-sm text-body-sm text-text-silver-smoke">Thời lượng: 94 Phút</span>
+</div>
+<div class="pt-space-xs flex items-center justify-between gap-space-xs">
+<button class="w-full py-2.5 rounded-xl bg-primary text-on-primary font-label-cta text-label-cta uppercase tracking-wider font-bold shadow-[0_2px_10px_rgba(212,175,55,0.25)] hover:bg-primary-fixed transition-all flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">book_online</span>
+              Đặt Vé
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Trải Nghiệm Thượng Hạng VIP Lounge -->
+<section class="w-full bg-surface-container-lowest py-space-3xl relative overflow-hidden">
+<!-- Ambient Radial Illumination -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-primary/5 rounded-full blur-[140px] pointer-events-none"></div>
+<div class="max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop relative z-10 flex flex-col gap-space-2xl">
+<div class="flex flex-col items-center text-center max-w-2xl mx-auto gap-space-xs">
+<span class="flex items-center gap-1 font-label-code text-label-code text-seat-vip-imperial uppercase tracking-[0.25em]">
+<span>👑</span> THE ROYAL CINEMA SANCTUARY
+        </span>
+<h2 class="font-headline-lg text-headline-lg text-text-pure-white font-bold">
+          Trải Nghiệm Thượng Hạng VIP Lounge
+        </h2>
+<p class="font-body-md text-body-md text-text-silver-smoke">
+          Được thiết kế lấy cảm hứng từ các phòng chiếu hoàng gia Châu Âu. Mỗi khoảnh khắc điện ảnh là sự hòa quyện giữa công nghệ tối tân và dịch vụ ẩm thực thượng đỉnh.
+        </p>
+</div>
+<!-- Feature Mosaic Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- Feature 1: Royal Suite Bed -->
+<div class="bg-surface-container-low rounded-2xl overflow-hidden p-space-lg flex flex-col gap-space-md hover:bg-surface-container transition-all group">
+<div class="relative w-full h-56 rounded-xl overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Luxurious cinema royal bed suite with plush crimson velvet reclining loungers, brushed gold brass reading lamps, and private dividers in a dim atmospheric movie theater" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc6PnZ9S6ZHNQkUFsN5J1aNgYtouVfvjVS4D8qKCncJ2bibfh0tcP-6DYyWBYXMAroYIOFCmrIdorEKi0l_NrpFVnZZUKGAPP0hK8blncYxDmU7XFltzBU7FTNfSZqSknuk_SooYv2S8mcoNFo1cE6oW1P-1uCAsaRBr6-KkX56WC6eqPV64GZcYqbEsVazUAK01hDRbZcOKlzlZxiX874Fe9deKVXz49SAMyx9OUGNXQHAmjCUxhhzw"/>
+<div class="absolute top-space-xs left-space-xs bg-surface-onyx-glass px-2.5 py-1 rounded-md text-primary font-label-code text-label-code font-bold">
+              ROYAL BED SUITE
+            </div>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors">
+              Giường Nằm Velvet Bọc Da Cao Cấp
+            </h3>
+<p class="font-body-sm text-body-sm text-text-silver-smoke leading-relaxed">
+              Ghế ngả điện tử 180 độ bọc nhung cao cấp nhập khẩu từ Ý, gối đệm êm ái cùng hệ thống massage vi điểm nhẹ nhàng mang đến sự thư thái tuyệt đối suốt buổi chiếu.
+            </p>
+</div>
+<div class="pt-space-xs flex items-center gap-2 text-primary font-label-meta text-label-meta">
+<span class="material-symbols-outlined text-[18px]">airline_seat_flat</span>
+<span>Không gian riêng tư có vách cách âm</span>
+</div>
+</div>
+<!-- Feature 2: Dolby Atmos & Acoustic Architecture -->
+<div class="bg-surface-container-low rounded-2xl overflow-hidden p-space-lg flex flex-col gap-space-md hover:bg-surface-container transition-all group">
+<div class="relative w-full h-56 rounded-xl overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="High tech cinematic audio room showing sleek Dolby Atmos speaker arrays integrated into luxury dark wood acoustic wall paneling with soft gold accent lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2_QXELbNtc_DQ0QORJ8-JmG4rArDnAdmaICU6GIJk82JhJVUubbu18IN1p1Ai3q5NedwCgZDq7TW6LYRLxik1FORtzIScONQpfY0F63eH8C41Xy335L2Qj7oQJBS7lZ1ppN9Z47nxQF1FhqPYLYz3DvxI1SaB2kd7FKbRcfnT6ojbhEjpWl7v8tvyryGX_IPk6-1VU42VqqK0KTidsgQrwCGyxzmuup1Jaixx7WGvoAgLQBakRXyeMQ"/>
+<div class="absolute top-space-xs left-space-xs bg-surface-onyx-glass px-2.5 py-1 rounded-md text-secondary-fixed font-label-code text-label-code font-bold">
+              DOLBY ATMOS 64 CHANNELS
+            </div>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors">
+              Âm Thanh Dolby Atmos Vòm Không Gian
+            </h3>
+<p class="font-body-sm text-body-sm text-text-silver-smoke leading-relaxed">
+              Trang bị dàn loa âm trần tùy chỉnh với 64 kênh âm thanh độc lập, tái tạo chuẩn xác từng giọt nước hay tiếng rền nổ cơ giới chân thực như đang sống trong từng thước phim.
+            </p>
+</div>
+<div class="pt-space-xs flex items-center gap-2 text-primary font-label-meta text-label-meta">
+<span class="material-symbols-outlined text-[18px]">surround_sound</span>
+<span>Màn chiếu cong Laser Christie 4K HDR</span>
+</div>
+</div>
+<!-- Feature 3: Butler Service & Fine Dining -->
+<div class="bg-surface-container-low rounded-2xl overflow-hidden p-space-lg flex flex-col gap-space-md hover:bg-surface-container transition-all group">
+<div class="relative w-full h-56 rounded-xl overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Elegant personal butler in black tuxedo pouring Dom Perignon vintage champagne into crystal flutes beside gourmet caviar canapes on a brass tray inside a private cinema lounge" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_Ijgc5dE77U0RJn6ZdmX3Z66gb5LHHWqUCf5DyQS726YQLynlzsvqYKsowQCNq2Ob6oBP9BrEpZQPxDWVOvoP-WgipsxK-Jtes7kJ3-EXNe-IdskTK6-yp5vN7PYXprTcd6GKXwe0AZg3H3ckd5H3JmN_l7UF1YNIOSW7YqcBipmCPi7-4beTTro7kYRiiyey5W2AzLIjXh8Jr8eIWnnuJNO3cRWziHPCXw3sPL6GYJb-UTFqv0dq2A"/>
+<div class="absolute top-space-xs left-space-xs bg-surface-onyx-glass px-2.5 py-1 rounded-md text-primary-fixed-dim font-label-code text-label-code font-bold">
+              BUTLER &amp; SOMMELIER
+            </div>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-title-lg text-title-lg text-text-pure-white font-bold group-hover:text-primary transition-colors">
+              Rượu Vang &amp; Canape Hoàng Gia
+            </h3>
+<p class="font-body-sm text-body-sm text-text-silver-smoke leading-relaxed">
+              Đội ngũ Butler phục vụ tận chỗ chỉ qua 1 nút bấm tinh tế. Thưởng thức các dòng vang Bordeaux hảo hạng, phô mai nhập khẩu và canape chuẩn sao Michelin.
+            </p>
+</div>
+<div class="pt-space-xs flex items-center gap-2 text-primary font-label-meta text-label-meta">
+<span class="material-symbols-outlined text-[18px]">wine_bar</span>
+<span>Thực đơn thiết kế bởi MasterChef</span>
+</div>
+</div>
+</div>
+<!-- VIP Club Stats Banner -->
+<div class="w-full bg-surface-container rounded-2xl p-space-xl grid grid-cols-2 md:grid-cols-4 gap-space-lg text-center shadow-2xl">
+<div class="flex flex-col gap-1">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">12</span>
+<span class="font-label-meta text-label-meta text-text-silver-smoke uppercase">Phòng Chiếu Hoàng Gia VIP</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">100%</span>
+<span class="font-label-meta text-label-meta text-text-silver-smoke uppercase">Ghế Da Recliner Tự Động</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">30+</span>
+<span class="font-label-meta text-label-meta text-text-silver-smoke uppercase">Dòng Rượu Vang Cao Cấp</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-headline-lg text-headline-lg font-bold text-seat-vip-imperial">4.98★</span>
+<span class="font-label-meta text-label-meta text-text-silver-smoke uppercase">Đánh Giá Thượng Khách</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive JavaScript Engine for Tabs & Quick Action -->
+<script>
+    (function() {
+      const tabNow = document.getElementById('tabNowShowing');
+      const tabSoon = document.getElementById('tabComingSoon');
+      
+      if (tabNow && tabSoon) {
+        tabNow.addEventListener('click', function() {
+          tabNow.className = 'px-space-lg py-space-xs rounded-full font-label-cta text-label-cta uppercase tracking-wider bg-primary text-on-primary font-bold shadow-[0_2px_12px_rgba(212,175,55,0.35)] transition-all';
+          tabSoon.className = 'px-space-lg py-space-xs rounded-full font-label-cta text-label-cta uppercase tracking-wider text-text-silver-smoke hover:text-text-pure-white transition-all';
+        });
+
+        tabSoon.addEventListener('click', function() {
+          tabSoon.className = 'px-space-lg py-space-xs rounded-full font-label-cta text-label-cta uppercase tracking-wider bg-primary text-on-primary font-bold shadow-[0_2px_12px_rgba(212,175,55,0.35)] transition-all';
+          tabNow.className = 'px-space-lg py-space-xs rounded-full font-label-cta text-label-cta uppercase tracking-wider text-text-silver-smoke hover:text-text-pure-white transition-all';
+        });
+      }
+
+      const quickBtn = document.getElementById('btnQuickBookGo');
+      if (quickBtn) {
+        quickBtn.addEventListener('click', function() {
+          const movie = document.getElementById('quickMovieSelect').value;
+          const cinema = document.getElementById('quickCinemaSelect').value;
+          const time = document.getElementById('quickTimeSelect').value;
+          
+          quickBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Đang Xử Lý...';
+          setTimeout(function() {
+            window.location.hash = '#seat-selection';
+            quickBtn.innerHTML = '<span>Tìm Ghế Trống</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span>';
+          }, 600);
+        });
+      }
+
+      const heroBookingBtn = document.getElementById('heroBookingBtn');
+      if (heroBookingBtn) {
+        heroBookingBtn.addEventListener('click', function() {
+          const quickBar = document.getElementById('quickMovieSelect');
+          if (quickBar) {
+            quickBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            quickBar.focus();
+          }
+        });
+      }
+    })();
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest text-on-surface"><div class="max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop py-space-3xl flex flex-col gap-space-2xl"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl"><div class="flex flex-col gap-space-sm"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary text-[28px]">stars</span><span class="font-headline-sm text-headline-sm font-bold text-primary tracking-widest uppercase">XEMPHIM PREMIER</span></div><p class="font-body-sm text-body-sm text-text-silver-smoke leading-relaxed">Hệ thống phòng chiếu chuẩn Hoàng Gia 5 sao. Không gian rạp riêng biệt, ghế nằm bọc nhung cao cấp, ẩm thực thượng lưu và trải nghiệm điện ảnh xứng tầm đế vương.</p><div class="flex items-center gap-space-xs mt-space-xs"><span class="material-symbols-outlined text-seat-vip-imperial text-[20px]">call</span><span class="font-title-md text-title-md text-seat-vip-imperial tracking-wide">1900-XEMPHIM</span></div></div><div class="flex flex-col gap-space-sm"><span class="font-title-md text-title-md text-secondary tracking-wider uppercase">Đặc Quyền Lounge VIP</span><ul class="flex flex-col gap-space-xs font-body-sm text-body-sm text-text-silver-smoke"><li>• Butler cá nhân phục vụ tại chỗ ngồi</li><li>• Thưởng rượu vang và Canape thượng hạng</li><li>• Lối đi bảo mật &amp; Fast-track check-in riêng biệt</li><li>• Hàng ghế King &amp; Queen cách âm tiêu chuẩn</li></ul></div><div class="flex flex-col gap-space-sm"><span class="font-title-md text-title-md text-secondary tracking-wider uppercase">Đối Tác Chiếu VIP</span><div class="grid grid-cols-2 gap-space-xs font-body-sm text-body-sm text-text-silver-smoke"><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">CGV Cinemas</span><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">BHD Star</span><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">Lotte Cinema</span><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">Beta Diamond</span></div></div><div class="flex flex-col gap-space-sm"><span class="font-title-md text-title-md text-secondary tracking-wider uppercase">An Ninh &amp; Bảo Mật</span><p class="font-body-sm text-body-sm text-text-silver-smoke">Hạ tầng microservices chuẩn ngân hàng, mã hóa thời gian thực vé điện tử QR và giữ chỗ chống trùng lặp theo quy trình độc quyền.</p><div class="flex items-center gap-space-xs mt-space-2xs"><span class="material-symbols-outlined text-primary text-[20px]">verified_user</span><span class="font-label-meta text-label-meta text-on-surface-variant uppercase">256-Bit Vault Protocol • PCI-DSS Ready</span></div></div></div><div class="flex flex-col md:flex-row items-center justify-between gap-space-md pt-space-lg text-center md:text-left"><span class="font-label-meta text-label-meta text-text-silver-smoke">© 2024 XEMPHIM Royal Cinema Platform. All Imperial Rights Reserved.</span><div class="flex items-center gap-space-lg font-label-meta text-label-meta text-text-silver-smoke"><a class="hover:text-primary transition-colors" href="#">Điều Khoản Hoàng Gia</a><a class="hover:text-primary transition-colors" href="#">Chính Sách Khách Hàng Danh Dự</a><a class="hover:text-primary transition-colors" href="#">Hỗ Trợ Thượng Khách</a></div></div></div></footer></body></html>

@@ -67,6 +67,20 @@ const Home = () => {
     };
   }, []);
 
+  // Handle smooth scroll when navigating to hash (#now-section, #coming-section)
+  useEffect(() => {
+    if (!loading && location.hash) {
+      const targetId = location.hash.replace('#', '');
+      const timer = setTimeout(() => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, location.hash]);
+
   const filteredMovies = searchQuery
     ? movies.filter(movie => movie.title && movie.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : movies;
@@ -374,7 +388,7 @@ const Home = () => {
         )}
 
         {/* Section 1: Now Showing */}
-        <section id="now-section" className="mb-16">
+        <section id="now-section" className="mb-16 scroll-mt-28">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[rgba(212,175,55,0.15)] mb-8">
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-7 bg-gradient-to-b from-[#D4AF37] to-[#B8860B] rounded-full"></span>
@@ -462,7 +476,7 @@ const Home = () => {
         </section>
 
         {/* Section 2: Coming Soon */}
-        <section id="coming-section" className="mb-20">
+        <section id="coming-section" className="mb-20 scroll-mt-28">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[rgba(212,175,55,0.15)] mb-8">
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-7 bg-gradient-to-b from-[#F5E6AB] to-[#AA771C] rounded-full"></span>
