@@ -27,12 +27,22 @@ jest.unstable_mockModule('../models/index.js', () => {
   };
 });
 
+const mockAxiosInstance = {
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+  interceptors: {
+    request: { use: jest.fn() },
+    response: { use: jest.fn() }
+  }
+};
+
 jest.unstable_mockModule('axios', () => {
   return {
     default: {
-      get: jest.fn(),
-      post: jest.fn(),
-      put: jest.fn(),
+      ...mockAxiosInstance,
+      create: jest.fn(() => mockAxiosInstance)
     }
   };
 });
@@ -43,6 +53,7 @@ jest.unstable_mockModule('ioredis', () => {
       return {
         set: jest.fn(),
         del: jest.fn(),
+        eval: jest.fn(),
       };
     })
   };
@@ -59,7 +70,7 @@ jest.unstable_mockModule('amqplib', () => {
 // 2. Import the mock objects and the target service dynamically
 const { Booking, BookingSeat } = await import('../models/index.js');
 const { cancelBooking, getBookingStatus } = await import('../services/bookingService.js');
-const axios = (await import('axios')).default;
+const httpClient = (await import('../utils/httpClient.js')).default;
 
 describe('Booking Service - Unit Tests', () => {
   beforeEach(() => {
@@ -109,7 +120,7 @@ describe('Booking Service - Unit Tests', () => {
       ]);
 
       // Mock ZaloPay HTTP void call
-      axios.post.mockResolvedValue({ data: { success: true } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { success: true } });
 
       const result = await cancelBooking({ booking_id: 123 });
 

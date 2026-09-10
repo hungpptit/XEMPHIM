@@ -88,3 +88,17 @@ export const getShowtimesByMovie = async (req, res) => {
   }
 };
 
+export const getMoviesBatch = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ message: 'ids must be an array of numbers' });
+    }
+    const movies = await moviesService.getMoviesByIds(ids);
+    res.json(movies);
+  } catch (err) {
+    console.error('Error fetching movies batch:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+

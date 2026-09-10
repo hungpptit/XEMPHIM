@@ -1,4 +1,4 @@
-import axios from 'axios';
+import httpClient from '../utils/httpClient.js';
 const SEAT_SERVICE = process.env.SEAT_SERVICE_URL || 'http://localhost:4003';
 
 /**
@@ -41,7 +41,7 @@ export const createHall = async (CinemaHall, Seat_Ignored, { name, rows, seatsPe
     // Delegate seat creation directly to seat-service (Single Source of Truth)
     console.log(`[Hall Service] Requesting seat-service to initialize seats for hall ${hall.id}...`);
     try {
-      await axios.post(`${SEAT_SERVICE}/api/seats/hall/${hall.id}/init`, {
+      await httpClient.post(`${SEAT_SERVICE}/api/seats/hall/${hall.id}/init`, {
         rows: rowsNum,
         seatsPerRow: seatsPerRowNum,
         vipRows: vipRowsNum
@@ -180,7 +180,7 @@ export const deleteHall = async (CinemaHall, Seat_Ignored, Showtime, hallId) => 
   try {
     // Delete all seats in this hall via seat-service
     try {
-      await axios.delete(`${SEAT_SERVICE}/api/seats/hall/${hallId}`);
+      await httpClient.delete(`${SEAT_SERVICE}/api/seats/hall/${hallId}`);
       console.log(`[Hall Service] Deleted seats in seat-service for hall ${hallId}`);
     } catch (seatErr) {
       console.warn(`[Hall Service] Warning deleting seats in seat-service:`, seatErr.message);
@@ -206,7 +206,7 @@ export const getHallDetail = async (CinemaHall, Seat_Ignored, Cinema, { hallId }
   try {
     let seatData = { layout: {}, seats: [], rows: 0, seatsPerRow: 0 };
     try {
-      const res = await axios.get(`${SEAT_SERVICE}/api/seats/hall/${hallId}/layout`);
+      const res = await httpClient.get(`${SEAT_SERVICE}/api/seats/hall/${hallId}/layout`);
       if (res.data && res.data.data) {
         seatData = res.data.data;
       }

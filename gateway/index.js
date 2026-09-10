@@ -19,10 +19,51 @@ if (!process.env.JWT_SECRET) {
 }
 
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 const port = process.env.GATEWAY_PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+
+if (process.env.NODE_ENV === 'production' && JWT_SECRET === 'dev-secret') {
+  console.error('🚨 [CRITICAL SECURITY] Insecure default JWT_SECRET used in production environment! Please configure JWT_SECRET in .env.');
+}
+
+// 1. Auth Rate Limiter (Brute-force protection: max 25 attempts per 15 mins)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Quá nhiều yêu cầu đăng nhập/đăng ký từ IP này. Vui lòng thử lại sau 15 phút.'
+  }
+});
+
+// 2. Booking & Payment Rate Limiter (Anti-bot seat locking: max 60 requests per minute)
+const transactionLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Thao tác quá nhanh. Vui lòng thử lại sau giây lát.'
+  }
+});
+
+// 3. Global API Rate Limiter (DDoS protection: max 200 requests per minute)
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Hệ thống đang bận. Vui lòng thử lại sau.'
+  }
+});
 
 // Correlation ID / Request ID middleware for Distributed Tracing
 app.use((req, res, next) => {
@@ -136,6 +177,13 @@ const proxyOptions = {
     res.status(502).json({ message: 'Bad Gateway: Microservice might be down.', error: err.message });
   }
 };
+
+// Rate Limiting protection
+app.use('/api/', globalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/bookings', transactionLimiter);
+app.use('/api/payments', transactionLimiter);
 
 // Proxy mount routes with Circuit Breaker protection
 app.use('/api/auth', withCircuitBreaker('user'), proxy(USER_SERVICE, proxyOptions));

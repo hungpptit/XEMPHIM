@@ -28,6 +28,41 @@ services:
       - xemphim-network
     restart: unless-stopped
 
+  # Microsoft SQL Server Database Container
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: xemphim-mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_PASS:-123}
+      SA_PASSWORD: ${DB_PASS:-123}
+    ports:
+      - "1433:1433"
+    networks:
+      - xemphim-network
+    restart: unless-stopped
+
+  # Auto-migration / Database schema initialization
+  mssql-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: xemphim-mssql-init
+    depends_on:
+      - mssql
+    environment:
+      DB_HOST: mssql
+      DB_PASS: ${DB_PASS:-123}
+      SA_PASSWORD: ${DB_PASS:-123}
+    volumes:
+      - ./scripts/init-mssql.sh:/scripts/init-mssql.sh
+      - ./XemPhim_User.sql:/scripts/XemPhim_User.sql
+      - ./XemPhim_Movie.sql:/scripts/XemPhim_Movie.sql
+      - ./XemPhim_Seat.sql:/scripts/XemPhim_Seat.sql
+      - ./XemPhim_Booking.sql:/scripts/XemPhim_Booking.sql
+      - ./XemPhim_Payment.sql:/scripts/XemPhim_Payment.sql
+    entrypoint: ["/bin/bash", "/scripts/init-mssql.sh"]
+    networks:
+      - xemphim-network
+
   # ==========================================
   # Core Microservices
   # ==========================================

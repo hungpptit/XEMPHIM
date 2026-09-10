@@ -1,5 +1,5 @@
 import { Op, Sequelize } from 'sequelize';
-import axios from 'axios';
+import httpClient from '../utils/httpClient.js';
 
 const MOVIE_SERVICE = process.env.MOVIE_SERVICE_URL || 'http://localhost:4002';
 
@@ -43,14 +43,14 @@ export const getRevenueStats = async (appModels, filters = {}) => {
     let showtimes = [];
     if (showtimeIds.length > 0) {
       try {
-        const res = await axios.post(`${MOVIE_SERVICE}/api/showtimes/batch`, { ids: showtimeIds });
+        const res = await httpClient.post(`${MOVIE_SERVICE}/api/showtimes/batch`, { ids: showtimeIds });
         showtimes = Array.isArray(res.data) ? res.data : [];
       } catch (err) {
         console.error('Failed to fetch batch showtimes for stats, trying parallel fallback:', err.message);
         showtimes = await Promise.all(
           showtimeIds.map(async (sid) => {
             try {
-              const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${sid}`);
+              const res = await httpClient.get(`${MOVIE_SERVICE}/api/showtimes/${sid}`);
               return res.data;
             } catch (e) {
               return null;

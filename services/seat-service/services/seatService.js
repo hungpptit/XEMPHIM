@@ -1,9 +1,11 @@
 import { Seat } from '../models/index.js';
 import Redis from 'ioredis';
-import axios from 'axios';
+import httpClient from '../utils/httpClient.js';
 
-// Khởi tạo Redis client phục vụ cho việc kiểm tra trạng thái khóa ghế thời gian thực (Real-time seat locks)
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 1 }) : null;
+if (redis) {
+  redis.on('error', (err) => console.warn('⚠️ [Redis Seat] Connection note:', err.message));
+}
 const MOVIE_SERVICE = process.env.MOVIE_SERVICE_URL || 'http://localhost:4002';
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 
@@ -99,7 +101,7 @@ export const getSeatMapForShowtime = async (showtimeId) => {
   // 1. Lấy thông tin lịch chiếu từ movie-service
   let showtime = null;
   try {
-    const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${showtimeId}`);
+    const res = await httpClient.get(`${MOVIE_SERVICE}/api/showtimes/${showtimeId}`);
     showtime = res.data;
   } catch (err) {
     console.error(`Failed to fetch showtime ${showtimeId} from movie-service:`, err.message);
@@ -120,7 +122,7 @@ export const getSeatMapForShowtime = async (showtimeId) => {
   let lockedSeatIds = new Set();
 
   try {
-    const seatsRes = await axios.get(`${BOOKING_SERVICE}/api/bookings/showtimes/${showtimeId}/seats`);
+    const seatsRes = await httpClient.get(`${BOOKING_SERVICE}/api/bookings/showtimes/${showtimeId}/seats`);
     confirmedSeatIds = new Set(seatsRes.data.confirmedSeatIds || []);
     lockedSeatIds = new Set(seatsRes.data.lockedSeatIds || []);
   } catch (err) {

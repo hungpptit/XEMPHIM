@@ -8,7 +8,7 @@ if (!redis) {
   console.warn('⚠️ [Redis Cache] REDIS_URL not configured in showtimeService.');
 }
 
-import axios from 'axios';
+import httpClient from '../utils/httpClient.js';
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 
 // Lấy danh sách lịch chiếu
@@ -199,7 +199,7 @@ export const deleteShowtime = async (id) => {
 
   let number = 0;
   try {
-    const res = await axios.get(`${BOOKING_SERVICE}/api/bookings/showtimes/${id}/bookings-count`);
+    const res = await httpClient.get(`${BOOKING_SERVICE}/api/bookings/showtimes/${id}/bookings-count`);
     number = res.data?.count || 0;
   } catch (err) {
     console.error('Failed to check bookings for showtime from booking-service:', err.message);

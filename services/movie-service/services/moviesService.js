@@ -3,8 +3,10 @@ import Redis from 'ioredis';
 
 // Khởi tạo Redis client với cơ chế dự phòng
 // Thiết kế: Sử dụng Redis làm lớp đệm cache để giảm tải cho DB SQL Server đối với các truy vấn đọc dữ liệu phim/lịch chiếu.
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
-if (!redis) {
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 1 }) : null;
+if (redis) {
+  redis.on('error', (err) => console.warn('⚠️ [Redis Cache] Connection note:', err.message));
+} else {
   console.warn('⚠️ [Redis Cache] REDIS_URL not configured. Caching is disabled; falling back to DB queries directly.');
 }
 
@@ -317,5 +319,19 @@ export const getShowtimesForMovie = async (movieId) => {
   }
 
   return plainShowtimes;
+};
+
+// Truy vấn danh sách nhiều bộ phim theo mảng ID (Batch query)
+export const getMoviesByIds = async (ids = []) => {
+  if (!ids || !ids.length) return [];
+  const movies = await Movie.findAll({
+    where: { id: ids },
+    attributes: [
+      'id', 'title', 'description', 'poster_url', 'backdrop_url',
+      'trailer_url', 'duration_minutes', 'release_date', 'rating',
+      'director', 'status'
+    ]
+  });
+  return movies.map(m => (typeof m.toJSON === 'function' ? m.toJSON() : m));
 };
 

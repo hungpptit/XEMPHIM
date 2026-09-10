@@ -1,5 +1,5 @@
 import amqp from 'amqplib';
-import axios from 'axios';
+import httpClient from '../utils/httpClient.js';
 import zalopayService from './zalopayService.js';
 
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
@@ -31,7 +31,7 @@ export const publishPaymentSuccess = async (payload) => {
     
     // HTTP Fallback to ensure reliability
     try {
-      await axios.post(`${BOOKING_SERVICE}/api/bookings/${payload.booking_id}/confirm-payment`, {
+      await httpClient.post(`${BOOKING_SERVICE}/api/bookings/${payload.booking_id}/confirm-payment`, {
         payment_method: payload.payment_method || 'zalopay',
         payment_payload: {
           transaction_ref: payload.zp_trans_id,

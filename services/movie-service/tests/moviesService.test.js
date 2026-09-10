@@ -25,7 +25,7 @@ jest.unstable_mockModule('ioredis', () => ({
 // ─── 2. Dynamic imports after mocks ──────────────────────────────────────────
 const { Movie } = await import('../models/index.js');
 const Redis = (await import('ioredis')).default;
-const { listMovies, getMovieById, invalidateListCache } = await import('../services/moviesService.js');
+const { listMovies, getMovieById, invalidateListCache, getMoviesByIds } = await import('../services/moviesService.js');
 
 // Get the mock Redis instance
 const redisMock = Redis.mock.results[0]?.value;
@@ -190,6 +190,36 @@ describe('Movies Service — Unit Tests', () => {
         expect(Movie.findAndCountAll).not.toHaveBeenCalled();
         expect(result).toEqual(cachedMovies);
       }
+    });
+  });
+
+  describe('getMoviesByIds (Batch Query)', () => {
+    it('should return empty array when ids is empty or null', async () => {
+      const result1 = await getMoviesByIds([]);
+      const result2 = await getMoviesByIds(null);
+      expect(result1).toEqual([]);
+      expect(result2).toEqual([]);
+      expect(Movie.findAll).not.toHaveBeenCalled();
+    });
+
+    it('should query multiple movies using Op.in and return serialized data', async () => {
+      const mockMovies = [
+        { id: 1, title: 'Movie 1', toJSON: () => ({ id: 1, title: 'Movie 1' }) },
+        { id: 2, title: 'Movie 2', toJSON: () => ({ id: 2, title: 'Movie 2' }) }
+      ];
+      Movie.findAll.mockResolvedValue(mockMovies);
+
+      const result = await getMoviesByIds([1, 2]);
+
+      expect(Movie.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: [1, 2] }
+        })
+      );
+      expect(result).toEqual([
+        { id: 1, title: 'Movie 1' },
+        { id: 2, title: 'Movie 2' }
+      ]);
     });
   });
 });
