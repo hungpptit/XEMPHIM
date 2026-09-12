@@ -1,716 +1,241 @@
-# 🎬 HƯỚNG DẪN QUẢN LÝ PHÒNG CHIẾU - Cinema Hall Management System
+# 🎬 HƯỚNG DẪN QUẢN LÝ PHÒNG CHIẾU — Cinema Hall Management System
 
 ## 📋 Mục Lục
 1. [Tổng Quan](#tổng-quan)
 2. [Cấu Trúc Dữ Liệu](#cấu-trúc-dữ-liệu)
 3. [Backend API](#backend-api)
-4. [Frontend Components](#frontend-components)
+4. [Frontend Architecture](#frontend-architecture)
 5. [Hướng Dẫn Sử Dụng](#hướng-dẫn-sử-dụng)
-6. [Ghi Chú Phát Triển](#ghi-chú-phát-triển)
+6. [Ghi Chú Triển Khai](#ghi-chú-triển-khai)
 
 ---
 
 ## 🎯 Tổng Quan
 
-Hệ thống **Quản Lý Phòng Chiếu** cung cấp các tính năng quản lý hoàn chỉnh cho rạp chiếu phim:
+Hệ thống **Quản Lý Rạp & Phòng Chiếu** cung cấp đầy đủ các tính năng quản trị cho rạp chiếu phim trong hệ sinh thái XEMPHIM:
 
 ### Tính Năng Chính
-✅ **Quản Lý Rạp**: Tạo, cập nhật, xóa thông tin rạp chiếu  
-✅ **Quản Lý Phòng**: CRUD phòng chiếu, cấu hình số hàng/ghế  
-✅ **Quản Lý Ghế**: Phân loại ghế (Standard, VIP, Couple, Premium, Disabled)  
-✅ **Sơ Đồ Ghế**: Hiển thị visual, cập nhật loại ghế, điều chỉnh giá  
-✅ **Quản Lý Giá**: Điều chỉnh giá cho từng loại ghế
+- ✅ **Quản Lý Rạp Chiếu**: Tạo, cập nhật, xóa và tra cứu danh sách rạp chiếu (Cinemas)
+- ✅ **Quản Lý Phòng Chiếu**: CRUD phòng chiếu (Cinema Halls), cấu hình số hàng/ghế
+- ✅ **Quản Lý & Phân Loại Ghế**: Phân loại ghế (Standard, VIP, Couple, Premium, Disabled)
+- ✅ **Sơ Đồ Ghế Trực Quan**: Render layout hàng/cột tương tác, bulk update loại ghế
+- ✅ **Định Giá Ghế**: Thiết lập hệ số giá `price_modifier` cho từng loại ghế
 
-### Kiến Trúc
+### Kiến Trúc Hệ Thống
 ```
-┌─────────────────────────────────────────┐
-│         Frontend (React)                 │
-│  - Components: Form, SeatLayout         │
-│  - Pages: CinemaManagement, HallList    │
-│  - Services: adminService              │
-└────────────────┬────────────────────────┘
-                 │ HTTP/REST
-┌────────────────▼────────────────────────┐
-│    API Gateway (Port 4000)              │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│   Movie Service (Port 4002)             │
-│  - Controllers: cinemaController...     │
-│  - Routes: cinemaRoutes.js              │
-│  - Services: cinemaService, hallService │
-│  - Models: Cinema, CinemaHall, Seat     │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│    Database (MSSQL)                     │
-│  - cinemas, cinema_halls, seats         │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Frontend (React - Port 3000)             │
+│  - Pages: CinemaList, HallList, ShowtimeManagement          │
+│  - Components: CinemaForm, HallForm                         │
+│  - Service: adminService.js                                 │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTP (Cookies / Bearer)
+┌──────────────────────────────▼──────────────────────────────┐
+│                  API Gateway (Port 8080)                    │
+│           JWT Auth Middleware · Route Proxy                 │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Proxy /api/admin/*
+┌──────────────────────────────▼──────────────────────────────┐
+│                Movie Service (Port 4002)                    │
+│  - Controllers: cinemaController, hallController, ...       │
+│  - Routes: cinemaRoutes.js, adminRoutes.js                  │
+│  - Models: Cinema, CinemaHall, Seat                         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ MSSQL (Sequelize)
+┌──────────────────────────────▼──────────────────────────────┐
+│               Database: XemPhim_Movie                       │
+│           cinemas, cinema_halls, seats, showtimes           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📊 Cấu Trúc Dữ Liệu
+## 📊 Cấu Trúc Dữ Liệu (Database Schema)
 
 ### 1. Cinema (Rạp Chiếu)
-
-**Bảng**: `cinemas`
+**Bảng**: `cinemas` (Database: `XemPhim_Movie`)
 
 | Cột | Kiểu | Mô Tả |
 |-----|------|-------|
-| id | INTEGER PK | ID rạp |
-| name | VARCHAR(255) | Tên rạp (VD: CGV Vincom) |
-| location | VARCHAR(500) | Địa chỉ rạp |
-| hotline | VARCHAR(20) | Số điện thoại |
-| email | VARCHAR(255) | Email liên hệ |
-| address | TEXT | Mô tả chi tiết |
-| is_active | BOOLEAN | Hoạt động hay không |
-| created_at | DATETIME | Thời gian tạo |
-| updated_at | DATETIME | Thời gian cập nhật |
+| `id` | INT (PK, IDENTITY) | ID rạp |
+| `name` | VARCHAR(255) | Tên rạp (VD: CGV Vincom Bà Triệu) |
+| `address` | VARCHAR(500) | Địa chỉ chi tiết |
+| `city` | VARCHAR(255) | Tỉnh / Thành phố |
+| `status` | VARCHAR(50) | Trạng thái (`active`, `inactive`) |
+| `created_at` | DATETIME | Thời gian tạo |
+| `updated_at` | DATETIME | Thời gian cập nhật |
 
 ### 2. CinemaHall (Phòng Chiếu)
-
-**Bảng**: `cinema_halls`
-
-| Cột | Kiểu | Mô Tả |
-|-----|------|-------|
-| id | INTEGER PK | ID phòng |
-| cinema_id | INTEGER FK | Tham chiếu đến Cinema |
-| name | VARCHAR(255) | Tên phòng (VD: Phòng A, Phòng IMAX) |
-| rows | INTEGER | Số hàng ghế (1-30) |
-| seats_per_row | INTEGER | Ghế mỗi hàng (1-50) |
-| total_seats | INTEGER | Tổng ghế = rows × seats_per_row |
-| hall_type | ENUM | Standard/IMAX/3D/Premium |
-| description | TEXT | Mô tả phòng |
-| is_active | BOOLEAN | Hoạt động |
-| created_at | DATETIME | Thời gian tạo |
-| updated_at | DATETIME | Thời gian cập nhật |
-
-### 3. Seat (Ghế)
-
-**Bảng**: `seats`
+**Bảng**: `cinema_halls` (Database: `XemPhim_Movie`)
 
 | Cột | Kiểu | Mô Tả |
 |-----|------|-------|
-| id | INTEGER PK | ID ghế |
-| hall_id | INTEGER FK | Tham chiếu đến CinemaHall |
-| row_name | CHAR(1) | Tên hàng (A, B, C, ...) |
-| seat_number | INTEGER | Số ghế (1, 2, 3, ...) |
-| seat_type | ENUM | Standard/VIP/Couple/Disabled/Premium |
-| price_modifier | DECIMAL | Điều chỉnh giá (VD: +50000) |
-| is_active | BOOLEAN | Hoạt động |
-| created_at | DATETIME | Thời gian tạo |
-| updated_at | DATETIME | Thời gian cập nhật |
+| `id` | INT (PK, IDENTITY) | ID phòng chiếu |
+| `cinema_id` | INT (FK -> `cinemas.id`) | Tham chiếu đến rạp |
+| `name` | VARCHAR(255) | Tên phòng (VD: Phòng 01, IMAX Laser) |
+| `total_seats` | INT | Tổng số ghế của phòng |
+| `created_at` | DATETIME | Thời gian tạo |
+| `updated_at` | DATETIME | Thời gian cập nhật |
 
-**Unique Index**: (hall_id, row_name, seat_number)
+### 3. Seat (Ghế Ngồi)
+**Bảng**: `seats` (Database: `XemPhim_Movie` & `XemPhim_Seat`)
 
----
+| Cột | Kiểu | Mô Tả |
+|-----|------|-------|
+| `id` | INT (PK, IDENTITY) | ID ghế |
+| `hall_id` | INT (FK -> `cinema_halls.id`) | Tham chiếu đến phòng chiếu |
+| `row_name` | CHAR(1) | Ký hiệu hàng ghế (A, B, C, ...) |
+| `seat_number` | INT | Số thứ tự ghế trong hàng (1, 2, 3, ...) |
+| `seat_type` | VARCHAR(255) | Phân loại: `Standard`, `VIP`, `Couple`, `Premium`, `Disabled` |
+| `price_modifier` | DECIMAL(15, 2) | Hệ số nhân giá vé (1.0, 1.5, 2.0, ...) |
+| `is_active` | BIT / BOOLEAN | Trạng thái khả dụng (1 = Active, 0 = Disabled) |
 
-## 🔌 Backend API
-
-### Base URL
-```
-http://localhost:4000/api/admin
-```
-
-### Phân Loại Endpoints
-
-#### A. Cinema Management
-
-**1. Tạo Rạp Chiếu**
-```http
-POST /cinemas
-Content-Type: application/json
-
-{
-  "name": "CGV Vincom Đồng Khởi",
-  "location": "TP. Hồ Chí Minh",
-  "hotline": "028 6291 2000",
-  "email": "hcm@cgv.com",
-  "address": "72 Lê Thánh Tôn, Quận 1, TP.HCM"
-}
-
-Response: 201 Created
-{
-  "success": true,
-  "message": "Rạp chiếu được tạo thành công",
-  "data": { "id": 1, "name": "CGV Vincom Đồng Khởi", ... }
-}
-```
-
-**2. Lấy Tất Cả Rạp**
-```http
-GET /cinemas
-
-Response: 200 OK
-{
-  "success": true,
-  "data": [
-    { "id": 1, "name": "CGV Vincom", ... },
-    { "id": 2, "name": "BHD Star", ... }
-  ],
-  "total": 2
-}
-```
-
-**3. Lấy Rạp Theo ID**
-```http
-GET /cinemas/:id
-
-Response: 200 OK
-{
-  "success": true,
-  "data": { "id": 1, "name": "CGV Vincom", ... }
-}
-```
-
-**4. Cập Nhật Rạp**
-```http
-PUT /cinemas/:id
-Content-Type: application/json
-
-{
-  "name": "CGV Vincom Landmark 81",
-  "hotline": "028 6291 2001"
-}
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Rạp chiếu được cập nhật thành công",
-  "data": { "id": 1, "name": "CGV Vincom Landmark 81", ... }
-}
-```
-
-**5. Xóa Rạp**
-```http
-DELETE /cinemas/:id
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Rạp chiếu đã xoá thành công"
-}
-```
-
-**6. Lấy Thống Kê**
-```http
-GET /cinemas/stats/overview
-
-Response: 200 OK
-{
-  "success": true,
-  "data": {
-    "totalCinemas": 5,
-    "activeCinemas": 4,
-    "totalHalls": 20,
-    "totalSeats": 3500
-  }
-}
-```
-
-#### B. Hall Management
-
-**1. Tạo Phòng Chiếu**
-```http
-POST /halls
-Content-Type: application/json
-
-{
-  "cinemaId": 1,
-  "name": "Phòng IMAX",
-  "rows": 12,
-  "seatsPerRow": 16,
-  "hallType": "IMAX",
-  "description": "Phòng chiếu công nghệ IMAX hàng đầu"
-}
-
-Response: 201 Created
-{
-  "success": true,
-  "message": "Phòng chiếu được tạo thành công",
-  "data": {
-    "id": 5,
-    "cinema_id": 1,
-    "name": "Phòng IMAX",
-    "rows": 12,
-    "seats_per_row": 16,
-    "total_seats": 192,
-    ...
-  }
-}
-```
-
-**2. Lấy Phòng Của Rạp**
-```http
-GET /cinemas/:cinemaId/halls
-
-Response: 200 OK
-{
-  "success": true,
-  "data": [
-    { "id": 5, "name": "Phòng IMAX", "total_seats": 192, ... },
-    { "id": 6, "name": "Phòng 3D", "total_seats": 150, ... }
-  ],
-  "total": 2
-}
-```
-
-**3. Lấy Chi Tiết Phòng (Với Sơ Đồ Ghế)**
-```http
-GET /halls/:hallId/detail
-
-Response: 200 OK
-{
-  "success": true,
-  "data": {
-    "id": 5,
-    "name": "Phòng IMAX",
-    "rows": 12,
-    "seats_per_row": 16,
-    "layout": {
-      "A": [
-        {"id": 1, "number": 1, "type": "Standard", "modifier": 0},
-        {"id": 2, "number": 2, "type": "VIP", "modifier": 50000},
-        ...
-      ],
-      "B": [...],
-      ...
-    },
-    "seatLayout": {...}
-  }
-}
-```
-
-**4. Cập Nhật Phòng**
-```http
-PUT /halls/:hallId
-Content-Type: application/json
-
-{
-  "name": "Phòng IMAX Premium",
-  "hall_type": "Premium"
-}
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Phòng chiếu được cập nhật thành công",
-  "data": { ... }
-}
-```
-
-**5. Xóa Phòng**
-```http
-DELETE /halls/:hallId
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Phòng chiếu đã xoá thành công"
-}
-```
-
-#### C. Seat Management
-
-**1. Lấy Sơ Đồ Ghế**
-```http
-GET /halls/:hallId/seats/layout
-
-Response: 200 OK
-{
-  "success": true,
-  "data": {
-    "hallId": 5,
-    "name": "Phòng IMAX",
-    "rows": 12,
-    "seatsPerRow": 16,
-    "layout": {
-      "A": [
-        {"id": 1, "number": 1, "type": "Standard", "modifier": 0},
-        ...
-      ],
-      ...
-    }
-  }
-}
-```
-
-**2. Cập Nhật Loại Ghế Cho Tất Cả Ghế Trong Phòng**
-```http
-PUT /halls/:hallId/seats/type
-Content-Type: application/json
-
-{
-  "seatType": "Premium",
-  "priceModifier": 100000
-}
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Đã cập nhật 192 ghế"
-}
-```
-
-**3. Cập Nhật Ghế Cụ Thể**
-```http
-PUT /seats/:seatId
-Content-Type: application/json
-
-{
-  "seat_type": "Couple",
-  "price_modifier": 150000
-}
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Ghế được cập nhật thành công",
-  "data": { "id": 1, "seat_type": "Couple", ... }
-}
-```
-
-**4. Xóa Ghế**
-```http
-DELETE /seats/:seatId
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Ghế đã xoá thành công"
-}
-```
+> **Ràng buộc duy nhất**: `UNIQUE(hall_id, row_name, seat_number)`
 
 ---
 
-## 🎨 Frontend Components
+## 🔌 Backend API Reference
 
-### 1. CinemaForm Component
+**Base URL qua Gateway**: `http://localhost:8080/api/admin`  
+**Direct Movie Service**: `http://localhost:4002/api/admin`  
+**Xác thực**: Yêu cầu JWT token với `role: 'admin'` (truyền qua Cookie `access_token` hoặc Header `Authorization: Bearer <token>`).
 
-**File**: `/frontend/src/modules/Admin/components/CinemaForm.js`
+### A. Quản Lý Rạp (Cinemas)
 
-```jsx
-<CinemaForm
-  onSubmit={handleSubmit}
-  onCancel={handleCancel}
-  initialData={cinema}  // Optional - for editing
-  isLoading={false}
-/>
+| Method | Endpoint | Mô Tả |
+|--------|----------|-------|
+| `POST` | `/api/admin/cinemas` | Tạo rạp chiếu mới |
+| `GET` | `/api/admin/cinemas` | Lấy danh sách rạp |
+| `GET` | `/api/admin/cinemas/:id` | Lấy thông tin chi tiết rạp |
+| `PUT` | `/api/admin/cinemas/:id` | Cập nhật thông tin rạp |
+| `DELETE` | `/api/admin/cinemas/:id` | Xóa rạp chiếu (chỉ khi không có phòng/lịch chiếu) |
+| `GET` | `/api/admin/cinemas/stats/overview` | Lấy thống kê tổng quan (số rạp, phòng, ghế) |
+| `GET` | `/api/admin/cinemas/:cinemaId/halls` | Lấy danh sách phòng chiếu thuộc rạp |
+
+### B. Quản Lý Phòng Chiếu (Halls)
+
+| Method | Endpoint | Mô Tả |
+|--------|----------|-------|
+| `POST` | `/api/admin/halls` | Tạo phòng chiếu mới (kèm tự động sinh ghế) |
+| `GET` | `/api/admin/halls` | Lấy tất cả phòng chiếu |
+| `GET` | `/api/admin/halls/:hallId` | Lấy thông tin cơ bản phòng chiếu |
+| `GET` | `/api/admin/halls/:hallId/detail` | Lấy chi tiết phòng kèm ma trận sơ đồ ghế |
+| `PUT` | `/api/admin/halls/:hallId` | Cập nhật thông tin phòng chiếu |
+| `DELETE` | `/api/admin/halls/:hallId` | Xóa phòng chiếu |
+
+### C. Quản Lý Ghế Ngồi (Seats)
+
+| Method | Endpoint | Mô Tả |
+|--------|----------|-------|
+| `POST` | `/api/admin/seats` | Tạo ghế thủ công theo lô |
+| `GET` | `/api/admin/halls/:hallId/seats` | Lấy danh sách ghế của phòng |
+| `GET` | `/api/admin/halls/:hallId/seats/layout` | Lấy layout ma trận ghế theo hàng |
+| `PUT` | `/api/admin/seats/:seatId` | Cập nhật 1 ghế cụ thể (loại ghế, hệ số giá, active) |
+| `PUT` | `/api/admin/halls/:hallId/seats/type` | Cập nhật loại ghế hàng loạt cho cả phòng |
+| `DELETE` | `/api/admin/seats/:seatId` | Xóa 1 ghế |
+
+---
+
+## 🎨 Frontend Architecture
+
+### Cấu Trúc File Frontend Admin
+```
+frontend/src/modules/Admin/
+├── components/
+│   ├── CinemaForm.js             # Modal Form tạo/sửa Rạp chiếu
+│   ├── CinemaForm.module.css
+│   └── HallForm.js               # Modal Form tạo/sửa Phòng chiếu
+├── pages/
+│   ├── CinemaManagement/
+│   │   ├── CinemaList.js         # Trang danh sách rạp + quản lý rạp
+│   │   └── CinemaList.module.css
+│   ├── HallManagement/
+│   │   ├── HallList.js           # Trang quản lý phòng + tương tác sơ đồ ghế
+│   │   └── HallList.module.css
+│   ├── MovieManagement/          # Quản lý danh mục phim
+│   ├── ShowtimeManagement/       # Quản lý lịch chiếu
+│   ├── RevenueManagement/        # Thống kê doanh thu
+│   └── UserManagement/           # Quản lý tài khoản
+├── services/
+│   └── adminService.js           # Axios client kết nối Gateway (:8080)
+└── index.js                      # Admin Module Entry Router
 ```
 
-**Props**:
-- `onSubmit(formData)` - Callback khi submit
-- `onCancel()` - Callback khi hủy
-- `initialData` - Dữ liệu để edit (optional)
-- `isLoading` - Trạng thái loading
+### Sử Dụng `adminService.js`
 
-**Returns**:
 ```javascript
-{
-  name: "CGV Vincom",
-  location: "TP.HCM",
-  hotline: "028 1234 5678",
-  email: "info@cgv.com",
-  address: "...",
-  is_active: true
-}
+import { cinemaAPI, hallAPI } from './services/adminService';
+
+// Lấy danh sách rạp
+const cinemas = await cinemaAPI.list();
+
+// Lấy chi tiết phòng và sơ đồ ghế
+const hallDetail = await hallAPI.getDetail(hallId);
 ```
-
-### 2. HallForm Component
-
-**File**: `/frontend/src/modules/Admin/components/HallForm.js`
-
-```jsx
-<HallForm
-  cinemaId={1}
-  onSubmit={handleSubmit}
-  onCancel={handleCancel}
-  initialData={hall}
-  isLoading={false}
-/>
-```
-
-**Props**:
-- `cinemaId` - ID rạp (bắt buộc)
-- `onSubmit(formData)` - Callback khi submit
-- `onCancel()` - Callback khi hủy
-- `initialData` - Dữ liệu để edit (optional)
-- `isLoading` - Trạng thái loading
-
-### 3. SeatLayout Component
-
-**File**: `/frontend/src/modules/Admin/components/SeatLayout.js`
-
-```jsx
-<SeatLayout
-  hallData={hallDetail}  // Từ API /halls/:id/detail
-  onSeatTypeChange={handleUpdateSeats}
-  isLoading={false}
-/>
-```
-
-**Props**:
-- `hallData` - Data từ getHallDetail
-- `onSeatTypeChange(data)` - Callback khi update ghế
-- `isLoading` - Trạng thái loading
-
-**onSeatTypeChange Data**:
-```javascript
-{
-  seatType: "VIP",
-  priceModifier: 50000
-}
-```
-
-### 4. CinemaManagement Page
-
-**File**: `/frontend/src/modules/Admin/pages/CinemaManagement/CinemaList.js`
-
-- Hiển thị danh sách rạp
-- Tạo rạp mới
-- Chỉnh sửa rạp
-- Xóa rạp
-- Kinh nghiệm tương tác mượt mà
-
-### 5. HallManagement Page
-
-**File**: `/frontend/src/modules/Admin/pages/HallManagement/HallList.js`
-
-- Sidebar chọn rạp
-- Danh sách phòng của rạp
-- Sơ đồ ghế interative
-- Quản lý loại ghế
 
 ---
 
 ## 📖 Hướng Dẫn Sử Dụng
 
-### A. Quản Lý Rạp Chiếu
+### 1. Thiết Lập Rạp Mới
+1. Đăng nhập với tài khoản Admin (`role: 'admin'`).
+2. Vào mục **Quản Lý Rạp Chiếu** trong Admin Dashboard.
+3. Nhấn **Thêm Rạp Mới**, nhập Tên rạp, Địa chỉ, Thành phố, Trạng thái.
+4. Nhấn **Lưu** để hoàn tất.
 
-#### Tạo Rạp Mới
-1. Vào tab **"Quản Lý Rạp Chiếu"** trong Admin Panel
-2. Click nút **"Thêm Rạp Mới"**
-3. Điền thông tin:
-   - **Tên Rạp**: Tên của rạp (VD: CGV Vincom Đồng Khởi)
-   - **Địa Chỉ**: Tỉnh/thành phố
-   - **Hotline**: Số điện thoại
-   - **Email**: Email liên hệ
-   - **Chi tiết**: Mô tả thêm
-4. Click **"Tạo Mới"**
+### 2. Thiết Lập Phòng Chiếu & Sơ Đồ Ghế
+1. Vào tab **Quản Lý Phòng Chiếu**, chọn rạp chiếu từ danh sách.
+2. Nhấn **Thêm Phòng Chiếu**, nhập:
+   - Tên phòng (VD: Phòng 01)
+   - Số hàng ghế (Rows: 1-26, tương ứng A-Z)
+   - Số ghế mỗi hàng (Seats per row: 1-50)
+3. Hệ thống sẽ tự động tính `total_seats` và khởi tạo toàn bộ ghế ở trạng thái `Standard` với `price_modifier = 1.0`.
+4. Trên giao diện sơ đồ ghế, chọn các hàng VIP / Couple / Premium và tiến hành cập nhật hệ số giá.
 
-#### Chỉnh Sửa Rạp
-1. Click icon **✏️ Edit** trên thẻ rạp
-2. Cập nhật thông tin
-3. Click **"Cập Nhật"**
+### 3. Phân Loại Ghế & Hệ Số Giá Chuẩn
 
-#### Xóa Rạp
-1. Click icon **🗑️ Delete** trên thẻ rạp
-2. Xác nhận xóa
-3. **Lưu ý**: Chỉ xóa được rạp không có phòng chiếu
-
-### B. Quản Lý Phòng Chiếu
-
-#### Tạo Phòng
-1. Vào tab **"Quản Lý Phòng Chiếu"**
-2. **Chọn rạp** từ sidebar
-3. Click **"Thêm Phòng"** trong phần danh sách phòng
-4. Điền thông tin:
-   - **Tên Phòng**: VD: Phòng A, Phòng IMAX
-   - **Số Hàng**: 10-30 hàng
-   - **Ghế Mỗi Hàng**: 15-50 ghế
-   - **Loại Phòng**: Standard/IMAX/3D/Premium
-   - **Mô Tả**: (optional)
-5. Tổng ghế sẽ tự tính = Số Hàng × Ghế Mỗi Hàng
-6. Click **"Tạo Mới"**
-
-**Hệ thống sẽ tự động tạo ghế**:
-- Hàng: A, B, C, ... (tương ứng số hàng)
-- Ghế: 1, 2, 3, ... (tương ứng số ghế/hàng)
-- Loại: Tất cả ghế mặc định là "Standard"
-
-#### Quản Lý Ghế Trong Phòng
-1. Click vào phòng trong danh sách
-2. Sơ đồ ghế sẽ hiển thị
-3. **Cập nhật loại ghế**:
-   - Chọn **Loại Ghế**: Standard, VIP, Couple, Disabled, Premium
-   - Nhập **Điều Chỉnh Giá**: VD: 50000 (cộng thêm 50.000đ)
-   - Click **"Cập Nhật Tất Cả Ghế"**
-
-### C. Loại Ghế & Giá
-
-| Loại | Mô Tả | Giá Modifier Gợi Ý |
-|------|-------|-----|
-| Standard | Ghế thường | 0đ |
-| VIP | Ghế cao cấp | +50.000đ |
-| Couple | Ghế đôi rộng | +100.000đ |
-| Premium | Ghế siêu cao cấp | +150.000đ |
-| Disabled | Ghế người khuyết tật | 0đ |
+| Loại Ghế | Hệ Số Giá (`price_modifier`) | Công Thức Tính Giá Vé | Ghi Chú |
+|----------|------------------------------|-----------------------|---------|
+| **Standard** | `1.0` | `base_price × 1.0` | Ghế thường tiêu chuẩn |
+| **VIP** | `1.5` | `base_price × 1.5` | Ghế vị trí trung tâm, êm ái |
+| **Couple** | `2.0` | `base_price × 2.0` | Ghế đôi hàng sau hoặc bên cánh |
+| **Premium** | `2.5` | `base_price × 2.5` | Ghế ngả cao cấp / Sweetbox |
+| **Disabled** | `0.5` | `base_price × 0.5` | Ghế ưu tiên lối đi, giảm 50% |
 
 ---
 
-## 🛠️ Ghi Chú Phát Triển
+## 🛠️ Ghi Chú Triển Khai & Cấu Hình
 
-### Cấu Trúc File Dự Án
+### Biến Môi Trường (File `.env`)
 
-```
-services/movie-service/
-├── models/
-│   ├── cinema.js                 # Cinema model
-│   ├── cinema_hall_v2.js         # CinemaHall model
-│   ├── seat_v2.js                # Seat model
-│   └── index.js
-├── services/
-│   ├── cinemaService.js          # Cinema business logic
-│   ├── hallService.js            # Hall business logic
-│   └── seatService.js            # Seat business logic
-├── controllers/
-│   ├── cinemaController.js       # Cinema API handlers
-│   ├── hallController.js         # Hall API handlers
-│   └── seatController.js         # Seat API handlers
-├── routes/
-│   ├── cinemaRoutes.js           # All cinema/hall/seat routes
-│   └── adminRoutes.js            # Import cinemaRoutes
-└── index.js
+```env
+# API Gateway
+GATEWAY_PORT=8080
+JWT_SECRET=your_jwt_secret_key
 
-frontend/src/modules/Admin/
-├── components/
-│   ├── CinemaForm.js             # Cinema form component
-│   ├── CinemaForm.module.css
-│   ├── HallForm.js               # Hall form component
-│   ├── SeatLayout.js             # Seat layout visualization
-│   └── SeatLayout.module.css
-├── pages/
-│   ├── CinemaManagement/
-│   │   ├── CinemaList.js         # Cinema management page
-│   │   └── CinemaList.module.css
-│   └── HallManagement/
-│       ├── HallList.js           # Hall management page
-│       └── HallList.module.css
-├── services/
-│   └── adminService.js           # API calls
-└── index.js
-```
-
-### Installation Steps
-
-1. **Backend Setup**
-```bash
-cd services/movie-service
-npm install
-```
-
-2. **Database Migration** (Manual)
-```sql
--- Create tables if not exist
-CREATE TABLE cinemas (...)
-CREATE TABLE cinema_halls (...)
-CREATE TABLE seats (...)
-```
-
-3. **Start Movie Service**
-```bash
-npm start  # Runs on port 4002
-```
-
-4. **Frontend Setup**
-```bash
-cd frontend
-npm install
-npm start  # Runs on port 3000
-```
-
-### Environment Variables
-
-**Backend** (.env):
-```
+# Movie Service
+MOVIE_SERVICE_PORT=4002
+MOVIE_DB_NAME=XemPhim_Movie
 DB_HOST=localhost
 DB_PORT=1433
-DB_USER=sa
-DB_PASS=YourPassword
-DB_NAME=MovieDB
-MOVIE_SERVICE_PORT=4002
+DB_USERNAME=sa
+DB_PASS=YourStrong@Password123
+DB_ENCRYPT=false
+DB_TRUST_SERVER_CERT=true
 ```
 
-**Frontend** (.env):
-```
-REACT_APP_API_URL=http://localhost:4000
-```
-
-### Testing API with Curl
-
+### Lệnh Khởi Chạy
 ```bash
-# Create Cinema
-curl -X POST http://localhost:4000/api/admin/cinemas \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "name": "CGV Vincom",
-    "location": "TP.HCM",
-    "hotline": "028 1234 5678"
-  }'
+# Khởi chạy Movie Service độc lập
+npm run dev --prefix services/movie-service
 
-# Get Cinema Stats
-curl http://localhost:4000/api/admin/cinemas/stats/overview \
-  -H "Authorization: Bearer YOUR_TOKEN"
+# Khởi chạy API Gateway
+npm run dev --prefix gateway
 
-# Get Seat Layout
-curl http://localhost:4000/api/admin/halls/5/seats/layout \
-  -H "Authorization: Bearer YOUR_TOKEN"
+# Khởi chạy Frontend
+npm start --prefix frontend
 ```
-
-### Error Handling
-
-Tất cả endpoints trả về format:
-```javascript
-{
-  "success": true/false,
-  "message": "...",
-  "data": {...},  // nếu success=true
-  "error": "..."  // nếu success=false
-}
-```
-
-### Validation Rules
-
-**Cinema**:
-- name: Bắt buộc, 3-255 ký tự
-- location: Bắt buộc
-- email: Hợp lệ hoặc rỗng
-
-**Hall**:
-- name: Bắt buộc
-- rows: 1-30
-- seats_per_row: 1-50
-
-**Seat**:
-- row_name: A-Z
-- seat_number: 1+
-- seat_type: Standard/VIP/Couple/Disabled/Premium
-- price_modifier: Decimal
-
-### Performance Notes
-
-- Ghế được tạo hàng loạt khi tạo phòng (bulk insert)
-- Sơ đồ ghế được generate từ DB data
-- Caching có thể thêm vào cho danh sách rạp/phòng
-- Pagination nên add cho danh sách lớn
-
-### Future Enhancements
-
-- [ ] Import/Export danh sách rạp
-- [ ] Quản lý promotion theo phòng/ghế
-- [ ] Report doanh thu theo phòng
-- [ ] Real-time seat availability
-- [ ] Batch seat operations
-- [ ] Hall amenities management
-- [ ] Maintenance scheduling
 
 ---
 
-## 📞 Support
-
-Mọi thắc mắc hoặc báo lỗi, vui lòng liên hệ development team.
-
-**Last Updated**: 2024
-**Version**: 1.0.0
+*Cập nhật: Tháng 8/2026 | Phiên bản: 1.0.0 | Tác giả: Phạm Tuấn Hưng*

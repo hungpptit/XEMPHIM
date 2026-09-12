@@ -36,6 +36,12 @@ app.use('/api/admin/stats', adminStatsRoutes);
 // Start background expiration worker (every 60 seconds)
 startExpireJob(60);
 
+// Start RabbitMQ Booking Consumer for payment.successful events (SAGA Choreography)
+import('./services/bookingConsumer.js').then(m => m.startBookingConsumer()).catch(e => {
+  console.warn('Booking consumer init note:', e.message);
+});
+
 app.listen(port, () => {
   console.log(`🎟 Booking Service listening on port ${port}`);
 });
+

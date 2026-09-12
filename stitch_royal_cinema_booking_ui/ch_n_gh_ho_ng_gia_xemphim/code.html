@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>XEMPHIM | Royal Cinema Club</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&amp;family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface": "#121316",
+          "on-primary-fixed-variant": "#574500",
+          "on-tertiary-fixed-variant": "#614000",
+          "surface-bright": "#38393d",
+          "surface-container": "#1f1f23",
+          "border-gold-glass": "rgba(212, 175, 55, 0.20)",
+          "surface-container-high": "#292a2d",
+          "primary-fixed-dim": "#e9c349",
+          "seat-occupied-charcoal": "#2A2E39",
+          "secondary-fixed": "#f1e3a8",
+          "on-secondary-fixed": "#211b00",
+          "surface-container-highest": "#343538",
+          "seat-vip-imperial": "#F3C644",
+          "on-primary-fixed": "#241a00",
+          "error": "#ffb4ab",
+          "text-silver-smoke": "#9CA3AF",
+          "surface-onyx-glass": "rgba(18, 22, 31, 0.85)",
+          "on-error-container": "#ffdad6",
+          "primary-container": "#d4af37",
+          "on-secondary-fixed-variant": "#50471a",
+          "seat-available-silver": "#D1D5DB",
+          "tertiary-fixed": "#ffddb0",
+          "tertiary": "#ffc469",
+          "surface-variant": "#343538",
+          "secondary-container": "#50471a",
+          "on-tertiary-container": "#5f3e00",
+          "surface-container-lowest": "#0d0e11",
+          "surface-container-low": "#1b1b1f",
+          "text-pure-white": "#FFFFFF",
+          "surface-onyx": "#12161F",
+          "seat-locked-amber": "#FF8C00",
+          "secondary-fixed-dim": "#d5c78e",
+          "background": "#121316",
+          "on-primary-container": "#554300",
+          "tertiary-fixed-dim": "#f9bc5c",
+          "surface-dim": "#121316",
+          "on-secondary": "#383006",
+          "inverse-on-surface": "#2f3034",
+          "on-tertiary-fixed": "#281800",
+          "primary": "#f2ca50",
+          "surface-tint": "#e9c349",
+          "accent-bronze-dark": "#B8860B",
+          "inverse-surface": "#e3e2e6",
+          "on-background": "#e3e2e6",
+          "primary-fixed": "#ffe088",
+          "on-primary": "#3c2f00",
+          "on-surface-variant": "#d0c5af",
+          "on-surface": "#e3e2e6",
+          "secondary": "#d5c78e",
+          "seat-selected-gold": "#FFD700",
+          "outline-variant": "#4d4635",
+          "inverse-primary": "#735c00",
+          "error-container": "#93000a",
+          "on-tertiary": "#442c00",
+          "on-error": "#690005",
+          "on-secondary-container": "#c3b57e",
+          "tertiary-container": "#e3a84b",
+          "glow-screen-gold": "rgba(212, 175, 55, 0.45)",
+          "outline": "#99907c",
+          "border-gold-hairline": "rgba(212, 175, 55, 0.25)"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "margin-desktop": "3rem",
+          "space-xs": "0.5rem",
+          "space-3xl": "4.5rem",
+          "gutter-mobile": "1rem",
+          "space-lg": "1.5rem",
+          "space-2xl": "3rem",
+          "space-sm": "0.75rem",
+          "margin-mobile": "1.25rem",
+          "space-2xs": "0.25rem",
+          "seat-gap": "0.375rem",
+          "space-md": "1rem",
+          "gutter-desktop": "1.5rem",
+          "space-xl": "2rem",
+          "seat-aisle-gap": "1.25rem"
+        },
+        "fontFamily": {
+          "title-lg": [
+            "Outfit"
+          ],
+          "title-md": [
+            "Outfit"
+          ],
+          "headline-lg-mobile": [
+            "Playfair Display"
+          ],
+          "label-meta": [
+            "Outfit"
+          ],
+          "label-cta": [
+            "Outfit"
+          ],
+          "display-hero": [
+            "Playfair Display"
+          ],
+          "body-sm": [
+            "Outfit"
+          ],
+          "body-lg": [
+            "Outfit"
+          ],
+          "label-code": [
+            "Outfit"
+          ],
+          "headline-lg": [
+            "Playfair Display"
+          ],
+          "headline-md": [
+            "Playfair Display"
+          ],
+          "body-md": [
+            "Outfit"
+          ],
+          "display-hero-mobile": [
+            "Playfair Display"
+          ],
+          "headline-sm": [
+            "Playfair Display"
+          ]
+        },
+        "fontSize": {
+          "title-lg": [
+            "18px",
+            {
+              "lineHeight": "26px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "title-md": [
+            "16px",
+            {
+              "lineHeight": "22px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg-mobile": [
+            "22px",
+            {
+              "lineHeight": "30px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "700"
+            }
+          ],
+          "label-meta": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.05em",
+              "fontWeight": "600"
+            }
+          ],
+          "label-cta": [
+            "15px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.08em",
+              "fontWeight": "700"
+            }
+          ],
+          "display-hero": [
+            "48px",
+            {
+              "lineHeight": "56px",
+              "letterSpacing": "0.04em",
+              "fontWeight": "800"
+            }
+          ],
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "18px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "400"
+            }
+          ],
+          "label-code": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.12em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-md": [
+            "20px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "400"
+            }
+          ],
+          "display-hero-mobile": [
+            "34px",
+            {
+              "lineHeight": "42px",
+              "letterSpacing": "0.02em",
+              "fontWeight": "800"
+            }
+          ],
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface font-body-md text-body-md text-on-surface selection:bg-primary selection:text-on-primary"><header class="fixed top-0 w-full z-50 bg-surface-onyx-glass backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.85)]"><div class="h-20 max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><a class="flex items-center gap-space-sm group" data-path="phim-dang-chieu" href="#"><img alt="XEMPHIM Royal Gold Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKmG1zq_LtL7bVgBlnRMO1GMps3ilm3LA5en432LtGrBeA_iYyyjyaLdiV1kauX6-6zQQrZOHZiQ4PyJQu_cAHsyw2dGz1KiznWqyCIoKH1UEIOgOq50txFgR8iSuqmclR3G5wJTWyQvc5ohkv5ezLF7n097Qb-qi7F7lP5lg0CyAmCnxP0QmEQJuoKmDLuXV34HPrSg9LX0quRx4UCA0gcYvgDEVFo6bzDqUNksYncKA-8a7c5aAq0A"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm font-bold tracking-widest text-primary uppercase">XEMPHIM</span><span class="font-label-code text-label-code tracking-widest text-secondary uppercase -mt-1">Royal Lounge</span></div></a><div class="hidden lg:flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-space-2xs rounded-full"><span class="material-symbols-outlined text-primary text-[18px]">location_on</span><select class="bg-transparent text-on-surface font-label-meta text-label-meta cursor-pointer focus:outline-none pr-space-xs"><option class="bg-surface-container-highest text-on-surface" value="hn">Hà Nội</option><option class="bg-surface-container-highest text-on-surface" value="hcm">TP. Hồ Chí Minh</option></select></div></div><nav class="hidden xl:flex items-center gap-space-lg" data-active-classes="text-primary font-bold shadow-[0_2px_10px_rgba(212,175,55,0.3)]"><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="phim-dang-chieu" href="#">Phim Đang Chiếu</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="phim-sap-chieu" href="#">Phim Sắp Chiếu</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="cum-rap-vip" href="#">Cụm Rạp VIP</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="uu-dai-hoang-gia" href="#">Ưu Đãi Hoàng Gia</a><a class="font-label-cta text-label-cta text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-wider" data-path="ve-cua-toi" href="#">Vé Của Tôi</a></nav><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center bg-surface-container-lowest rounded-full px-space-md py-space-2xs"><span class="material-symbols-outlined text-primary text-[18px] mr-space-xs">search</span><input class="bg-transparent text-on-surface placeholder-text-silver-smoke font-body-sm text-body-sm focus:outline-none w-36 lg:w-44" placeholder="Tìm phim, sự kiện VIP..." type="text"/></div><div class="relative flex items-center gap-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-surface-container-lowest text-[10px] text-seat-vip-imperial shadow-[0_0_8px_rgba(243,198,68,0.8)]">👑</span></div></div></div></header><main class="w-full pt-20 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Dynamic Notification Bar / Seat Contention Alert -->
+<div class="w-full bg-seat-locked-amber/15 backdrop-blur-md px-margin-mobile md:px-margin-desktop py-space-xs transition-all duration-500 ease-out flex items-center justify-between" id="seat-conflict-toast">
+<div class="max-w-[1360px] mx-auto w-full flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-seat-locked-amber text-[20px] animate-pulse">crisis_alert</span>
+<span class="font-body-sm text-body-sm text-text-pure-white font-medium">Ghế <strong class="text-primary">A5</strong> vừa có người khác giữ chỗ qua Redis Lock. Vui lòng chọn vị trí khác!</span>
+</div>
+<button class="text-text-silver-smoke hover:text-text-pure-white transition-colors" onclick="document.getElementById('seat-conflict-toast').classList.add('hidden')">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<!-- Screening Session Master Ribbon -->
+<section class="w-full bg-surface-container-low/90 backdrop-blur-md">
+<div class="max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop py-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<!-- Movie Itinerary Information -->
+<div class="flex items-start md:items-center gap-space-md min-w-0">
+<div class="hidden sm:flex w-12 h-16 rounded overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Official cinematic movie poster of Dune Part Two in dark bronze and gold sandstorm aesthetic, featuring dramatic imperial lighting and obsidian silhouettes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvbeEPDBoE5bdT4PQvROo5QCyGjb0wLhOOvvZYtyqOpFhiUs9EBQ-KhfhdgjapiDWzfGoefthKiny4whkyXhSMHZrJnoBvnXwDpHgZgKAEorGA3VXwczpOTv5IiSdHI0QkrU2b81iICEkpliSEWGldux-WZpDyMwPnf2yNpUL6tZR9dWI5ief7dSTJ4CYf1uosE1oqERjQKDyFQvv4T4vavTwHWTnR5XOkXc4NCp-Mp1mTu-hgg0AL_w"/>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-headline-md text-headline-md font-bold text-text-pure-white tracking-wide truncate">Dune: Hành Tinh Cát 2</span>
+<span class="bg-primary/20 text-primary font-label-code text-label-code px-space-xs py-0.5 rounded uppercase font-bold">2D VIP LOUNGE</span>
+<span class="bg-surface-container-high text-text-silver-smoke font-label-code text-label-code px-space-xs py-0.5 rounded">T18</span>
+</div>
+<div class="flex items-center gap-space-xs text-text-silver-smoke font-body-sm text-body-sm mt-1 flex-wrap">
+<span class="flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[16px]">location_on</span>
+              CGV Vincom Bà Triệu • Phòng Chiếu 01
+            </span>
+<span class="text-outline">•</span>
+<span class="text-secondary flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+              18:45 • Thứ Sáu, 10/09/2026
+            </span>
+</div>
+</div>
+</div>
+<!-- Real-time Redis Countdown Lock Pill -->
+<div class="flex items-center self-start md:self-auto gap-space-sm bg-surface-container-lowest px-space-md py-space-xs rounded-full shadow-[0_0_20px_rgba(255,140,0,0.25)]">
+<span class="material-symbols-outlined text-seat-locked-amber text-[20px] animate-spin">history_toggle_off</span>
+<div class="flex flex-col">
+<span class="font-label-code text-label-code text-text-silver-smoke uppercase tracking-wider">Phiên Giữ Ghế Tức Thì</span>
+<span class="font-title-md text-title-md text-seat-locked-amber font-bold tracking-widest leading-none" id="countdown-timer">01:58</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-seat-locked-amber animate-ping ml-1"></div>
+</div>
+</div>
+</section>
+<!-- Main Seat Selection Sanctuary -->
+<main class="w-full max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop py-space-xl pb-44 flex flex-col items-center">
+<!-- Theater Atmosphere Projection Screen Visual -->
+<div class="w-full max-w-4xl flex flex-col items-center mb-space-2xl relative">
+<!-- Curved Ambient Golden Screen Element -->
+<div class="w-full h-8 sm:h-12 relative flex justify-center items-start">
+<svg class="w-full h-full text-primary" fill="none" preserveaspectratio="none" viewbox="0 0 1000 70">
+<path d="M 0 55 Q 500 -10 1000 55" fill="transparent" stroke="currentColor" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<div class="absolute inset-0 bg-gradient-to-b from-primary/30 via-glow-screen-gold/15 to-transparent h-28 pointer-events-none blur-xl"></div>
+</div>
+<!-- Screen Overline Badge -->
+<div class="flex items-center gap-space-xs text-text-silver-smoke font-label-meta text-label-meta uppercase tracking-widest mt-2">
+<span class="w-8 h-[1px] bg-outline-variant"></span>
+<span class="text-secondary font-semibold">Màn Hình Điện Ảnh Khẩu Độ Lớn (Screen)</span>
+<span class="w-8 h-[1px] bg-outline-variant"></span>
+</div>
+</div>
+<!-- Seat Status Legend Ribbon -->
+<div class="w-full max-w-4xl mb-space-2xl bg-surface-container/60 backdrop-blur-md rounded-xl p-space-sm flex flex-wrap items-center justify-around gap-space-sm">
+<!-- Standard Available -->
+<div class="flex items-center gap-space-xs">
+<div class="w-6 h-6 rounded bg-surface-container-high flex items-center justify-center shadow-sm">
+<div class="w-3.5 h-3.5 rounded-sm bg-seat-available-silver/40"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-meta text-label-meta text-on-surface">Ghế Thường</span>
+<span class="font-label-code text-label-code text-text-silver-smoke">90.000đ</span>
+</div>
+</div>
+<!-- Royal VIP -->
+<div class="flex items-center gap-space-xs">
+<div class="w-6 h-6 rounded bg-seat-vip-imperial/20 flex items-center justify-center text-[12px] shadow-[0_0_8px_rgba(243,198,68,0.3)]">
+          👑
+        </div>
+<div class="flex flex-col">
+<span class="font-label-meta text-label-meta text-seat-vip-imperial font-semibold">VIP Hoàng Gia</span>
+<span class="font-label-code text-label-code text-primary">110.000đ</span>
+</div>
+</div>
+<!-- Currently Selected -->
+<div class="flex items-center gap-space-xs">
+<div class="w-6 h-6 rounded bg-seat-selected-gold flex items-center justify-center shadow-[0_0_12px_#FFD700]">
+<span class="material-symbols-outlined text-surface-onyx text-[14px] font-bold">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-meta text-label-meta text-seat-selected-gold font-semibold">Đang Chọn</span>
+<span class="font-label-code text-label-code text-secondary">Vị trí của bạn</span>
+</div>
+</div>
+<!-- Temporarily Locked by Redis -->
+<div class="flex items-center gap-space-xs">
+<div class="w-6 h-6 rounded bg-seat-locked-amber/20 flex items-center justify-center shadow-[0_0_10px_rgba(255,140,0,0.5)] animate-pulse">
+<span class="text-[12px]">🔒</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-meta text-label-meta text-seat-locked-amber font-semibold">Đang Giữ Chỗ</span>
+<span class="font-label-code text-label-code text-text-silver-smoke">Khóa tạm 120s</span>
+</div>
+</div>
+<!-- Sold / Occupied -->
+<div class="flex items-center gap-space-xs">
+<div class="w-6 h-6 rounded bg-seat-occupied-charcoal flex items-center justify-center opacity-70">
+<span class="material-symbols-outlined text-text-silver-smoke text-[14px]">close</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-meta text-label-meta text-text-silver-smoke">Đã Bán</span>
+<span class="font-label-code text-label-code text-text-silver-smoke">Hết chỗ</span>
+</div>
+</div>
+</div>
+<!-- Seat Matrix Grid Container (4-4-4 Partitioning with Lateral Aisles) -->
+<div class="w-full overflow-x-auto pb-space-lg flex justify-center scrollbar-none">
+<div class="min-w-[680px] sm:min-w-[760px] flex flex-col gap-space-xs items-center select-none">
+<!-- Row A (Standard) -->
+<div class="flex items-center gap-space-sm w-full justify-center">
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">A</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A1" data-id="1" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A2" data-id="2" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A3" data-id="3" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">3</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A4" data-id="4" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">4</span></button>
+</div>
+<!-- Aisle 1 -->
+<div class="w-seat-aisle-gap flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span>
+</div>
+<div class="flex items-center gap-seat-gap">
+<!-- A5 Locked State Example -->
+<button class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-locked-amber/20 shadow-[0_0_10px_rgba(255,140,0,0.6)] cursor-not-allowed flex items-center justify-center text-[12px] animate-pulse" title="Đang được khách khác giữ chỗ">🔒</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A6" data-id="6" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">6</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A7" data-id="7" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">7</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A8" data-id="8" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">8</span></button>
+</div>
+<!-- Aisle 2 -->
+<div class="w-seat-aisle-gap flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span>
+</div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A9" data-id="9" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">9</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A10" data-id="10" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">10</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A11" data-id="11" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="A12" data-id="12" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">A</span>
+</div>
+<!-- Row B (Standard) -->
+<div class="flex items-center gap-space-sm w-full justify-center">
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">B</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B1" data-id="13" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B2" data-id="14" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-occupied-charcoal cursor-not-allowed flex items-center justify-center opacity-60"><span class="material-symbols-outlined text-text-silver-smoke text-[14px]">close</span></button>
+<button class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-occupied-charcoal cursor-not-allowed flex items-center justify-center opacity-60"><span class="material-symbols-outlined text-text-silver-smoke text-[14px]">close</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B5" data-id="17" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">5</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B6" data-id="18" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">6</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B7" data-id="19" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">7</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B8" data-id="20" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">8</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B9" data-id="21" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">9</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B10" data-id="22" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">10</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B11" data-id="23" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="B12" data-id="24" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">B</span>
+</div>
+<!-- Row C (Standard) -->
+<div class="flex items-center gap-space-sm w-full justify-center">
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">C</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C1" data-id="25" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C2" data-id="26" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C3" data-id="27" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">3</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C4" data-id="28" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">4</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C5" data-id="29" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">5</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C6" data-id="30" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">6</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C7" data-id="31" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">7</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C8" data-id="32" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">8</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-occupied-charcoal cursor-not-allowed flex items-center justify-center opacity-60"><span class="material-symbols-outlined text-text-silver-smoke text-[14px]">close</span></button>
+<button class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-occupied-charcoal cursor-not-allowed flex items-center justify-center opacity-60"><span class="material-symbols-outlined text-text-silver-smoke text-[14px]">close</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C11" data-id="35" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="C12" data-id="36" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">C</span>
+</div>
+<!-- Row D (Imperial Gold VIP Central Sector) -->
+<div class="flex items-center gap-space-sm w-full justify-center mt-1">
+<span class="w-6 text-center font-title-md text-title-md text-seat-vip-imperial font-bold">D</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D1" data-id="37" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D2" data-id="38" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D3" data-id="39" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">3</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D4" data-id="40" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">4</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-seat-vip-imperial/40"></span></div>
+<!-- VIP Seats Center D5, D6 (Pre-selected), D7 (Pre-selected), D8 -->
+<div class="flex items-center gap-seat-gap p-1 rounded-lg bg-surface-container-high/40">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="D5" data-id="41" data-price="110000" data-type="vip">👑</button>
+<!-- Selected D6 -->
+<button class="seat-btn is-selected w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-selected-gold text-surface-onyx font-bold flex items-center justify-center shadow-[0_0_15px_#FFD700]" data-code="D6" data-id="42" data-price="110000" data-type="vip">
+<span class="material-symbols-outlined text-[15px]">check</span>
+</button>
+<!-- Selected D7 -->
+<button class="seat-btn is-selected w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-selected-gold text-surface-onyx font-bold flex items-center justify-center shadow-[0_0_15px_#FFD700]" data-code="D7" data-id="43" data-price="110000" data-type="vip">
+<span class="material-symbols-outlined text-[15px]">check</span>
+</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="D8" data-id="44" data-price="110000" data-type="vip">👑</button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-seat-vip-imperial/40"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D9" data-id="45" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">9</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D10" data-id="46" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">10</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D11" data-id="47" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="D12" data-id="48" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-seat-vip-imperial font-bold">D</span>
+</div>
+<!-- Row E (Imperial Gold VIP Central Sector) -->
+<div class="flex items-center gap-space-sm w-full justify-center">
+<span class="w-6 text-center font-title-md text-title-md text-seat-vip-imperial font-bold">E</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E1" data-id="49" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E2" data-id="50" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E3" data-id="51" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">3</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E4" data-id="52" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">4</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-seat-vip-imperial/40"></span></div>
+<div class="flex items-center gap-seat-gap p-1 rounded-lg bg-surface-container-high/40">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="E5" data-id="53" data-price="110000" data-type="vip">👑</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="E6" data-id="54" data-price="110000" data-type="vip">👑</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="E7" data-id="55" data-price="110000" data-type="vip">👑</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="E8" data-id="56" data-price="110000" data-type="vip">👑</button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-seat-vip-imperial/40"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E9" data-id="57" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">9</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E10" data-id="58" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">10</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E11" data-id="59" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="E12" data-id="60" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-seat-vip-imperial font-bold">E</span>
+</div>
+<!-- Row F (Imperial Gold VIP Central Sector) -->
+<div class="flex items-center gap-space-sm w-full justify-center">
+<span class="w-6 text-center font-title-md text-title-md text-seat-vip-imperial font-bold">F</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="F1" data-id="61" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="F2" data-id="62" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-occupied-charcoal cursor-not-allowed flex items-center justify-center opacity-60"><span class="material-symbols-outlined text-text-silver-smoke text-[14px]">close</span></button>
+<button class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-occupied-charcoal cursor-not-allowed flex items-center justify-center opacity-60"><span class="material-symbols-outlined text-text-silver-smoke text-[14px]">close</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-seat-vip-imperial/40"></span></div>
+<div class="flex items-center gap-seat-gap p-1 rounded-lg bg-surface-container-high/40">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="F5" data-id="65" data-price="110000" data-type="vip">👑</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="F6" data-id="66" data-price="110000" data-type="vip">👑</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="F7" data-id="67" data-price="110000" data-type="vip">👑</button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-seat-vip-imperial/20 hover:bg-seat-vip-imperial/40 transition-colors flex items-center justify-center text-seat-vip-imperial font-bold text-[12px]" data-code="F8" data-id="68" data-price="110000" data-type="vip">👑</button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-seat-vip-imperial/40"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="F9" data-id="69" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">9</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="F10" data-id="70" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">10</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="F11" data-id="71" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="F12" data-id="72" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-seat-vip-imperial font-bold">F</span>
+</div>
+<!-- Row G (Standard) -->
+<div class="flex items-center gap-space-sm w-full justify-center mt-1">
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">G</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G1" data-id="73" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G2" data-id="74" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G3" data-id="75" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">3</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G4" data-id="76" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">4</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G5" data-id="77" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">5</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G6" data-id="78" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">6</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G7" data-id="79" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">7</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G8" data-id="80" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">8</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G9" data-id="81" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">9</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G10" data-id="82" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">10</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G11" data-id="83" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="G12" data-id="84" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">G</span>
+</div>
+<!-- Row H (Standard) -->
+<div class="flex items-center gap-space-sm w-full justify-center">
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">H</span>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H1" data-id="85" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">1</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H2" data-id="86" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">2</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H3" data-id="87" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">3</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H4" data-id="88" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">4</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H5" data-id="89" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">5</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H6" data-id="90" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">6</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H7" data-id="91" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">7</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H8" data-id="92" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">8</span></button>
+</div>
+<div class="w-seat-aisle-gap flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-highest"></span></div>
+<div class="flex items-center gap-seat-gap">
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H9" data-id="93" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">9</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H10" data-id="94" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">10</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H11" data-id="95" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">11</span></button>
+<button class="seat-btn w-7 h-7 sm:w-8 sm:h-8 rounded bg-surface-container-high hover:bg-seat-available-silver/40 transition-colors flex items-center justify-center" data-code="H12" data-id="96" data-price="90000" data-type="standard"><span class="text-[11px] font-bold text-text-silver-smoke">12</span></button>
+</div>
+<span class="w-6 text-center font-title-md text-title-md text-text-silver-smoke font-bold">H</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Bottom Drawer: Imperial Booking Ledger & Lock Trigger -->
+<aside class="fixed bottom-0 left-0 w-full z-40 bg-surface-onyx-glass backdrop-blur-2xl shadow-[0_-10px_35px_rgba(0,0,0,0.85)]">
+<div class="max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop py-space-md flex flex-col md:flex-row items-center justify-between gap-space-md">
+<!-- Selection Summary Information -->
+<div class="flex flex-col sm:flex-row sm:items-center gap-space-md w-full md:w-auto">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-seat-vip-imperial/15 flex items-center justify-center text-seat-vip-imperial">
+<span class="material-symbols-outlined text-[24px]">event_seat</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-meta text-label-meta text-text-silver-smoke uppercase">Ghế đã chọn:</span>
+<span class="font-title-md text-title-md text-primary font-bold" id="selected-seats-badge">D6, D7 (Crown VIP) - Hàng D</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-silver-smoke">Phòng chiếu 01 • 2D Phụ đề Tiếng Việt</span>
+</div>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant hidden sm:block"></div>
+<!-- Total Price Computation -->
+<div class="flex flex-col">
+<span class="font-label-code text-label-code text-text-silver-smoke uppercase tracking-wider">Tạm tính (Bao gồm VAT)</span>
+<span class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight" id="total-price-display">220.000 VNĐ</span>
+</div>
+</div>
+<!-- Action Confirmation Trigger -->
+<div class="flex items-center gap-space-md w-full md:w-auto justify-end">
+<button class="w-full sm:w-auto px-space-xl py-space-sm rounded-full bg-gradient-to-r from-primary-container via-primary to-accent-bronze-dark text-on-primary font-label-cta text-label-cta font-bold uppercase tracking-wider shadow-[0_0_25px_rgba(212,175,55,0.4)] hover:shadow-[0_0_35px_rgba(212,175,55,0.7)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-space-xs" id="lock-seat-btn" onclick="triggerSeatLock()">
+<span>Tiến Hành Giữ Ghế</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</aside>
+</div>
+<script>
+  // Dynamic Seat Selection Logic and State
+  const selectedSeats = [
+    { id: 42, code: 'D6', type: 'vip', price: 110000 },
+    { id: 43, code: 'D7', type: 'vip', price: 110000 }
+  ];
+
+  function updateBookingLedger() {
+    const seatsBadge = document.getElementById('selected-seats-badge');
+    const priceDisplay = document.getElementById('total-price-display');
+    const lockBtn = document.getElementById('lock-seat-btn');
+
+    if (selectedSeats.length === 0) {
+      seatsBadge.textContent = 'Chưa chọn ghế nào';
+      priceDisplay.textContent = '0 VNĐ';
+      lockBtn.disabled = true;
+      lockBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      return;
+    }
+
+    lockBtn.disabled = false;
+    lockBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+    const codes = selectedSeats.map(s => s.code).join(', ');
+    const hasVip = selectedSeats.some(s => s.type === 'vip');
+    const vipTag = hasVip ? ' (Crown VIP)' : ' (Standard)';
+    seatsBadge.textContent = `${codes}${vipTag}`;
+
+    const total = selectedSeats.reduce((acc, curr) => acc + curr.price, 0);
+    priceDisplay.textContent = new Intl.NumberFormat('vi-VN').format(total) + ' VNĐ';
+  }
+
+  document.querySelectorAll('.seat-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const id = parseInt(this.dataset.id);
+      const code = this.dataset.code;
+      const type = this.dataset.type;
+      const price = parseInt(this.dataset.price);
+
+      const existingIndex = selectedSeats.findIndex(s => s.id === id);
+
+      if (existingIndex > -1) {
+        selectedSeats.splice(existingIndex, 1);
+        this.classList.remove('is-selected', 'bg-seat-selected-gold', 'text-surface-onyx', 'shadow-[0_0_15px_#FFD700]');
+        if (type === 'vip') {
+          this.classList.add('bg-seat-vip-imperial/20', 'text-seat-vip-imperial');
+          this.innerHTML = '👑';
+        } else {
+          this.classList.add('bg-surface-container-high');
+          this.innerHTML = `<span class="text-[11px] font-bold text-text-silver-smoke">${code.substring(1)}</span>`;
+        }
+      } else {
+        selectedSeats.push({ id, code, type, price });
+        this.classList.add('is-selected', 'bg-seat-selected-gold', 'text-surface-onyx', 'shadow-[0_0_15px_#FFD700]');
+        this.classList.remove('bg-seat-vip-imperial/20', 'text-seat-vip-imperial', 'bg-surface-container-high');
+        this.innerHTML = '<span class="material-symbols-outlined text-[15px]">check</span>';
+      }
+
+      updateBookingLedger();
+    });
+  });
+
+  // Mock Lock Seats API Interaction
+  function triggerSeatLock() {
+    const seatIds = selectedSeats.map(s => s.id);
+    const payload = {
+      showtime_id: 101,
+      seat_ids: seatIds
+    };
+    
+    const btn = document.getElementById('lock-seat-btn');
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> <span>Đang khóa vị trí...</span>';
+
+    setTimeout(() => {
+      alert(`[Mô phỏng Redis API] POST /api/bookings/lock-seat\nPayload: ${JSON.stringify(payload, null, 2)}\n\nGhế đã được giữ an toàn 120s! Chuyển hướng thanh toán VIP.`);
+      btn.innerHTML = '<span>Tiến Hành Giữ Ghế</span> <span class="material-symbols-outlined text-[20px]">arrow_forward</span>';
+    }, 750);
+  }
+
+  // 120s Countdown Timer simulation
+  let timeLeft = 118; // 01:58
+  const timerElement = document.getElementById('countdown-timer');
+
+  const countdownInterval = setInterval(() => {
+    if (timeLeft <= 0) {
+      clearInterval(countdownInterval);
+      timerElement.textContent = '00:00';
+      return;
+    }
+    timeLeft--;
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }, 1000);
+</script></main><footer class="w-full bg-surface-container-lowest text-on-surface"><div class="max-w-[1360px] mx-auto px-margin-mobile md:px-margin-desktop py-space-3xl flex flex-col gap-space-2xl"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-xl"><div class="flex flex-col gap-space-sm"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary text-[28px]">stars</span><span class="font-headline-sm text-headline-sm font-bold text-primary tracking-widest uppercase">XEMPHIM PREMIER</span></div><p class="font-body-sm text-body-sm text-text-silver-smoke leading-relaxed">Hệ thống phòng chiếu chuẩn Hoàng Gia 5 sao. Không gian rạp riêng biệt, ghế nằm bọc nhung cao cấp, ẩm thực thượng lưu và trải nghiệm điện ảnh xứng tầm đế vương.</p><div class="flex items-center gap-space-xs mt-space-xs"><span class="material-symbols-outlined text-seat-vip-imperial text-[20px]">call</span><span class="font-title-md text-title-md text-seat-vip-imperial tracking-wide">1900-XEMPHIM</span></div></div><div class="flex flex-col gap-space-sm"><span class="font-title-md text-title-md text-secondary tracking-wider uppercase">Đặc Quyền Lounge VIP</span><ul class="flex flex-col gap-space-xs font-body-sm text-body-sm text-text-silver-smoke"><li>• Butler cá nhân phục vụ tại chỗ ngồi</li><li>• Thưởng rượu vang và Canape thượng hạng</li><li>• Lối đi bảo mật &amp; Fast-track check-in riêng biệt</li><li>• Hàng ghế King &amp; Queen cách âm tiêu chuẩn</li></ul></div><div class="flex flex-col gap-space-sm"><span class="font-title-md text-title-md text-secondary tracking-wider uppercase">Đối Tác Chiếu VIP</span><div class="grid grid-cols-2 gap-space-xs font-body-sm text-body-sm text-text-silver-smoke"><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">CGV Cinemas</span><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">BHD Star</span><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">Lotte Cinema</span><span class="bg-surface-container-low px-space-sm py-space-2xs rounded text-center">Beta Diamond</span></div></div><div class="flex flex-col gap-space-sm"><span class="font-title-md text-title-md text-secondary tracking-wider uppercase">An Ninh &amp; Bảo Mật</span><p class="font-body-sm text-body-sm text-text-silver-smoke">Hạ tầng microservices chuẩn ngân hàng, mã hóa thời gian thực vé điện tử QR và giữ chỗ chống trùng lặp theo quy trình độc quyền.</p><div class="flex items-center gap-space-xs mt-space-2xs"><span class="material-symbols-outlined text-primary text-[20px]">verified_user</span><span class="font-label-meta text-label-meta text-on-surface-variant uppercase">256-Bit Vault Protocol • PCI-DSS Ready</span></div></div></div><div class="flex flex-col md:flex-row items-center justify-between gap-space-md pt-space-lg text-center md:text-left"><span class="font-label-meta text-label-meta text-text-silver-smoke">© 2024 XEMPHIM Royal Cinema Platform. All Imperial Rights Reserved.</span><div class="flex items-center gap-space-lg font-label-meta text-label-meta text-text-silver-smoke"><a class="hover:text-primary transition-colors" href="#">Điều Khoản Hoàng Gia</a><a class="hover:text-primary transition-colors" href="#">Chính Sách Khách Hàng Danh Dự</a><a class="hover:text-primary transition-colors" href="#">Hỗ Trợ Thượng Khách</a></div></div></div></footer></body></html>

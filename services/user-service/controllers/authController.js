@@ -30,6 +30,13 @@ export const register = async (req, res) => {
     });
   }
 
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      message: 'Email must be a valid @gmail.com address'
+    });
+  }
+
   try {
     const result = await authService.register({
       full_name: name,

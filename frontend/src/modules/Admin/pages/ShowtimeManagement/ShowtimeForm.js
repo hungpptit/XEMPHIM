@@ -5,8 +5,9 @@ import styles from '../MovieManagement/MovieList.module.css';
 export default function ShowtimeForm({ show, onClose, onSaved, initial, showToast }) {
   const [movies, setMovies] = useState([]);
   const [halls, setHalls] = useState([]);
+  const [cinemas, setCinemas] = useState([]);
   const [form, setForm] = useState({
-    movie_id: '', hall_id: '', start_time: '', end_time: '', base_price: ''
+    movie_id: '', cinema_id: '', hall_id: '', start_time: '', end_time: '', base_price: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,21 +21,41 @@ export default function ShowtimeForm({ show, onClose, onSaved, initial, showToas
       } catch (e) { setMovies([]); }
 
       try {
-        const h = await API.get('/admin/halls');
-        const listH = h.data?.data || h.data || [];
-        setHalls(Array.isArray(listH) ? listH : []);
-      } catch (e) {
-        setHalls([]);
-      }
+        const res = await API.get('/admin/cinemas');
+        const listC = res.data?.data || res.data || [];
+        setCinemas(Array.isArray(listC) ? listC : []);
+      } catch (e) { setCinemas([]); }
     };
     load();
   }, []);
 
+  // If editing an existing showtime, try to fetch the hall detail to determine cinema
   useEffect(() => {
-    if ((halls == null || halls.length === 0) && initial?.hall_id) {
-      setHalls([{ id: initial.hall_id, name: `Phòng #${initial.hall_id}` }]);
-    }
-  }, [initial, halls]);
+    const loadInitialHall = async () => {
+      if (initial?.hall_id) {
+        try {
+          const one = await API.get(`/admin/halls/${initial.hall_id}`);
+          const hallObj = one.data?.data || one.data || null;
+          if (hallObj) {
+            // set cinema and halls for that cinema
+            setForm(f => ({ ...f, cinema_id: hallObj.cinema_id ? String(hallObj.cinema_id) : '', hall_id: String(hallObj.id) }));
+            try {
+              const res = await API.get(`/admin/cinemas/${hallObj.cinema_id}/halls`);
+              const list = res.data?.data || res.data || [];
+              setHalls(Array.isArray(list) ? list : [hallObj]);
+            } catch (e) {
+              setHalls([hallObj]);
+            }
+          } else {
+            setHalls([{ id: initial.hall_id, name: `Phòng #${initial.hall_id}` }]);
+          }
+        } catch (e) {
+          setHalls([{ id: initial.hall_id, name: `Phòng #${initial.hall_id}` }]);
+        }
+      }
+    };
+    loadInitialHall();
+  }, [initial]);
 
   const parseLocal = React.useCallback((val) => {
     if (!val) return null;
@@ -67,6 +88,7 @@ export default function ShowtimeForm({ show, onClose, onSaved, initial, showToas
     if (initial) {
       setForm({
         movie_id: initial.movie_id ? String(initial.movie_id) : '',
+        cinema_id: initial.cinema_id ? String(initial.cinema_id) : '',
         hall_id: initial.hall_id ? String(initial.hall_id) : '',
         start_time: initial.start_time ? formatLocalForInput(initial.start_time) : '',
         end_time: initial.end_time ? formatLocalForInput(initial.end_time) : '',
@@ -75,9 +97,30 @@ export default function ShowtimeForm({ show, onClose, onSaved, initial, showToas
     }
   }, [initial, formatLocalForInput]);
 
+    // When cinema is selected, load halls for that cinema
+    useEffect(() => {
+      const cid = form.cinema_id;
+      if (!cid) return;
+      const loadHalls = async () => {
+        try {
+          const res = await API.get(`/admin/cinemas/${cid}/halls`);
+          const list = res.data?.data || res.data || [];
+          setHalls(Array.isArray(list) ? list : []);
+        } catch (e) {
+          setHalls([]);
+        }
+      };
+      loadHalls();
+    }, [form.cinema_id]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    // if changing cinema, reset hall selection
+    if (name === 'cinema_id') {
+      setForm(f => ({ ...f, cinema_id: value, hall_id: '' }));
+    } else {
+      setForm(f => ({ ...f, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -132,11 +175,21 @@ export default function ShowtimeForm({ show, onClose, onSaved, initial, showToas
         {error && <div className={styles.errorAlert}>{error}</div>}
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formRow}>
-            <div className={styles.formGroup}>
+            <div className={`${styles.formGroup} ${styles.full}`}>
               <label>Phim</label>
               <select name="movie_id" value={form.movie_id} onChange={handleChange}>
                 <option value="">-- Chọn phim --</option>
                 {movies.map(m => <option key={m.id} value={String(m.id)}>{m.title || m.name || m.id}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label>Rạp</label>
+              <select name="cinema_id" value={form.cinema_id} onChange={handleChange}>
+                <option value="">-- Chọn rạp --</option>
+                {cinemas.map(c => <option key={c.id} value={String(c.id)}>{c.name || c.id}</option>)}
               </select>
             </div>
             <div className={styles.formGroup}>

@@ -1,390 +1,157 @@
-# 🎬 Cinema Management System - Business Logic Guide
+# 🎬 Cinema Management System — Business Logic Guide
 
-**Hướng Dẫn Logic Quản Lý Rạp Chiếu Phim**
+**Tài Liệu Quy Chuẩn Nghiệp Vụ Quản Lý Rạp & Phòng Chiếu**
+
+Phiên bản: 1.0.0  
+Cập nhật: Tháng 8/2026  
+Hệ thống: XEMPHIM Microservices
 
 ---
 
-## 📐 Quy Trình Quản Lý Rạp - Real World Logic
+## 📐 Quy Trình & Nghiệp Vụ Thực Tế
 
-### 1️⃣ Tạo Rạp Chiếu (Cinemas)
+### 1️⃣ Tạo & Quản Lý Rạp Chiếu (Cinemas)
 
 #### Business Rules:
-```
-✅ Tên rạp: Bắt buộc, unique, trừ khoảng trắng
-✅ Địa chỉ: Chi tiết, không được trống
-✅ Thành phố: Nên có trong danh sách cities
-✅ Trạng thái: Active (hoạt động) hoặc Inactive (ngưng hoạt động)
-✅ Hot contact: Số điện thoại (optional)
-✅ Email: Email liên hệ (optional)
+- ✅ **Tên rạp**: Bắt buộc, độ dài 2-255 ký tự, không chứa ký tự đặc biệt nguy hiểm.
+- ✅ **Địa chỉ**: Chi tiết, bao gồm số nhà/tòa nhà, đường, quận/huyện.
+- ✅ **Thành phố**: Bắt buộc (VD: Hà Nội, TP. Hồ Chí Minh, Đà Nẵng).
+- ✅ **Trạng thái**: `active` (đang mở cửa đón khách) hoặc `inactive` (tạm đóng/sửa chữa).
 
-⛔ Không thể xoá rạp nếu:
-   - Có phòng chiếu
-   - Có lịch chiếu tương lai
-   - Có booking chưa xử lý
+#### Ràng Buộc Khi Xóa Rạp (Deletion Constraints):
 ```
+⛔ KHÔNG THỂ xóa rạp nếu:
+   1. Rạp đang có phòng chiếu (Cinema Halls) trực thuộc
+   2. Rạp có các suất chiếu trong tương lai
+   3. Rạp có đơn đặt vé (Bookings) chưa xử lý xong hoặc đang active
 
-#### Validation:
-```javascript
-// Input validation
-- name: String, 2-255 chars, trimmed, unique
-- address: String, 5-500 chars
-- city: String, must exist in cities list
-- status: 'Active' or 'Inactive'
-- phone: Optional, 10-15 digits
-- email: Optional, valid email format
+✅ Giải pháp an toàn: Chuyển trạng thái rạp sang 'inactive' thay vì Hard Delete.
 ```
 
 ---
 
-### 2️⃣ Tạo Phòng Chiếu (Cinema Halls)
+### 2️⃣ Tạo & Cấu Hình Phòng Chiếu (Cinema Halls)
 
 #### Business Rules:
-```
-✅ Tên phòng: Unique per cinema (A, B, VIP, IMAX, etc.)
-✅ Loại phòng: 2D, 3D, IMAX, 4DX, etc.
-✅ Sức chứa: 50-500 ghế (điển hình 150-300)
-✅ Hàng/Ghế: 
-   - Hàng: A-Z (max 26 hàng)
-   - Ghế: 1-50 ghế/hàng
-   - Tối đa: 26 * 50 = 1,300 ghế
+- ✅ **Tên phòng**: Phân biệt trong cùng một rạp (VD: Phòng 01, Phòng 02, IMAX Laser).
+- ✅ **Số hàng ghế (Rows)**: 1 đến 26 hàng (tương ứng chữ cái A đến Z).
+- ✅ **Số ghế mỗi hàng (Seats per row)**: 1 đến 50 ghế.
+- ✅ **Tổng số ghế**: Tự động tính toán: `total_seats = rows × seats_per_row`.
 
-⛔ Không thể xoá phòng nếu:
-   - Có lịch chiếu tương lai
-   - Có ghế được booking
-```
-
-#### Cấu Hình Ghế Tiêu Biểu:
-```
-Standard (Ghế Thường):    hàng B-T, hàng giữa
-VIP (Ghế VIP):           hàng D-R (hàng giữa nhất)
-Couple (Ghế Đôi):        hàng A,B,Y,Z (cạnh),số 1-2, 19-20
-Premium (Ghế Cao Cấp):   hàng G-O (ghế số 5-16, giữa)
-Disabled (Ghế Khuyết):   hàng A hoặc Z, ghế số 1 hoặc 20
-```
+#### Cơ Chế Tự Động Sinh Ghế (Auto-Generation):
+Khi Admin tạo phòng chiếu mới, hệ thống tự động:
+1. Tạo bản ghi `cinema_halls` trong cơ sở dữ liệu `XemPhim_Movie`.
+2. Khởi tạo hàng loạt (bulk create) danh sách ghế trong bảng `seats`:
+   - `row_name`: A, B, C, ...
+   - `seat_number`: 1, 2, 3, ...
+   - `seat_type`: Mặc định là `Standard`
+   - `price_modifier`: Mặc định là `1.00`
+   - `is_active`: Mặc định là `1` (True)
 
 ---
 
-### 3️⃣ Phân Loại & Định Giá Ghế (Seats)
+### 3️⃣ Phân Loại Ghế & Cơ Chế Định Giá (Seats & Price Modifiers)
 
-#### Loại Ghế & Hệ Số Giá:
+Hệ thống tính giá vé dựa trên **công thức nhân hệ số**:
+$$\text{Giá Vé} = \text{round}(\text{base\_price} \times \text{price\_modifier})$$
 
-```
-Loại Ghế          | Hệ Số Giá | Ví Dụ Giá      | Vị Trí Tiêu Biểu
-───────────────────────────────────────────────────────────────────
-Standard          | 1.0       | 70,000 VNĐ     | Hàng B-T, số bất kỳ
-VIP               | 1.5       | 105,000 VNĐ    | Hàng D-R, số 5-16
-Couple            | 2.0       | 140,000 VNĐ    | Hàng cạnh, số cặp
-Premium           | 2.5       | 175,000 VNĐ    | Hàng giữa nhất, số giữa
-Disabled          | 0.5       | 35,000 VNĐ     | Hàng A/Z, vị trí trước
-```
+Trong đó:
+- `base_price`: Giá vé cơ bản của từng suất chiếu (Showtime).
+- `price_modifier`: Hệ số giá của từng chiếc ghế.
 
-#### Rules:
+#### Bảng Phân Loại & Hệ Số Chuẩn:
+
+| Loại Ghế (`seat_type`) | Hệ Số Giá (`price_modifier`) | Ví dụ Base Price = 80.000đ | Vị Trí Bố Trí Tiêu Chuẩn |
+|------------------------|------------------------------|----------------------------|--------------------------|
+| **Standard** | `1.00` | 80.000 VNĐ | Các hàng đầu và giữa mép cánh (A - C, các ghế ngoài) |
+| **VIP** | `1.50` | 120.000 VNĐ | Các hàng trung tâm (D - H, ghế giữa 4 - 15) |
+| **Couple** | `2.00` | 160.000 VNĐ | Hàng ghế cuối cùng (Sweetbox / Ghế đôi) |
+| **Premium** | `2.50` | 200.000 VNĐ | Ghế ngả da cao cấp, trung tâm góc nhìn tốt nhất |
+| **Disabled** | `0.50` | 40.000 VNĐ | Hàng ghế đầu gần lối thoát hiểm / lối đi xe lăn |
+
+#### Business Rules Ghế:
 ```javascript
-// Validation
-- seat_type: 'Standard', 'VIP', 'Couple', 'Premium', 'Disabled'
-- price_modifier: 0.5 - 3.0 (hệ số nhân với giá cơ bản)
-- is_active: true/false (ghế có sử dụng được không)
-
-// Business rules
-- Ghế Couple: phải tạo thành cặp (A1-A2, A3-A4, ...)
-- Ghế Disabled: tối đa 10% sức chứa phòng
-- Ghế Disabled phải gần lối thoát, không blocked
-- Ghế Premium: tối đa 20% sức chứa
-- Ghế VIP: tối đa 30% sức chứa
-```
-
-#### Mặc Định Cho Phòng Mới:
-
-```javascript
-// Phòng 240 ghế (12 hàng x 20 ghế)
-Hàng A:  20 ghế Couple (2 cặp: số 1-2, 19-20) + 16 Disabled phía sau
-Hàng B:  12 Standard + 1 Disabled mỗi đầu + 4 vị trí trống
-Hàng C-E: 20 Standard
-Hàng F-G: 16 VIP + 4 Couple (số 5-6, 15-16)
-Hàng H-K: 20 Premium (giữa) + Standard (cạnh)
-Hàng L-R: 20 Standard
-Hàng S-T: 20 Standard
-Hàng U:  16 VIP + 4 Couple
-Hàng V-Y: 20 Standard
-Hàng Z:  20 ghế Couple + Disabled
+// Validation & Constraints
+- seat_type: 'Standard' | 'VIP' | 'Couple' | 'Premium' | 'Disabled'
+- price_modifier: 0.50 đến 3.00
+- Unique Constraint: Duy nhất cặp (hall_id, row_name, seat_number)
+- Ghế Disabled: Tối đa 5-10% tổng sức chứa phòng, ưu tiên lối ra vào
 ```
 
 ---
 
-### 4️⃣ Quản Lý Trạng Thái Ghế
+### 4️⃣ Vòng Đời Trạng Thái Ghế & Khóa Ghế (Seat State Machine)
 
-#### Trạng Thái Ghế:
+Khi người dùng đặt vé, trạng thái ghế được kiểm soát qua **Redis Distributed Lock** và **Database Lifecycle**:
 
 ```
-Trạng Thái        | is_active | Có Thể Book | Ghi Chú
-──────────────────────────────────────────────────────────
-Available         | true      | ✅ Có       | Ghế sẵn sàng đặt
-Booked            | true      | ❌ Không    | Đã được booking
-Maintenance       | false     | ❌ Không    | Trong thời gian bảo trì
-Broken/Damaged    | false     | ❌ Không    | Ghế bị hỏng, cần sửa chữa
-Blocked           | false     | ❌ Không    | Bị khóa tạm thời
-Reserved          | true      | ❌ Không    | Dành riêng cho sự kiện
-```
-
-#### Validation Rules:
-```javascript
-// Khi update status
-- Ghế Active phải có valid seat_type
-- Ghế broken phải track maintenance request
-- Không thể disable ghế có booking hiện tại
-- Premium/VIP seats phải có price_modifier >= 1.5
+ ┌─────────────┐
+ │  Available  │ ◄─── Ghế trống, sẵn sàng chọn
+ └──────┬──────┘
+        │ User chọn ghế (acquire lock SET NX PX TTL=120s)
+ ┌──────▼──────┐
+ │   Locked    │ ◄─── Đang giữ chỗ trong 2 phút chờ thanh toán
+ └──────┬──────┘
+        │
+   ┌────┴──────────────────────────┐
+   │ Thanh toán ZaloPay thành công  │ Hết hạn 120s / User hủy
+ ┌─▼───────────┐             ┌─────▼───────┐
+ │  Confirmed  │             │  Available  │
+ │  (Booked)   │             │ (Lock giải) │
+ └─────────────┘             └─────────────┘
 ```
 
 ---
 
-### 5️⃣ Kiểm Tra Ghế Khả Dụng
+### 5️⃣ Ràng Buộc Toàn Vẹn Dữ Liệu (Integrity Constraints)
 
-#### Business Logic:
-
-```javascript
-// Ghế khả dụng = Điều kiện:
-- is_active = true
-- seat_type != 'Disabled' (nếu user bình thường)
-- Chưa được book cho showtime này
-- Không trong maintenance mode
-- Phòng phải active
-- Rạp phải active
-
-// Ghế khuyết tật (Disabled):
-- Chỉ user có trợ cấp mới thấy
-- Needs special handling khi calculate seat layout
-- Nên ở gần cửa ra vào
 ```
+Cinemas (XemPhim_Movie)
+  └── 1 : N ── Cinema Halls (XemPhim_Movie)
+                 ├── 1 : N ── Seats (XemPhim_Movie & XemPhim_Seat)
+                 └── 1 : N ── Showtimes (XemPhim_Movie)
+                                └── 1 : N ── Bookings (XemPhim_Booking)
+```
+
+1. **Không cho phép xóa ghế** nếu ghế đó đã từng phát sinh giao dịch trong lịch sử `booking_seats`.
+2. **Nếu ghế bị hỏng hoặc bảo trì**: Admin chuyển `is_active = false` để loại khỏi sơ đồ hiển thị khi người dùng đặt vé.
+3. **Khi thay đổi cấu hình phòng**: Chỉ được thực hiện khi phòng không có suất chiếu nào đang hoạt động trong tương lai.
 
 ---
 
-### 6️⃣ Quy Tắc Xoá & Deactivate
-
-#### DELETE Rạp (Hard Delete):
-```
-⛔ Điều kiện xoá:
-- KHÔNG có phòng chiếu nào
-- KHÔNG có lịch chiếu
-- KHÔNG có booking nào (cả thành công và pending)
-
-✅ Khi có dữ liệu:
-- Mark as inactive thay vì xoá
-```
-
-#### DELETE Phòng:
-```
-⛔ Điều kiện xoá:
-- KHÔNG có lịch chiếu tương lai (7 ngày trở lại)
-- KHÔNG có booking chưa xử lý
-
-✅ Nếu cần xoá ngay:
-- Phải cancel tất cả bookings
-- Phải xoá tất cả showtimes
-```
-
-#### DELETE Ghế:
-```
-⛔ Điều kiện xoá:
-- KHÔNG được phép xoá ghế đã tạo
-- Phải set is_active = false để deactivate
-
-✅ Deactivate:
-- Đánh dấu is_active = false
-- Track reason (maintenance, broken, etc.)
-```
-
----
-
-## 🎯 Quy Trình Quản Lý Thực Tế
-
-### A. Thiết Lập Rạp Mới
-
-```
-1. Admin tạo Cinema (rạp)
-   └─ Nhập: name, address, city, phone, email
-   └─ System: Auto create ID, timestamps
-
-2. Tạo từng Hall (phòng chiếu)
-   └─ Nhập: name, hallType (2D/3D/etc), rows, seatsPerRow
-   └─ System: Calculate total_seats = rows × seatsPerRow
-
-3. Auto-generate Seats cho Hall
-   └─ System tạo mặc định 100% Standard
-   └─ Ghế có: id, hall_id, row_name, seat_number, seat_type, price_modifier
-
-4. Admin customize Seat Layout
-   └─ Edit từng vùng ghế: loại, giá
-   └─ Bulk update: "Hàng D-G là VIP, hệ số 1.5"
-   └─ Set Disabled seats: hàng A (số 1,19,20), hàng Z (số 1,19,20)
-```
-
-### B. Cập Nhật Cấu Hình Ghế
-
-```
-Trước khi có booking:
-├─ Có thể thay đổi seat_type
-├─ Có thể xóa/thêm ghế
-└─ Có thể deactivate toàn bộ phòng
-
-Khi có booking:
-├─ KHÔNG thể thay đổi ghế đã book
-├─ Có thể deactivate ghế chưa book
-└─ Flexible seat = User chọn ghế khác nếu seat book
-```
-
-### C. Monitoring & Maintenance
-
-```
-Hàng ngày:
-├─ Check lịch chiếu hôm nay
-├─ Monitor ghế broken/damaged
-└─ Xử lý refund
-
-Hàng tuần:
-├─ Review seat availability stats
-├─ Plan maintenance
-└─ Update seat pricing nếu cần
-
-Hàng tháng:
-├─ Analyze booking patterns
-├─ Optimize pricing strategies
-└─ Generate revenue reports
-```
-
----
-
-## 📊 Database Relationships
-
-```
-cinemas (1)
-├── cinema_halls (Many)
-│   ├── seats (Many)
-│   ├── showtimes (Many)
-│   │   ├── bookings (Many)
-│   │   └── booking_seats (Many)
-│   └── cinema_hall_images (Many)
-│
-└── cinema_info (Optional, 1)
-    ├── contact_info
-    ├── opening_hours
-    └── amenities
-```
-
----
-
-## ✅ Validation Checklist
-
-### Khi Tạo Cinema:
-```
-☑ Name: 2-255 chars, not null, trimmed
-☑ Address: 5-500 chars, not null
-☑ City: valid city code, not null
-☑ Status: 'Active' hoặc 'Inactive'
-☑ Phone: optional, valid format if provided
-☑ Email: optional, valid email if provided
-```
-
-### Khi Tạo Hall:
-```
-☑ Name: unique per cinema, not null
-☑ Cinema_id: must exist
-☑ Rows: 1-26 (A-Z), not null
-☑ SeatsPerRow: 1-50, not null
-☑ Total_seats: rows × seatsPerRow (auto calc)
-☑ HallType: valid type (2D/3D/IMAX/etc)
-```
-
-### Khi Tạo/Update Seats:
-```
-☑ Hall_id: must exist
-☑ Row_name: A-Z, single char
-☑ Seat_number: 1-50, positive integer
-☑ Seat_type: valid type (Standard/VIP/etc)
-☑ Price_modifier: 0.5-3.0 for valid types
-☑ Is_active: boolean
-☑ Unique constraint: (hall_id, row_name, seat_number)
-```
-
----
-
-## 🔄 API Workflow Example
-
-### Scenario: Thiết Lập Rạp CGV Hà Nội
+### 6️⃣ API Workflow Mẫu (Ví dụ Thiết Lập Cụm Rạp)
 
 ```bash
-# 1. Tạo rạp
-POST /admin/cinemas
+# 1. Admin tạo Rạp mới
+POST http://localhost:8080/api/admin/cinemas
 {
-  "name": "CGV Hà Nội Skylake",
-  "address": "Tầng 3-4, Tòa Skylake, Phạm Hùng",
-  "city": "Hà Nội",
-  "phone": "0243-9999-999",
-  "email": "hanoi@cgv.vn",
-  "status": "Active"
+  "name": "CGV Vincom Đồng Khởi",
+  "address": "72 Lê Thánh Tôn, Bến Nghé, Quận 1",
+  "city": "TP. Hồ Chí Minh",
+  "status": "active"
 }
-// Response: { id: 1, ... }
 
-# 2. Tạo phòng A
-POST /admin/halls
+# 2. Tạo Phòng Chiếu 01 (10 hàng x 16 ghế = 160 ghế Standard)
+POST http://localhost:8080/api/admin/halls
 {
-  "name": "Phòng A",
-  "hallType": "2D",
-  "rows": 12,
-  "seatsPerRow": 20,
   "cinemaId": 1,
-  "description": "Phòng 2D tiêu chuẩn, 240 ghế"
+  "name": "Phòng 01 (IMAX)",
+  "rows": 10,
+  "seatsPerRow": 16
 }
-// Response: { id: 1, total_seats: 240, ... }
 
-# 3. Tạo ghế (tự động tạo 240 ghế Standard)
-POST /admin/seats
-{
-  "hallId": 1,
-  "rows": 12,
-  "seatsPerRow": 20,
-  "defaultSeatType": "Standard",
-  "defaultPriceModifier": 1.0
-}
-// Response: { created: 240, ... }
+# 3. Lấy layout sơ đồ ghế để kiểm tra
+GET http://localhost:8080/api/admin/halls/1/detail
 
-# 4. Customize seat layout
-PUT /admin/halls/1/seats/batch-update
+# 4. Nâng cấp hàng D, E, F thành VIP (hệ số 1.5)
+PUT http://localhost:8080/api/admin/seats/45
 {
-  "updates": [
-    {
-      "rowName": "A",
-      "seatType": "Couple",
-      "priceModifier": 2.0,
-      "seats": [1,2,19,20]
-    },
-    {
-      "rowName": "D",
-      "seatType": "VIP",
-      "priceModifier": 1.5,
-      "seats": "1-20"
-    },
-    {
-      "rowName": "G-H",
-      "seatType": "Premium",
-      "priceModifier": 2.5,
-      "seats": "5-16"
-    }
-  ]
+  "seat_type": "VIP",
+  "price_modifier": 1.50,
+  "is_active": true
 }
-// Updates nhiều ghế trong request duy nhất
 ```
 
 ---
 
-## 📋 Summary of Cinema Management
-
-| Aspect | Detail |
-|--------|--------|
-| **Entity** | Cinema (Rạp) |
-| **Sub-entities** | Halls, Seats |
-| **Key Operations** | CRUD Rạp, Phòng, Ghế |
-| **Main Validation** | Unique tên (per cinema), status, quantities |
-| **Pricing** | Price_modifier (0.5-3.0) × base_price |
-| **Deletion** | Mostly deactivate, hard delete chỉ khi sạch sẽ |
-| **Complexity** | Medium (multiple levels, many validations) |
-
+*Cập nhật: Tháng 8/2026 | Phiên bản: 1.0.0 | Tác giả: Phạm Tuấn Hưng*

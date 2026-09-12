@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 
+// Handler xử lý yêu cầu tạo đơn hàng thanh toán mới (tạo link QR code)
 export const createOrderHandler = async (req, res) => {
   try {
     const { booking_id, booking_code, amount, description } = req.body;
@@ -15,6 +16,7 @@ export const createOrderHandler = async (req, res) => {
   }
 };
 
+// Handler xử lý yêu cầu hoàn tiền cho đơn đặt vé đã thanh toán
 export const refundOrderHandler = async (req, res) => {
   try {
     const { zp_trans_id, amount, description, booking_id } = req.body;
@@ -25,11 +27,13 @@ export const refundOrderHandler = async (req, res) => {
   }
 };
 
+// Webhook/Callback Handler nhận phản hồi kết quả giao dịch tự động từ ZaloPay
 export const zalopayCallbackHandler = async (req, res) => {
   try {
     const { data: dataStr, mac: reqMac } = req.body;
     console.log('📬 [Webhook ZaloPay] Callback Received:', { dataStr: dataStr?.substring(0, 100), mac: reqMac });
 
+    // Xác thực chữ ký số (MAC) từ ZaloPay gửi sang
     const isValid = zalopayService.verifyCallback(dataStr, reqMac);
     if (!isValid) {
       console.error('❌ [ZaloPay Callback] Invalid MAC signature');
@@ -47,7 +51,7 @@ export const zalopayCallbackHandler = async (req, res) => {
       return res.json({ return_code: 0, return_message: 'booking_id not found' });
     }
 
-    // Update internal Payment record status first
+    // 1. Cập nhật trạng thái bản ghi thanh toán nội bộ của hệ thống sang 'paid'
     try {
       const payment = await Payment.findOne({
         where: { booking_id, status: 'pending' },
@@ -81,33 +85,33 @@ export const zalopayCallbackHandler = async (req, res) => {
       console.error('⚠️ [ZaloPay Callback] Failed to update Payment in DB:', dbErr.message);
     }
 
-    // Call Booking Service to process DB confirmation and send notifications
+    // 2. Phát sự kiện bất đồng bộ payment.successful vào RabbitMQ (SAGA Pattern)
+    // Tách rời hoàn toàn khỏi Booking Service, không chờ đợi hay phụ thuộc vòng tròn
     try {
-      const response = await axios.post(`${BOOKING_SERVICE}/api/bookings/${booking_id}/confirm-payment`, {
-        payment_method: 'zalopay',
-        payment_payload: {
-          transaction_ref: zp_trans_id,
-          app_trans_id: app_trans_id,
-          response_code: '1',
-          amount: amount
-        }
+      const { publishPaymentSuccess } = await import('../services/rabbitmqService.js');
+      const correlationId = req.headers['x-request-id'] || `REQ-${uuidv4().substring(0, 8)}`;
+      await publishPaymentSuccess({
+        correlation_id: correlationId,
+        booking_id,
+        zp_trans_id,
+        app_trans_id,
+        amount,
+        payment_method: 'zalopay'
       });
-      if (response.data && response.data.booking) {
-        console.log(`✅ [ZaloPay Callback] Booking ${booking_id} confirmed via booking-service`);
-        return res.json({ return_code: 1, return_message: 'success' });
-      } else {
-        return res.json({ return_code: 0, return_message: 'Failed to confirm booking status' });
-      }
-    } catch (apiErr) {
-      console.error('❌ [ZaloPay Callback] Failed calling Booking Service confirmPayment API:', apiErr.message);
-      return res.json({ return_code: 0, return_message: apiErr.message });
+      console.log(`[Trace: ${correlationId}] 📤 [ZaloPay Callback] Event 'payment.successful' published for booking ${booking_id}`);
+      return res.json({ return_code: 1, return_message: 'success' });
+    } catch (eventErr) {
+      console.error('❌ [ZaloPay Callback] Failed to dispatch payment event:', eventErr.message);
+      return res.json({ return_code: 1, return_message: 'payment recorded' });
     }
+
   } catch (error) {
     console.error('💥 [ZaloPay Callback] Error:', error);
     return res.status(500).json({ return_code: 0, return_message: 'Internal server error' });
   }
 };
 
+// Handler truy vấn trực tiếp trạng thái đơn hàng từ ZaloPay
 export const queryOrderHandler = async (req, res) => {
   try {
     const { app_trans_id } = req.params;
@@ -119,6 +123,7 @@ export const queryOrderHandler = async (req, res) => {
   }
 };
 
+// Handler truy vấn trạng thái yêu cầu hoàn tiền từ ZaloPay
 export const queryRefundHandler = async (req, res) => {
   try {
     const { m_refund_id } = req.params;
@@ -130,7 +135,7 @@ export const queryRefundHandler = async (req, res) => {
   }
 };
 
-// Database-backed endpoints for booking-service
+// Truy vấn thông tin bản ghi thanh toán theo ID đặt vé (phục vụ giao tiếp nội bộ giữa các services)
 export const getPaymentByBooking = async (req, res) => {
   try {
     const { booking_id } = req.params;
@@ -148,6 +153,7 @@ export const getPaymentByBooking = async (req, res) => {
   }
 };
 
+// Tạo bản ghi thanh toán mới trong Database (phục vụ giao tiếp nội bộ giữa các services)
 export const createPaymentRecord = async (req, res) => {
   try {
     const payment = await Payment.create({
@@ -169,6 +175,7 @@ export const createPaymentRecord = async (req, res) => {
   }
 };
 
+// Cập nhật bản ghi thanh toán trong Database (phục vụ giao tiếp nội bộ giữa các services)
 export const updatePaymentRecord = async (req, res) => {
   try {
     const { id } = req.params;
@@ -182,6 +189,7 @@ export const updatePaymentRecord = async (req, res) => {
   }
 };
 
+// Vô hiệu hóa (void) các giao dịch thanh toán đang ở trạng thái pending khi booking bị hủy
 export const voidPendingPayments = async (req, res) => {
   try {
     const { booking_id } = req.body;
@@ -195,6 +203,7 @@ export const voidPendingPayments = async (req, res) => {
   }
 };
 
+// Đánh dấu hết hạn các bản ghi thanh toán pending quá thời hạn
 export const expirePendingPaymentsRecord = async (req, res) => {
   try {
     const now = new Date().toISOString();

@@ -1,26 +1,25 @@
+import httpClient from '../utils/httpClient.js';
+const SEAT_SERVICE = process.env.SEAT_SERVICE_URL || 'http://localhost:4003';
+
 /**
- * Seat Controllers
- * Xử lý các yêu cầu liên quan đến quản lý ghế
+ * Seat Controllers in Movie Service
+ * Ủy quyền hoàn toàn (Reverse Proxy / Service Delegation) sang Seat Service (Single Source of Truth)
  */
 
 export const createSeats = async (req, res) => {
   try {
     const { hallId, seats } = req.body;
-    const { Seat, CinemaHall } = req.app.locals.models;
-    
-    const seatService = await import('../services/seatService.js');
-    const createdSeats = await seatService.createSeats(Seat, CinemaHall, { hallId, seats });
-
+    const response = await httpClient.post(`${SEAT_SERVICE}/api/seats/bulk`, seats.map(s => ({ ...s, hall_id: hallId })));
     res.status(201).json({
       success: true,
-      message: `${createdSeats.length} ghế được tạo thành công`,
-      data: createdSeats
+      message: `${response.data.length} ghế được tạo thành công`,
+      data: response.data
     });
   } catch (error) {
-    console.error('[Seat Controller] Error creating seats:', error.message);
-    res.status(400).json({
+    console.error('[Seat Controller] Error creating seats via seat-service:', error.message);
+    res.status(error.response?.status || 400).json({
       success: false,
-      error: error.message
+      error: error.response?.data?.message || error.message
     });
   }
 };
@@ -28,21 +27,13 @@ export const createSeats = async (req, res) => {
 export const getSeatsByHall = async (req, res) => {
   try {
     const { hallId } = req.params;
-    const { Seat } = req.app.locals.models;
-    
-    const seatService = await import('../services/seatService.js');
-    const seats = await seatService.getSeatsByHall(Seat, { hallId });
-
-    res.json({
-      success: true,
-      data: seats,
-      total: seats.length
-    });
+    const response = await httpClient.get(`${SEAT_SERVICE}/api/seats/hall/${hallId}`);
+    res.json(response.data);
   } catch (error) {
-    console.error('[Seat Controller] Error getting seats:', error.message);
-    res.status(500).json({
+    console.error('[Seat Controller] Error getting seats from seat-service:', error.message);
+    res.status(error.response?.status || 500).json({
       success: false,
-      error: error.message
+      error: error.response?.data?.message || error.message
     });
   }
 };
@@ -50,21 +41,13 @@ export const getSeatsByHall = async (req, res) => {
 export const getSeatLayout = async (req, res) => {
   try {
     const { hallId } = req.params;
-    const { Seat, CinemaHall } = req.app.locals.models;
-    
-    const seatService = await import('../services/seatService.js');
-    const layout = await seatService.getSeatLayout(Seat, CinemaHall, { hallId });
-
-    res.json({
-      success: true,
-      data: layout
-    });
+    const response = await httpClient.get(`${SEAT_SERVICE}/api/seats/hall/${hallId}/layout`);
+    res.json(response.data);
   } catch (error) {
-    console.error('[Seat Controller] Error getting seat layout:', error.message);
-    const statusCode = error.message.includes('không tồn tại') ? 404 : 500;
-    res.status(statusCode).json({
+    console.error('[Seat Controller] Error getting seat layout from seat-service:', error.message);
+    res.status(error.response?.status || 500).json({
       success: false,
-      error: error.message
+      error: error.response?.data?.message || error.message
     });
   }
 };
@@ -72,22 +55,17 @@ export const getSeatLayout = async (req, res) => {
 export const updateSeat = async (req, res) => {
   try {
     const { seatId } = req.params;
-    const updates = req.body;
-    const { Seat } = req.app.locals.models;
-    
-    const seatService = await import('../services/seatService.js');
-    const seat = await seatService.updateSeat(Seat, seatId, updates);
-
+    const response = await httpClient.put(`${SEAT_SERVICE}/api/seats/${seatId}`, req.body);
     res.json({
       success: true,
       message: 'Ghế được cập nhật thành công',
-      data: seat
+      data: response.data
     });
   } catch (error) {
-    console.error('[Seat Controller] Error updating seat:', error.message);
-    res.status(400).json({
+    console.error('[Seat Controller] Error updating seat via seat-service:', error.message);
+    res.status(error.response?.status || 400).json({
       success: false,
-      error: error.message
+      error: error.response?.data?.message || error.message
     });
   }
 };
@@ -95,35 +73,13 @@ export const updateSeat = async (req, res) => {
 export const updateSeatType = async (req, res) => {
   try {
     const { hallId } = req.params;
-    const { seatType, totalPrice, basePrice } = req.body;
-    const { Seat } = req.app.locals.models;
-    
-    if (!hallId || !seatType) {
-      return res.status(400).json({
-        success: false,
-        error: 'Hall ID và loại ghế là bắt buộc'
-      });
-    }
-
-    console.log(`[Seat Controller] Updating hall ${hallId} - Type: ${seatType}, Price: ${totalPrice}`);
-    
-    const seatService = await import('../services/seatService.js');
-    const result = await seatService.updateSeatType(Seat, {
-      hallId: Number(hallId), 
-      seatType: seatType, 
-      totalPrice: totalPrice,
-      basePrice: basePrice
-    });
-
-    res.json({
-      success: true,
-      message: result.message
-    });
+    const response = await httpClient.put(`${SEAT_SERVICE}/api/seats/hall/${hallId}/type`, req.body);
+    res.json(response.data);
   } catch (error) {
-    console.error('[Seat Controller] Error updating seat type:', error.message);
-    res.status(400).json({
+    console.error('[Seat Controller] Error updating seat type via seat-service:', error.message);
+    res.status(error.response?.status || 400).json({
       success: false,
-      error: error.message
+      error: error.response?.data?.message || error.message
     });
   }
 };
@@ -131,20 +87,18 @@ export const updateSeatType = async (req, res) => {
 export const deleteSeat = async (req, res) => {
   try {
     const { seatId } = req.params;
-    const { Seat } = req.app.locals.models;
-    
-    const seatService = await import('../services/seatService.js');
-    const result = await seatService.deleteSeat(Seat, seatId);
-
+    const response = await httpClient.delete(`${SEAT_SERVICE}/api/seats/${seatId}`);
     res.json({
       success: true,
-      message: result.message
+      message: 'Ghế đã xoá thành công',
+      data: response.data
     });
   } catch (error) {
-    console.error('[Seat Controller] Error deleting seat:', error.message);
-    res.status(400).json({
+    console.error('[Seat Controller] Error deleting seat via seat-service:', error.message);
+    res.status(error.response?.status || 400).json({
       success: false,
-      error: error.message
+      error: error.response?.data?.message || error.message
     });
   }
 };
+

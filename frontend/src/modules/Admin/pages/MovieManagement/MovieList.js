@@ -25,7 +25,7 @@ export default function MovieManagement() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  
+
 
   const loadMovies = useCallback(async () => {
     try {
@@ -137,7 +137,7 @@ export default function MovieManagement() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>🎬 Quản Lý Phim</h2>
+        <h2>Quản Lý Phim</h2>
         {!showForm && (
           <button className={styles.btnAdd} onClick={() => setShowForm(true)}>+ Thêm Phim Mới</button>
         )}
@@ -225,59 +225,59 @@ export default function MovieManagement() {
         ) : (
           <>
             <div className={styles.paginationBar}>
-              <button className={styles.pageBtn} onClick={() => setPage(p => Math.max(1, p-1))} disabled={page<=1}>‹ Prev</button>
-              <span className={styles.pageInfo}>Trang {page}{total?` / ${Math.ceil(total/10)}`:''}</span>
-              <button className={styles.pageBtn} onClick={() => setPage(p => p+1)} disabled={total && page >= Math.ceil(total/10)}>Next ›</button>
+              <button className={styles.pageBtn} onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>‹ Prev</button>
+              <span className={styles.pageInfo}>Trang {page}{total ? ` / ${Math.ceil(total / 10)}` : ''}</span>
+              <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={total && page >= Math.ceil(total / 10)}>Next ›</button>
             </div>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Poster</th>
-                <th>Tiêu đề</th>
-                {/* <th>Thể loại</th> */}
-                <th>Thời lượng</th>
-                <th>Năm</th>
-                <th>Đạo diễn</th>
-                <th>Trạng thái</th>
-                <th>Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movies.map((m, idx) => {
-                const duration = m.duration_minutes || m.duration || m.duration_min || '-';
-                const year = m.release_date ? new Date(m.release_date).getFullYear() : (m.release_year || '-');
-                const statusText = m.status === 'now_showing' ? 'Đang chiếu' : (m.status === 'coming_soon' ? 'Sắp chiếu' : (m.status || 'Không'));
-                const poster = m.poster_url || m.poster || '';
-                return (
-                  <tr key={m.id}>
-                    <td>{idx + 1}</td>
-                    <td>
-                      {poster ? (
-                        <img src={poster} alt={m.title} className={styles.thumb} />
-                      ) : (
-                        <div className={styles.noThumb}>-</div>
-                      )}
-                    </td>
-                    <td className={styles.title}>{m.title}</td>
-                    {/* <td>{m.genre || '-'}</td> */}
-                    <td>{duration ? `${duration} phút` : '-'}</td>
-                    <td>{year}</td>
-                    <td>{m.director || '-'}</td>
-                    <td>{statusText}</td>
-                    <td className={styles.actions}>
-                      <button className={styles.btnEdit} onClick={() => handleEdit(m)} title="Chỉnh sửa" aria-label={`Chỉnh sửa ${m.title}`}>
-                        <FaEdit />
-                      </button>
-                      <button className={styles.btnDelete} onClick={() => handleDelete(m.id)} title="Xóa" aria-label={`Xóa ${m.title}`}>
-                        <FaTrashAlt />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Poster</th>
+                  <th>Tiêu đề</th>
+                  {/* <th>Thể loại</th> */}
+                  <th>Thời lượng</th>
+                  <th>Năm</th>
+                  <th>Đạo diễn</th>
+                  <th>Trạng thái</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movies.map((m, idx) => {
+                  const duration = m.duration_minutes || m.duration || m.duration_min || '-';
+                  const year = m.release_date ? new Date(m.release_date).getFullYear() : (m.release_year || '-');
+                  const statusText = m.status === 'now_showing' ? 'Đang chiếu' : (m.status === 'coming_soon' ? 'Sắp chiếu' : (m.status || 'Không'));
+                  const poster = m.poster_url || m.poster || '';
+                  return (
+                    <tr key={m.id}>
+                      <td>{idx + 1}</td>
+                      <td>
+                        {poster ? (
+                          <img src={poster} alt={m.title} className={styles.thumb} />
+                        ) : (
+                          <div className={styles.noThumb}>-</div>
+                        )}
+                      </td>
+                      <td className={styles.title}>{m.title}</td>
+                      {/* <td>{m.genre || '-'}</td> */}
+                      <td>{duration ? `${duration} phút` : '-'}</td>
+                      <td>{year}</td>
+                      <td>{m.director || '-'}</td>
+                      <td>{statusText}</td>
+                      <td className={styles.actions}>
+                        <button className={styles.btnEdit} onClick={() => handleEdit(m)} title="Chỉnh sửa" aria-label={`Chỉnh sửa ${m.title}`}>
+                          <FaEdit />
+                        </button>
+                        <button className={styles.btnDelete} onClick={() => handleDelete(m.id)} title="Xóa" aria-label={`Xóa ${m.title}`}>
+                          <FaTrashAlt />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </>
         )}
       </div>

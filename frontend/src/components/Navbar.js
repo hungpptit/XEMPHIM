@@ -30,8 +30,67 @@ const Navbar = () => {
     return () => { mounted = false; window.removeEventListener('authChanged', onAuth); };
   }, []);
 
-  const isActiveLink = (path) => {
-    return location.pathname === path ? styles.active : '';
+  const [activeSection, setActiveSection] = useState('home');
+
+  // ScrollSpy to highlight active section on scroll or click
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      setActiveSection('');
+      return;
+    }
+
+    if (location.hash === '#now-section') {
+      setActiveSection('now');
+    } else if (location.hash === '#coming-section') {
+      setActiveSection('coming');
+    } else {
+      setActiveSection('home');
+    }
+
+    const mainEl = document.getElementById('main-content');
+    const scrollTarget = mainEl || window;
+
+    const onScroll = () => {
+      if (location.pathname !== '/') return;
+      const nowEl = document.getElementById('now-section');
+      const comingEl = document.getElementById('coming-section');
+      const currentScroll = mainEl ? mainEl.scrollTop : window.scrollY;
+      const scrollPos = currentScroll + 200;
+
+      if (comingEl && scrollPos >= comingEl.offsetTop) {
+        setActiveSection('coming');
+      } else if (nowEl && scrollPos >= nowEl.offsetTop) {
+        setActiveSection('now');
+      } else {
+        setActiveSection('home');
+      }
+    };
+
+    scrollTarget.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollTarget.removeEventListener('scroll', onScroll);
+  }, [location.pathname, location.hash]);
+
+  const handleNavClick = (targetId, e) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      const mainEl = document.getElementById('main-content');
+      if (targetId === 'home') {
+        if (mainEl) {
+          mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.history.pushState(null, '', '/');
+        setActiveSection('home');
+      } else {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          window.history.pushState(null, '', `#${targetId}`);
+          setActiveSection(targetId === 'now-section' ? 'now' : 'coming');
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -72,7 +131,16 @@ const Navbar = () => {
     }
   };
 
-  const handleLogin = () => navigate('/login');
+  const handleLogin = () => {
+    const currentPath = location.pathname + location.search;
+    if (currentPath !== '/login' && currentPath !== '/register') {
+      navigate(`/login?redirect=${encodeURIComponent(currentPath)}`, {
+        state: { from: currentPath }
+      });
+    } else {
+      navigate('/login');
+    }
+  };
 
   const handleLogout = async () => {
     await authService.logout();
@@ -82,72 +150,107 @@ const Navbar = () => {
   };
 
   return (
-    <nav className={styles.navbar}>
-      <div className={styles.container}>
-        <Link to="/" className={styles.logo}>
-          CinemaX
+    <header className="w-full shrink-0 z-50 bg-[#12161F]/90 backdrop-blur-xl border-b border-[rgba(212,175,55,0.2)] shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
+      <div className="h-20 max-w-[1360px] mx-auto px-4 md:px-8 flex items-center justify-between gap-6">
+        {/* Brand Logo */}
+        <Link to="/" className="flex items-center gap-3 group shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37] via-[#F5E6AB] to-[#B8860B] flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.5)]">
+            <span className="material-symbols-outlined text-[#08090C] text-[24px]">crown</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-['Playfair_Display'] text-xl font-bold tracking-widest text-[#f2ca50] uppercase">
+              XEMPHIM
+            </span>
+            <span className="font-mono text-[10px] tracking-[0.2em] text-[#d5c78e] uppercase -mt-1">
+              Cinemas
+            </span>
+          </div>
         </Link>
-        
-        <ul className={styles.navLinks}>
-          {user?.role === 'admin' ? (
-            <>
-              <li>
-                <Link to="/" className={`${styles.navLink} ${isActiveLink('/')}`}>
-                  Trang chủ
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin" className={`${styles.navLink} ${isActiveLink('/admin')}`}>
-                  Trang quản trị
-                </Link>
-              </li>
-            </>
-          ) : (
-            <>
-              <li>
-                <Link to="/" className={`${styles.navLink} ${isActiveLink('/')}`}>
-                  Trang chủ
-                </Link>
-              </li>
-              <li>
-                <Link to="/movies" className={`${styles.navLink} ${isActiveLink('/movies')}`}>
-                  Phim
-                </Link>
-              </li>
-              <li>
-                <Link to="/my-tickets" className={`${styles.navLink} ${isActiveLink('/my-tickets')}`}>
-                  Vé của tôi
-                </Link>
-              </li>
-            </>
+
+        {/* Navigation Links with Spacious Breathing Room */}
+        <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
+          <Link 
+            to="/" 
+            onClick={(e) => handleNavClick('home', e)}
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 cursor-pointer ${
+              location.pathname === '/' && activeSection === 'home'
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
+            }`}
+          >
+            Trang Chủ
+          </Link>
+          <a 
+            href="/#now-section" 
+            onClick={(e) => handleNavClick('now-section', e)}
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 cursor-pointer ${
+              location.pathname === '/' && activeSection === 'now'
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
+            }`}
+          >
+            Phim Đang Chiếu
+          </a>
+          <a 
+            href="/#coming-section" 
+            onClick={(e) => handleNavClick('coming-section', e)}
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 cursor-pointer ${
+              location.pathname === '/' && activeSection === 'coming'
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
+            }`}
+          >
+            Phim Sắp Chiếu
+          </a>
+          <Link 
+            to="/my-tickets" 
+            className={`text-sm uppercase tracking-wider font-semibold transition-all duration-200 ${
+              location.pathname === '/my-tickets' 
+                ? 'text-[#f2ca50] drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] font-bold' 
+                : 'text-[#9CA3AF] hover:text-white'
+            }`}
+          >
+            Vé Của Tôi
+          </Link>
+          {user?.role === 'admin' && (
+            <Link 
+              to="/admin" 
+              className={`text-sm uppercase tracking-wider font-semibold transition-colors ${
+                location.pathname.startsWith('/admin') ? 'text-[#f2ca50]' : 'text-[#F5E6AB] hover:text-white'
+              }`}
+            >
+              👑 Quản Trị
+            </Link>
           )}
-        </ul>
+        </nav>
 
-        <div className={styles.rightSection}>
-          <form onSubmit={handleSearch} className={styles.searchBox}>
-            <input
-              type="text"
-              placeholder="Tìm kiếm phim..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => {
-                // Delay hiding suggestions to allow clicking on list items
-                setTimeout(() => setShowSuggestions(false), 200);
-              }}
-              className={styles.searchInput}
-            />
-            <FaSearch className={styles.searchIcon} />
+        {/* Right Section: Search & User */}
+        <div className="flex items-center gap-4">
+          {/* Search Box */}
+          <form onSubmit={handleSearch} className="relative hidden md:flex items-center">
+            <div className="flex items-center bg-[#0d0e11] border border-[rgba(212,175,55,0.2)] rounded-full px-3 py-1.5 focus-within:border-[#D4AF37] transition-all">
+              <span className="material-symbols-outlined text-[#f2ca50] text-[18px] mr-2">search</span>
+              <input
+                type="text"
+                placeholder="Tìm phim, sự kiện VIP..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="bg-transparent text-sm text-[#e3e2e6] placeholder-[#9CA3AF] focus:outline-none w-36 lg:w-48"
+              />
+            </div>
 
+            {/* Suggestions */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className={styles.suggestionList}>
+              <div className="absolute top-12 left-0 right-0 bg-[#12161F] border border-[rgba(212,175,55,0.25)] rounded-xl shadow-2xl p-2 z-50 max-h-80 overflow-y-auto">
                 {suggestions.map((m) => (
                   <div
                     key={m.id}
-                    className={styles.suggestionItem}
+                    className="flex items-center gap-3 p-2 hover:bg-[#1b1b1f] rounded-lg cursor-pointer transition-colors"
                     onClick={() => {
                       setSearchQuery('');
                       setShowSuggestions(false);
@@ -155,13 +258,12 @@ const Navbar = () => {
                     }}
                   >
                     {m.poster && (
-                      <img src={m.poster} alt={m.title} className={styles.suggestionPoster} />
+                      <img src={m.poster} alt={m.title} className="w-10 h-14 object-cover rounded" />
                     )}
-                    <div className={styles.suggestionInfo}>
-                      <span className={styles.suggestionTitle}>{m.title}</span>
-                      <span className={styles.suggestionMeta}>
-                        {m.duration ? `${m.duration} phút` : ''}
-                        {m.releaseYear ? ` • ${m.releaseYear}` : ''}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-white">{m.title}</span>
+                      <span className="text-xs text-[#9CA3AF]">
+                        {m.duration ? `${m.duration} phút` : ''} {m.releaseYear ? ` • ${m.releaseYear}` : ''}
                       </span>
                     </div>
                   </div>
@@ -170,74 +272,80 @@ const Navbar = () => {
             )}
           </form>
 
-          <div className={styles.userSection}>
+          {/* User Profile / Login */}
+          <div className="relative">
             {user ? (
-              <>
-                {user?.role === 'admin' ? (
-                  <div className={styles.adminMenuContainer}>
-                    {/* Bấm vào vùng chứa thông tin Admin Real Test để bật/tắt menu */}
-                    <button
-                      className={styles.adminProfileBtn}
-                      onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                      title="Menu Quản Trị"
-                    >
-                      <div className={styles.adminProfile}>
-                        <div className={styles.avatarArea}>
-                          {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'A'}
-                        </div>
-                        <div className={styles.profileInfo}>
-                          <span className={styles.profileName}>{user.full_name || 'Admin Real Test'}</span>
-                          <span className={styles.profileRole}>
-                            System Manager <FaChevronDown style={{ fontSize: '0.8em', marginLeft: '2px' }} />
-                          </span>
-                        </div>
-                      </div>
-                    </button>
+              <div className="relative">
+                <button
+                  onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                  className="relative flex items-center gap-2.5 p-1 pr-3 rounded-full bg-[#1b1b1f] border border-[rgba(212,175,55,0.3)] hover:border-[#D4AF37] transition-all"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#AA771C] flex items-center justify-center text-[#08090C] font-bold text-sm">
+                    {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="text-sm font-medium text-white max-w-[120px] truncate hidden sm:inline">
+                    {user.full_name || 'Khách VIP'}
+                  </span>
+                  <span className="text-[10px] text-[#F3C644]">👑</span>
+                </button>
 
-                    {/* Kiểm tra class styles.show động để ẩn/hiện menu chuẩn xác */}
-                    <div className={`${styles.adminDropdown} ${adminMenuOpen ? styles.show : ''}`}>
-                      <button 
+                {/* Dropdown Menu */}
+                {adminMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-[#12161F] border border-[rgba(212,175,55,0.3)] rounded-xl shadow-2xl p-2 z-50">
+                    <div className="px-3 py-2 border-b border-gray-800">
+                      <p className="text-xs text-[#9CA3AF]">Tài khoản thành viên VIP</p>
+                      <p className="text-sm font-semibold text-[#f2ca50] truncate">{user.email}</p>
+                    </div>
+                    {user.role === 'admin' && (
+                      <button
                         onClick={() => {
                           setAdminMenuOpen(false);
                           navigate('/admin');
                         }}
-                        className={styles.adminDropdownItemGo}
+                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#1b1b1f] rounded-lg transition-colors flex items-center gap-2 mt-1"
                       >
-                        ⚙️ Trang Quản Trị
+                        <span className="material-symbols-outlined text-sm text-[#f2ca50]">admin_panel_settings</span>
+                        Trang Quản Trị
                       </button>
-                      <button 
-                        onClick={handleLogout}
-                        className={styles.adminDropdownItem}
-                      >
-                        🚪 Đăng Xuất
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.userInfo}>
-                    <div className={styles.avatar}>
-                      <FaUser />
-                    </div>
-                    <div className={styles.userMeta}>
-                      <Link to="/profile" className={styles.userNameLink}>Hi, {user.full_name || user.fullName || user.email}</Link>
-                      <span className={styles.userSubtext}>Xem hồ sơ và lịch sử đặt vé</span>
-                    </div>
+                    )}
+                    <Link
+                      to="/profile"
+                      onClick={() => setAdminMenuOpen(false)}
+                      className="w-full block px-3 py-2 text-sm text-white hover:bg-[#1b1b1f] rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm text-[#f2ca50]">badge</span>
+                      Hồ Sơ Của Tôi
+                    </Link>
+                    <Link
+                      to="/my-tickets"
+                      onClick={() => setAdminMenuOpen(false)}
+                      className="w-full block px-3 py-2 text-sm text-white hover:bg-[#1b1b1f] rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm text-[#f2ca50]">confirmation_number</span>
+                      Vé Đã Đặt
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-950/40 rounded-lg transition-colors flex items-center gap-2 mt-1"
+                    >
+                      <span className="material-symbols-outlined text-sm text-red-400">logout</span>
+                      Đăng Xuất
+                    </button>
                   </div>
                 )}
-              </>
+              </div>
             ) : (
-              <button onClick={handleLogin} className={styles.loginBtn}>
-                Đăng nhập
+              <button
+                onClick={handleLogin}
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#F5E6AB] to-[#B8860B] text-[#08090C] text-xs font-bold uppercase tracking-wider hover:brightness-110 shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all"
+              >
+                Đăng Nhập
               </button>
             )}
           </div>
-
-          <button className={styles.mobileMenuBtn}>
-            <FaBars />
-          </button>
         </div>
       </div>
-    </nav>
+    </header>
   );
 };
 

@@ -61,6 +61,11 @@ const userAPI = {
   delete: (userId) => adminAPI.delete(`/api/admin/users/${userId}`)
 };
 
+// ============= STATS Management =============
+const statsAPI = {
+  getRevenueStats: (params = {}) => adminAPI.get('/api/admin/stats/dashboard', { params })
+};
+
 // Combine all services
 export const adminService = {
   cinema: cinemaAPI,
@@ -68,6 +73,7 @@ export const adminService = {
   movie: movieAPI,
   showtime: showtimeAPI,
   user: userAPI,
+  stats: statsAPI,
   
   // Legacy support for existing code
   createHall: (data) => hallAPI.create(data),
