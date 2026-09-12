@@ -14,10 +14,12 @@ import {
   FaTimes,
   FaFilm
 } from 'react-icons/fa';
+import authService from '../../services/authService';
 import styles from './MyTickets.module.css';
 
 const MyTickets = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -26,11 +28,15 @@ const MyTickets = () => {
   const loadTickets = async () => {
     setLoading(true);
     try {
-      // Get current user ID
-      const { default: authService } = await import('../../services/authService');
-      const user = await authService.getCurrentUser();
-      const userId = user?.id || user?.user_id;
-      if (!userId) throw new Error('User not found');
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+
+      const userId = currentUser?.id || currentUser?.user_id;
+      if (!userId) {
+        setTickets([]);
+        return;
+      }
+
       // Fetch bookings
       const res = await bookingAPI.getUserBookings(userId);
       const data = res.data?.bookings || res.data || [];
@@ -64,6 +70,12 @@ const MyTickets = () => {
 
   useEffect(() => {
     loadTickets();
+
+    const onAuthChanged = () => {
+      loadTickets();
+    };
+    window.addEventListener('authChanged', onAuthChanged);
+    return () => window.removeEventListener('authChanged', onAuthChanged);
   }, []);
 
   const getTicketStatus = (ticket) => {
@@ -119,10 +131,8 @@ const MyTickets = () => {
     const reason = prompt('Vui lòng nhập lý do hoàn tiền (không bắt buộc):');
     
     try {
-      // Get current user
-      const { default: authService } = await import('../../services/authService');
-      const user = await authService.getCurrentUser();
-      const userId = user?.id || user?.user_id;
+      const currentUser = await authService.getCurrentUser();
+      const userId = currentUser?.id || currentUser?.user_id;
       
       const response = await bookingAPI.refundBooking(ticket.id, { 
         reason: reason || 'User requested refund',
@@ -232,102 +242,192 @@ const MyTickets = () => {
               VÉ XEM PHIM CỦA TÔI
             </h1>
             <p className="text-xs sm:text-sm text-[#9CA3AF] italic">
-              Quản lý thẻ vé vào phòng chiếu VIP và mã QR Fast-track Check-in
+              Quản lý thẻ vé vào phòng chiếu và mã QR Check-in
             </p>
           </div>
 
-          {/* Real Total Tickets Count Badge */}
-          <div className="flex items-center gap-3 bg-[#1b1b1f] border border-[rgba(212,175,55,0.3)] px-4 py-2 rounded-2xl shadow-xl">
-            <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#f2ca50]">
-              <span className="material-symbols-outlined text-[20px]">confirmation_number</span>
+          {/* Real Total Tickets Count Badge or Login Prompt Badge */}
+          {user ? (
+            <div className="flex items-center gap-3 bg-[#1b1b1f] border border-[rgba(212,175,55,0.3)] px-4 py-2 rounded-2xl shadow-xl">
+              <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#f2ca50]">
+                <span className="material-symbols-outlined text-[20px]">confirmation_number</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-mono text-xs text-[#f2ca50] font-bold uppercase tracking-wider">
+                  {tickets.length} Vé Đã Đặt
+                </span>
+                <span className="text-[11px] text-[#9CA3AF]">Tất cả giao dịch</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-mono text-xs text-[#f2ca50] font-bold uppercase tracking-wider">
-                {tickets.length} Vé Đã Đặt
-              </span>
-              <span className="text-[11px] text-[#9CA3AF]">Tất cả giao dịch</span>
+          ) : (
+            <div className="flex items-center gap-3 bg-[#1b1b1f] border border-amber-500/30 px-4 py-2 rounded-2xl shadow-xl">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+                <span className="material-symbols-outlined text-[20px]">lock</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-mono text-xs text-amber-400 font-bold uppercase tracking-wider">
+                  Chưa Đăng Nhập
+                </span>
+                <span className="text-[11px] text-[#9CA3AF]">Cần đăng nhập tài khoản</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Tab Filters */}
-        {tickets.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 bg-[#0d0e11] p-1.5 rounded-2xl w-fit border border-gray-800">
-            <button 
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                filter === 'all' 
-                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
-                  : 'text-[#9CA3AF] hover:text-white'
-              }`}
-              onClick={() => setFilter('all')}
-            >
-              Tất cả ({tickets.length})
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                filter === 'confirmed' 
-                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
-                  : 'text-[#9CA3AF] hover:text-white'
-              }`}
-              onClick={() => setFilter('confirmed')}
-            >
-              Còn hiệu lực ({tickets.filter(t => getTicketStatus(t) === 'confirmed').length})
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                filter === 'expired' 
-                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
-                  : 'text-[#9CA3AF] hover:text-white'
-              }`}
-              onClick={() => setFilter('expired')}
-            >
-              Đã chiếu ({tickets.filter(t => getTicketStatus(t) === 'expired').length})
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                filter === 'cancelled' 
-                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
-                  : 'text-[#9CA3AF] hover:text-white'
-              }`}
-              onClick={() => setFilter('cancelled')}
-            >
-              Đã hủy ({tickets.filter(t => getTicketStatus(t) === 'cancelled').length})
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                filter === 'refunded' 
-                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
-                  : 'text-[#9CA3AF] hover:text-white'
-              }`}
-              onClick={() => setFilter('refunded')}
-            >
-              Đã hoàn tiền ({tickets.filter(t => getTicketStatus(t) === 'refunded').length})
-            </button>
-          </div>
-        )}
+        {/* Not Logged In State */}
+        {!user ? (
+          <div className="relative overflow-hidden p-8 sm:p-12 md:p-16 text-center bg-gradient-to-b from-[#161a24] to-[#0f1218] rounded-3xl border border-[rgba(212,175,55,0.25)] shadow-[0_10px_40px_rgba(0,0,0,0.6)] flex flex-col items-center gap-6 max-w-2xl mx-auto my-4 w-full">
+            {/* Subtle Gold Aura Effect */}
+            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        {/* Empty State */}
-        {filteredTickets.length === 0 ? (
-          <div className="p-12 text-center bg-[#12161F] rounded-2xl border border-[rgba(212,175,55,0.2)] flex flex-col items-center gap-4">
-            <span className="material-symbols-outlined text-5xl text-[#D4AF37]">confirmation_number</span>
-            <h2 className="font-['Playfair_Display'] text-xl font-bold text-white">
-              {tickets.length === 0 ? 'Bạn Chưa Có Vé Xem Phim Nào' : 'Không Tìm Thấy Vé Phù Hợp'}
-            </h2>
-            <p className="text-xs text-[#9CA3AF] max-w-md">
-              {tickets.length === 0 
-                ? 'Hãy khám phá các tác phẩm điện ảnh kinh điển và đặt vé phòng chiếu VIP ngay hôm nay!'
-                : 'Không có vé nào trong mục này. Vui lòng chọn tab khác để xem.'}
-            </p>
-            {tickets.length === 0 && (
+            {/* Luxury Lock & Key Icon */}
+            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1b1b1f] to-[#121316] border border-[#D4AF37]/40 flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+              <span className="material-symbols-outlined text-4xl text-[#f2ca50]">lock</span>
+              <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center text-[#08090C] shadow-md">
+                <span className="material-symbols-outlined text-sm font-bold">key</span>
+              </div>
+            </div>
+
+            {/* Chip Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#f2ca50] text-xs font-mono uppercase tracking-widest font-semibold">
+              <span className="material-symbols-outlined text-sm">account_circle</span>
+              Xác Thực Tài Khoản
+            </div>
+
+            {/* Title & Description */}
+            <div className="flex flex-col gap-2">
+              <h2 className="font-['Playfair_Display'] text-2xl sm:text-3xl font-bold text-white tracking-wide">
+                Bạn Chưa Đăng Nhập Tài Khoản
+              </h2>
+              <p className="text-sm sm:text-base text-[#9CA3AF] max-w-lg leading-relaxed mx-auto">
+                Vui lòng đăng nhập để tra cứu lịch sử đặt vé, xem vé điện tử và mã QR Check-in tại rạp.
+              </p>
+            </div>
+
+            {/* Primary & Secondary Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <button 
-                onClick={() => navigate('/')}
-                className="mt-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] text-xs font-bold uppercase tracking-wider shadow-lg"
+                onClick={() => navigate('/login?redirect=/my-tickets', { state: { from: '/my-tickets' } })}
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F5E6AB] to-[#B8860B] text-[#08090C] font-bold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.35)] hover:brightness-110 hover:shadow-[0_0_25px_rgba(212,175,55,0.5)] transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                Khám Phá Phim Ngay
+                <span className="material-symbols-outlined text-base">login</span>
+                <span>Đăng Nhập Ngay</span>
               </button>
-            )}
+
+              <button 
+                onClick={() => navigate('/register?redirect=/my-tickets', { state: { from: '/my-tickets' } })}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#1b1b1f] hover:bg-[#252830] border border-[rgba(212,175,55,0.3)] hover:border-[#D4AF37] text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-base text-[#f2ca50]">person_add</span>
+                <span>Đăng Ký Tài Khoản</span>
+              </button>
+            </div>
+
+            {/* Account Benefits Mini Feature List */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full pt-4 mt-2 border-t border-[rgba(212,175,55,0.15)] text-left">
+              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#1b1b1f]/60 border border-[rgba(212,175,55,0.15)]">
+                <span className="material-symbols-outlined text-lg text-[#f2ca50]">confirmation_number</span>
+                <div className="text-[11px]">
+                  <p className="font-semibold text-white">Vé điện tử</p>
+                  <p className="text-[#9CA3AF]">Tra cứu mọi lúc</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#1b1b1f]/60 border border-[rgba(212,175,55,0.15)]">
+                <span className="material-symbols-outlined text-lg text-[#f2ca50]">qr_code_scanner</span>
+                <div className="text-[11px]">
+                  <p className="font-semibold text-white">QR Check-in</p>
+                  <p className="text-[#9CA3AF]">Vào rạp tức thì</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#1b1b1f]/60 border border-[rgba(212,175,55,0.15)]">
+                <span className="material-symbols-outlined text-lg text-[#f2ca50]">history</span>
+                <div className="text-[11px]">
+                  <p className="font-semibold text-white">Lịch sử vé</p>
+                  <p className="text-[#9CA3AF]">Quản lý dễ dàng</p>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
+          <>
+            {/* Tab Filters */}
+            {tickets.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 bg-[#0d0e11] p-1.5 rounded-2xl w-fit border border-gray-800">
+                <button 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    filter === 'all' 
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                      : 'text-[#9CA3AF] hover:text-white'
+                  }`}
+                  onClick={() => setFilter('all')}
+                >
+                  Tất cả ({tickets.length})
+                </button>
+                <button 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    filter === 'confirmed' 
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                      : 'text-[#9CA3AF] hover:text-white'
+                  }`}
+                  onClick={() => setFilter('confirmed')}
+                >
+                  Còn hiệu lực ({tickets.filter(t => getTicketStatus(t) === 'confirmed').length})
+                </button>
+                <button 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    filter === 'expired' 
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                      : 'text-[#9CA3AF] hover:text-white'
+                  }`}
+                  onClick={() => setFilter('expired')}
+                >
+                  Đã chiếu ({tickets.filter(t => getTicketStatus(t) === 'expired').length})
+                </button>
+                <button 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    filter === 'cancelled' 
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                      : 'text-[#9CA3AF] hover:text-white'
+                  }`}
+                  onClick={() => setFilter('cancelled')}
+                >
+                  Đã hủy ({tickets.filter(t => getTicketStatus(t) === 'cancelled').length})
+                </button>
+                <button 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    filter === 'refunded' 
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] shadow-md' 
+                      : 'text-[#9CA3AF] hover:text-white'
+                  }`}
+                  onClick={() => setFilter('refunded')}
+                >
+                  Đã hoàn tiền ({tickets.filter(t => getTicketStatus(t) === 'refunded').length})
+                </button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {filteredTickets.length === 0 ? (
+              <div className="p-12 text-center bg-[#12161F] rounded-2xl border border-[rgba(212,175,55,0.2)] flex flex-col items-center gap-4">
+                <span className="material-symbols-outlined text-5xl text-[#D4AF37]">confirmation_number</span>
+                <h2 className="font-['Playfair_Display'] text-xl font-bold text-white">
+                  {tickets.length === 0 ? 'Bạn Chưa Có Vé Xem Phim Nào' : 'Không Tìm Thấy Vé Phù Hợp'}
+                </h2>
+                <p className="text-xs text-[#9CA3AF] max-w-md">
+                  {tickets.length === 0 
+                    ? 'Hãy khám phá các tác phẩm điện ảnh kinh điển và đặt vé phòng chiếu VIP ngay hôm nay!'
+                    : 'Không có vé nào trong mục này. Vui lòng chọn tab khác để xem.'}
+                </p>
+                {tickets.length === 0 && (
+                  <button 
+                    onClick={() => navigate('/')}
+                    className="mt-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#08090C] text-xs font-bold uppercase tracking-wider shadow-lg"
+                  >
+                    Khám Phá Phim Ngay
+                  </button>
+                )}
+              </div>
+            ) : (
           /* VIP Boarding Pass Tickets Grid */
           <div className="flex flex-col gap-8">
             {filteredTickets.map((ticket) => {
@@ -496,6 +596,8 @@ const MyTickets = () => {
             })}
           </div>
         )}
+      </>
+    )}
       </div>
     </div>
   );
