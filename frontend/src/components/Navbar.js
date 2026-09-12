@@ -47,11 +47,15 @@ const Navbar = () => {
       setActiveSection('home');
     }
 
+    const mainEl = document.getElementById('main-content');
+    const scrollTarget = mainEl || window;
+
     const onScroll = () => {
       if (location.pathname !== '/') return;
       const nowEl = document.getElementById('now-section');
       const comingEl = document.getElementById('coming-section');
-      const scrollPos = window.scrollY + 200;
+      const currentScroll = mainEl ? mainEl.scrollTop : window.scrollY;
+      const scrollPos = currentScroll + 200;
 
       if (comingEl && scrollPos >= comingEl.offsetTop) {
         setActiveSection('coming');
@@ -62,15 +66,20 @@ const Navbar = () => {
       }
     };
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    scrollTarget.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollTarget.removeEventListener('scroll', onScroll);
   }, [location.pathname, location.hash]);
 
   const handleNavClick = (targetId, e) => {
     if (location.pathname === '/') {
       e.preventDefault();
+      const mainEl = document.getElementById('main-content');
       if (targetId === 'home') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (mainEl) {
+          mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         window.history.pushState(null, '', '/');
         setActiveSection('home');
       } else {
@@ -141,7 +150,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-[#12161F]/90 backdrop-blur-xl border-b border-[rgba(212,175,55,0.2)] shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
+    <header className="w-full shrink-0 z-50 bg-[#12161F]/90 backdrop-blur-xl border-b border-[rgba(212,175,55,0.2)] shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
       <div className="h-20 max-w-[1360px] mx-auto px-4 md:px-8 flex items-center justify-between gap-6">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-3 group shrink-0">

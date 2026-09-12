@@ -313,7 +313,7 @@ const Payment = () => {
   }
 
   return (
-    <div className="w-full bg-[#121316] min-h-screen text-[#e3e2e6] pt-20 pb-24">
+    <div className="w-full bg-[#121316] min-h-full text-[#e3e2e6] pt-4 pb-20">
       <div className="relative w-full max-w-[1360px] mx-auto px-4 md:px-8 py-8">
         {/* Ambient Atmospheric Glows */}
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-[#f2ca50]/10 rounded-full blur-3xl pointer-events-none -z-10"></div>

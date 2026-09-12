@@ -253,7 +253,7 @@ const MovieDetail = () => {
   }
 
   return (
-    <div className="w-full bg-[#121316] min-h-screen text-[#e3e2e6] pt-20 pb-24">
+    <div className="w-full bg-[#121316] min-h-full text-[#e3e2e6] pt-0 pb-24">
       {/* Movie Hero Showcase */}
       <section className="relative w-full overflow-hidden bg-[#0d0e11]">
         {/* Background image & lighting */}

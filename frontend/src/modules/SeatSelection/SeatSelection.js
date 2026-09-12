@@ -442,7 +442,7 @@ const SeatSelection = () => {
   const hasLockedSeats = allSeats.some(s => s.status === 'locked');
 
   return (
-    <div className="min-h-screen bg-[#121316] text-[#e3e2e6] pt-20 pb-36 xl:pb-20">
+    <div className="min-h-full bg-[#121316] text-[#e3e2e6] pt-4 pb-36 xl:pb-20">
       {/* Toast Warning for Redis Lock Contention */}
       {hasLockedSeats && showContentionToast && (
         <div className="bg-[#554300] border-b border-[#f2ca50]/50 px-4 py-2.5 flex items-center justify-between text-xs text-[#ffe088] shadow-lg animate-fade-in">

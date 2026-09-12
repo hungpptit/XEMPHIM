@@ -277,7 +277,7 @@ const Home = () => {
           )}
 
           {/* Hero Cinematic Meta & CTA Stack */}
-          <div className="relative z-10 max-w-[1360px] mx-auto w-full px-4 md:px-8 pt-36 pb-20 flex flex-col justify-end">
+          <div className="relative z-10 max-w-[1360px] mx-auto w-full px-4 md:px-8 pt-16 pb-20 flex flex-col justify-end">
             <div 
               key={currentHeroMovie.id || safeHeroIndex} 
               className={`max-w-3xl flex flex-col gap-4 ${styles.heroSlideText || ''}`}
