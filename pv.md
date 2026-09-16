@@ -47,6 +47,66 @@
 
 ---
 
+# PHẦN 0: LÝ DO CHỌN CÔNG NGHỆ & ĐÁNH ĐỔI THỰC TẾ (TECH STACK TRADEOFFS)
+> **Mục tiêu:** Trả lời tự tin câu hỏi: *"Tại sao em chọn công nghệ A mà không dùng công nghệ B?"* — thể hiện tư duy Senior biết cân nhắc giữa Lợi ích (Pros) và Đánh đổi (Cons).
+
+---
+
+### 1. Kiến trúc: Microservices vs. Monolith (Nguyên khối)
+* **Đối trọng so sánh:** **Monolith** (Tất cả logic đóng gói chung 1 source code và 1 database).
+* **Lý do chọn Microservices:**
+  * **Scale độc lập theo đặc thù tải (Independent Scaling):** Dịch vụ phim (`movie-service`) chủ yếu là đọc (Read-heavy, cache cao), trong khi `booking-service` chịu tải ghi cực lớn và tranh chấp CPU khi mở bán vé. Tách riêng giúp scale 5–10 instances cho `booking-service` mà không cần lãng phí tài nguyên cho các phần khác.
+  * **Cách ly sự cố (Fault Isolation):** Nếu dịch vụ gửi email vé (`notification-service`) bị quá tải hoặc sập, luồng mua vé và thanh toán của khách vẫn hoạt động trơn tru 100%.
+* **Đánh đổi chấp nhận (Trade-off):** Hệ thống tăng độ phức tạp trong việc triển khai (DevOps, Docker), độ trễ mạng giữa các service (Network Latency), và phải giải quyết bài toán nhất quán dữ liệu phân tán (Distributed Consistency).
+
+---
+
+### 2. Nền tảng Backend: Node.js (Express) vs. Java (Spring Boot)
+* **Đối trọng so sánh:** **Java (Spring Boot)** (Framework Backend doanh nghiệp phổ biến).
+* **Lý do chọn Node.js (Express):**
+  * **Tối ưu cho bài toán I/O-Intensive & Concurrency cao:** Hệ thống đặt vé chủ yếu chờ I/O (gọi Redis, query SQL Server, publish RabbitMQ, nhận Webhook ZaloPay). Mô hình **Single-Threaded Event Loop** và **Non-blocking I/O** của Node.js xử lý hàng chục ngàn kết nối đồng thời với mức tiêu tốn RAM cực thấp (mỗi service chỉ tốn ~40–60MB RAM lúc chạy).
+  * *So với Spring Boot:* Spring Boot theo mô hình truyền thống đa luồng (Thread-per-request). Khi có hàng ngàn request đồng thời, việc tạo hàng ngàn Thread sẽ ngốn lượng RAM rất lớn và tốn chi phí chuyển đổi ngữ cảnh CPU (Context Switching). Ngoài ra, mỗi container Spring Boot ngốn tối thiểu 300MB–500MB RAM, khởi động chậm hơn nhiều so với Node.js khi cần scale container tự động (Auto-scaling) lúc mở bán vé bom tấn.
+  * **Đồng nhất ngôn ngữ (Fullstack JavaScript):** Cả Backend và Frontend đều dùng JavaScript/TypeScript, giúp chia sẻ validation logic, kiểu dữ liệu, và tăng tốc độ phát triển cho team.
+* **Đánh đổi chấp nhận (Trade-off):** Node.js chạy đơn luồng nên không phù hợp với các tác vụ nặng về tính toán CPU (CPU-Intensive). Nếu có đoạn code thuật toán xử lý nặng, nó có thể làm block Event Loop, đòi hỏi lập trình viên phải tách Worker Thread hoặc đẩy sang queue xử lý riêng.
+
+---
+
+### 3. Xử lý tranh chấp: Redis Distributed Lock vs. Database Lock (`SELECT ... FOR UPDATE` / `UPDLOCK`)
+* **Đối trọng so sánh:** **Database Lock** (Khóa dòng trực tiếp trên SQL Server).
+* **Lý do chọn Redis Lock:**
+  * **Tốc độ In-Memory (<1ms) & Lọc tải rác (Database Shielding):** Nếu 10.000 người cùng bấm tranh 1 chiếc ghế VIP, Redis xử lý trên RAM trong tích tắc: chỉ 1 người lấy được lock, 9.999 người còn lại bị từ chối ngay lập tức. Database SQL Server hoàn toàn không bị ảnh hưởng.
+  * *Nếu dùng Database Lock:* 10.000 request dồn xuống DB cùng lúc sẽ làm cạn kiệt Connection Pool, gây nghẽn hàng đợi I/O và dễ dẫn tới Deadlock làm sập cơ sở dữ liệu.
+* **Đánh đổi chấp nhận (Trade-off):** Phải quản lý thêm một cụm hạ tầng Redis, phải viết Lua Script để tránh xóa nhầm lock, và chấp nhận rủi ro bất đồng bộ nếu Redis bị crash (cần có DB Unique Constraint làm lớp bọc lót).
+
+---
+
+### 4. Hàng đợi tin nhắn: RabbitMQ vs. Apache Kafka
+* **Đối trọng so sánh:** **Apache Kafka** (Hệ thống Distributed Streaming Platform).
+* **Lý do chọn RabbitMQ:**
+  * **Đúng mục đích sử dụng (Transactional Messaging & Task Queue):** Nghiệp vụ của rạp chiếu phim là gửi tin nhắn tác vụ: gửi email vé QR, bắn thông báo, và hẹn giờ nhả ghế sau 10 phút bằng **Dead Letter Exchange (DLQ)**. RabbitMQ hỗ trợ định tuyến tin nhắn linh hoạt (Routing Key), xác nhận tin cậy (Message ACK) và độ trễ cực thấp (<1ms).
+  * *Tại sao không dùng Kafka:* Kafka sinh ra để xử lý luồng dữ liệu Big Data khổng lồ (hàng triệu event/giây để làm log stream, data analytics). Đưa Kafka vào hệ thống đặt vé xem phim là "dùng dao mổ trâu để giết gà", gây phức tạp hóa hạ tầng (ZooKeeper/KRaft) và tốn tài nguyên vận hành không cần thiết.
+* **Đánh đổi chấp nhận (Trade-off):** RabbitMQ không lưu trữ lâu dài và không hỗ trợ replay lại toàn bộ dòng lịch sử sự kiện từ vài ngày trước mạnh mẽ như cơ chế Log Retention của Kafka.
+
+---
+
+### 5. Cơ sở dữ liệu: SQL Server (RDBMS) vs. MongoDB (NoSQL)
+* **Đối trọng so sánh:** **MongoDB** (Document-based NoSQL Database).
+* **Lý do chọn SQL Server:**
+  * **Tuân thủ tuyệt đối chuẩn ACID (Data Integrity):** Bài toán tiền bạc, thanh toán và vé xem phim không chấp nhận sai số dù chỉ 1 vé (Zero Tolerance for Double-booking). SQL Server đảm bảo tính nhất quán tức thì (Strong Consistency) và hỗ trợ **Unique Constraint** trên cặp `(ShowtimeId, SeatId)` để chặn đứng việc bán trùng ở tầng vật lý.
+  * *Tại sao không dùng MongoDB:* MongoDB thích hợp cho dữ liệu có cấu trúc động và đọc ghi phi cấu trúc. Khi cần thực hiện transaction phức tạp trên nhiều bảng liên kết chặt chẽ (`Users`, `Showtimes`, `Bookings`, `Seats`, `Payments`), NoSQL rất dễ rơi vào trạng thái Eventual Consistency (nhất quán sau cùng), tiềm ẩn nguy cơ xuất vé trùng khi tải cực cao.
+* **Đánh đổi chấp nhận (Trade-off):** SQL Server khó mở rộng theo chiều ngang (Horizontal Scale/Sharding) hơn MongoDB, chi phí license và tài nguyên phần cứng cao hơn.
+
+---
+
+### 6. Giao diện Frontend: React SPA vs. Vue.js
+* **Đối trọng so sánh:** **Vue.js**.
+* **Lý do chọn React:**
+  * **Kiểm soát chi tiết hiệu năng Re-render (Fine-grained Render Control):** Ma trận ghế phòng chiếu lớn có từ 500 đến 1.000 ghế. React cung cấp các công cụ tối ưu mạnh mẽ như `React.memo` (với custom comparator) và `useCallback`, giúp cô lập phạm vi render: khi 1 ghế thay đổi trạng thái, chỉ duy nhất ô ghế đó được vẽ lại trên Virtual DOM, toàn bộ 999 ghế còn lại giữ nguyên mà không bị giật lag khung hình.
+  * **Hệ sinh thái WebSocket & Thư viện UI:** Hệ sinh thái thư viện kết nối Socket.io và state management của React cực kỳ trưởng thành, dễ chuẩn hóa dữ liệu dạng Normalized Map (`{ [seatId]: data }`).
+* **Đánh đổi chấp nhận (Trade-off):** Khác với Vue có reactivity tự động thông minh, React đòi hỏi lập trình viên phải hiểu sâu về cơ chế so sánh tham chiếu (shallow comparison) để tránh gây ra re-render ngoài ý muốn (Unnecessary Re-renders).
+
+---
+
 # PHẦN 1: REDIS DISTRIBUTED LOCK & CƠ CHẾ GIỮ GHẾ
 
 ---
