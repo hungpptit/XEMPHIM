@@ -9,7 +9,7 @@ export default function UserManagement() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Edit State
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -69,7 +69,7 @@ export default function UserManagement() {
     }
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone_number?.includes(searchTerm)
@@ -78,12 +78,12 @@ export default function UserManagement() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>👥 Quản Lý Người Dùng</h2>
+        <h2>Quản Lý Người Dùng</h2>
         <div className={styles.searchBar}>
           <FaSearch className={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm theo tên, email hoặc SĐT..." 
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên, email hoặc SĐT..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -100,25 +100,25 @@ export default function UserManagement() {
             <form onSubmit={handleUpdate}>
               <div className={styles.formGroup}>
                 <label>Họ tên:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={editForm.full_name}
-                  onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Số điện thoại:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={editForm.phone_number}
-                  onChange={(e) => setEditForm({...editForm, phone_number: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Vai trò:</label>
-                <select 
+                <select
                   value={editForm.role}
-                  onChange={(e) => setEditForm({...editForm, role: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                 >
                   <option value="user">User</option>
                   <option value="admin">Admin</option>

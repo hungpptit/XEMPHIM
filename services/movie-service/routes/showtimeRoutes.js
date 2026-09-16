@@ -6,7 +6,9 @@ const router = express.Router();
 
 // Public list / filter
 router.get('/', controller.listShowtimes);
+router.post('/batch', controller.getShowtimesBatch);
 router.get('/:id', controller.getShowtime);
+
 
 // Admin operations
 router.post('/', adminAuth, controller.createShowtime);

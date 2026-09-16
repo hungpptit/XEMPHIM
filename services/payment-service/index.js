@@ -28,6 +28,12 @@ app.use((req, res, next) => {
 app.use('/api/payments', paymentRoutes);
 app.use('/api/zalopay', zalopayRoutes);
 
+// Start RabbitMQ SAGA Compensating Consumer
+import('./services/rabbitmqService.js').then(m => m.startCompensatingConsumer()).catch(e => {
+  console.warn('RabbitMQ consumer init note:', e.message);
+});
+
 app.listen(port, () => {
   console.log(`💳 Payment Service listening on port ${port}`);
 });
+

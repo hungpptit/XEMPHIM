@@ -379,3 +379,18 @@
     align-items: flex-start;
   }
 }
+
+@keyframes heroSlideTextIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.heroSlideText {
+  animation: heroSlideTextIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

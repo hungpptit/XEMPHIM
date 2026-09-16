@@ -4,6 +4,7 @@ import * as controller from '../controllers/moviesController.js';
 const router = express.Router();
 
 router.get('/', controller.list);
+router.post('/batch', controller.getMoviesBatch);
 router.get('/:id', controller.detail);
 router.get('/:id/showtimes', controller.getShowtimesByMovie);
 router.post('/', controller.create);

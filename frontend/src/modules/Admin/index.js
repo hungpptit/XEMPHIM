@@ -5,8 +5,9 @@ import HallManagement from './pages/HallManagement/HallList';
 import MovieManagement from './pages/MovieManagement/MovieList';
 import ShowtimeManagement from './pages/ShowtimeManagement/ShowtimeList';
 import UserManagement from './pages/UserManagement/UserList'; 
+import RevenueDashboard from './pages/RevenueManagement/RevenueDashboard';
 import styles from './AdminPanel.module.css';
-import { FaHome, FaFilm, FaUserShield, FaChevronRight, FaCity, FaClock, FaUsers, FaTh } from 'react-icons/fa';
+import { FaHome, FaFilm, FaUserShield, FaChevronRight, FaCity, FaClock, FaUsers, FaTh, FaChartLine } from 'react-icons/fa';
 import { adminService } from './services/adminService';
 
 export default function AdminPanel() {
@@ -19,6 +20,7 @@ export default function AdminPanel() {
     if (path.startsWith('/admin/movies')) return 'movies';
     if (path.startsWith('/admin/showtimes')) return 'showtimes';
     if (path.startsWith('/admin/users')) return 'users';
+    if (path.startsWith('/admin/revenue')) return 'revenue';
     return 'overview';
   };
 
@@ -84,6 +86,7 @@ export default function AdminPanel() {
   const goCinemas = () => navigate('/admin/cinemas');
   const goMovies = () => navigate('/admin/movies');
   const goShowtimes = () => navigate('/admin/showtimes');
+  const goRevenue = () => navigate('/admin/revenue');
   const goUsers = () => navigate('/admin/users');
 
   const getRoleText = () => 'Bảng Điều Khiển Quản Trị';
@@ -120,6 +123,11 @@ export default function AdminPanel() {
             </button>
           </li>
           <li className={styles.navItem}>
+            <button className={`${styles.navBtn} ${activeTab === 'revenue' ? styles.active : ''}`} onClick={goRevenue}>
+              <FaChartLine className={styles.navIcon} /> <span>Thống Kê Doanh Số</span>
+            </button>
+          </li>
+          <li className={styles.navItem}>
             <button className={`${styles.navBtn} ${activeTab === 'users' ? styles.active : ''}`} onClick={goUsers}>
               <FaUsers className={styles.navIcon} /> <span>Quản Lý Người Dùng</span>
             </button>
@@ -144,6 +152,7 @@ export default function AdminPanel() {
               {activeTab === 'halls' && 'Quản lý danh sách các phòng chiếu trong rạp'}
               {activeTab === 'movies' && 'Quản lý danh sách phim và thông tin'}
               {activeTab === 'showtimes' && 'Sắp xếp lịch chiếu phim tại các rạp và phòng'}
+              {activeTab === 'revenue' && 'Báo cáo và thống kê doanh số bán vé chi tiết theo rạp và phim'}
               {activeTab === 'users' && 'Quản lý danh sách tài khoản và phân quyền người dùng'}
             </p>
           </div>
@@ -218,6 +227,7 @@ export default function AdminPanel() {
 
           {activeTab === 'movies' && <MovieManagement />}
           {activeTab === 'showtimes' && <ShowtimeManagement />}
+          {activeTab === 'revenue' && <RevenueDashboard />}
           {activeTab === 'users' && <UserManagement />}
         </div>
       </div>

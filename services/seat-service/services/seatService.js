@@ -1,11 +1,16 @@
 import { Seat } from '../models/index.js';
 import Redis from 'ioredis';
-import axios from 'axios';
+import httpClient from '../utils/httpClient.js';
 
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 1 }) : null;
+if (redis) {
+  redis.on('error', (err) => console.warn('⚠️ [Redis Seat] Connection note:', err.message));
+}
 const MOVIE_SERVICE = process.env.MOVIE_SERVICE_URL || 'http://localhost:4002';
 const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL || 'http://localhost:4004';
 
+// Truy vấn danh sách ID các ghế đang bị khóa (tạm giữ) trên Redis cho một lịch chiếu
+// Thiết kế: Quét qua tất cả các khóa tạm giữ dạng 'lock:showtime:${showtimeId}:seat:*' để lấy ra các ghế đang bị khóa tạm thời 120s.
 async function getRedisLockedSeatIds(showtimeId) {
   if (!redis) return new Set();
 
@@ -45,6 +50,15 @@ export const getSeatById = async (id) => {
   return seat ? seat.toJSON() : null;
 };
 
+export const getSeatsByIds = async (ids) => {
+  if (!ids || !ids.length) return [];
+  const seats = await Seat.findAll({
+    where: { id: ids },
+    attributes: ['id', 'hall_id', 'row_name', 'seat_number', 'seat_type', 'price_modifier', 'is_active']
+  });
+  return seats.map(s => s.toJSON());
+};
+
 export const createSeat = async (payload) => {
   const seat = await Seat.create({
     hall_id: payload.hall_id,
@@ -80,11 +94,14 @@ export const deleteSeat = async (id) => {
   return true;
 };
 
+// Lấy bản đồ trạng thái ghế ngồi cho một lịch chiếu
+// Thiết kế: Kết hợp dữ liệu từ SQL Server (ghế trống, ghế đã thanh toán thành công)
+// và Redis (các ghế đang bị giữ tạm thời do tiến trình đặt vé đang diễn ra)
 export const getSeatMapForShowtime = async (showtimeId) => {
-  // 1. Fetch showtime details from movie-service
+  // 1. Lấy thông tin lịch chiếu từ movie-service
   let showtime = null;
   try {
-    const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${showtimeId}`);
+    const res = await httpClient.get(`${MOVIE_SERVICE}/api/showtimes/${showtimeId}`);
     showtime = res.data;
   } catch (err) {
     console.error(`Failed to fetch showtime ${showtimeId} from movie-service:`, err.message);
@@ -93,28 +110,26 @@ export const getSeatMapForShowtime = async (showtimeId) => {
 
   if (!showtime) return null;
 
-  // Note: showtime from movie-service already contains nested CinemaHall/Cinema details
-
-  // 2. Fetch seats in the showtime's hall
+  // 2. Lấy danh sách toàn bộ ghế có trong phòng chiếu đó
   const seats = await Seat.findAll({
     where: { hall_id: showtime.hall_id },
     attributes: ['id', 'hall_id', 'row_name', 'seat_number', 'seat_type', 'price_modifier', 'is_active'],
     order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
   });
 
-  // 3. Fetch locked and confirmed seat IDs from booking-service
+  // 3. Lấy thông tin ghế đã đặt (confirmed) và bị khóa (locked) từ DB của booking-service
   let confirmedSeatIds = new Set();
   let lockedSeatIds = new Set();
 
   try {
-    const seatsRes = await axios.get(`${BOOKING_SERVICE}/api/bookings/showtimes/${showtimeId}/seats`);
+    const seatsRes = await httpClient.get(`${BOOKING_SERVICE}/api/bookings/showtimes/${showtimeId}/seats`);
     confirmedSeatIds = new Set(seatsRes.data.confirmedSeatIds || []);
     lockedSeatIds = new Set(seatsRes.data.lockedSeatIds || []);
   } catch (err) {
     console.error('Failed to fetch showtime seat reservations from booking-service:', err.message);
   }
 
-  // Also query Redis locks locally
+  // 4. Lấy thêm các ghế đang bị khóa tạm thời trên Redis (Real-time locks) và gộp lại
   try {
     const redisLocked = await getRedisLockedSeatIds(showtimeId);
     for (const id of redisLocked) {
@@ -132,9 +147,9 @@ export const getSeatMapForShowtime = async (showtimeId) => {
       status = 'inactive';
     } else {
       if (lockedSeatIds.has(s.id)) {
-        status = 'locked';
+        status = 'locked'; // Ghế đang bị giữ tạm thời
       } else if (confirmedSeatIds.has(s.id)) {
-        status = 'occupied';
+        status = 'occupied'; // Ghế đã được mua thành công
       }
     }
 
@@ -163,3 +178,102 @@ export const bulkCreateSeats = async (seatsArray) => {
   const created = await Seat.bulkCreate(seatsArray);
   return created.map(s => s.toJSON());
 };
+
+export const getSeatsByHall = async (hallId) => {
+  const seats = await Seat.findAll({
+    where: { hall_id: hallId, is_active: true },
+    order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
+  });
+  return seats.map(s => s.toJSON());
+};
+
+export const getSeatLayoutByHall = async (hallId) => {
+  const seats = await Seat.findAll({
+    where: { hall_id: hallId },
+    order: [['row_name', 'ASC'], ['seat_number', 'ASC']]
+  });
+  const rowNames = [...new Set(seats.map(s => s.row_name))].sort();
+  const maxSeatsPerRow = seats.reduce((max, s) => s.seat_number > max ? s.seat_number : max, 0);
+
+  const layout = {};
+  for (const rowLetter of rowNames) {
+    layout[rowLetter] = [];
+    for (let j = 1; j <= maxSeatsPerRow; j++) {
+      const seat = seats.find(s => s.row_name === rowLetter && s.seat_number === j);
+      if (seat) {
+        layout[rowLetter].push({
+          id: seat.id,
+          number: seat.seat_number,
+          type: seat.seat_type,
+          modifier: seat.price_modifier,
+          active: seat.is_active
+        });
+      } else {
+        layout[rowLetter].push({
+          id: null,
+          number: j,
+          type: 'none',
+          active: false
+        });
+      }
+    }
+  }
+
+  return {
+    hallId: Number(hallId),
+    rows: rowNames.length,
+    seatsPerRow: maxSeatsPerRow,
+    totalSeats: seats.length,
+    seats: seats.map(s => s.toJSON()),
+    seatLayout: layout,
+    layout
+  };
+};
+
+export const deleteSeatsByHall = async (hallId) => {
+  const count = await Seat.destroy({ where: { hall_id: hallId } });
+  return { deleted: count };
+};
+
+export const initSeatsForHall = async (hallId, { rows = 10, seatsPerRow = 12, vipRows = 2 }) => {
+  const rowsNum = parseInt(rows, 10);
+  const seatsPerRowNum = parseInt(seatsPerRow, 10);
+  const vipRowsNum = parseInt(vipRows, 10) || 0;
+
+  const seatsToCreate = [];
+  const rows_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const startVipRowIndex = rowsNum - vipRowsNum;
+
+  for (let i = 0; i < rowsNum; i++) {
+    const rowLetter = rows_letters[i];
+    const isVipRow = i >= startVipRowIndex;
+
+    for (let j = 1; j <= seatsPerRowNum; j++) {
+      seatsToCreate.push({
+        hall_id: Number(hallId),
+        row_name: rowLetter,
+        seat_number: j,
+        seat_type: isVipRow ? 'vip' : 'regular',
+        price_modifier: isVipRow ? 1.20 : 1.00,
+        is_active: true
+      });
+    }
+  }
+
+  const created = await Seat.bulkCreate(seatsToCreate);
+  return created.map(s => s.toJSON());
+};
+
+export const updateSeatTypeByHall = async (hallId, { seatType, priceModifier }) => {
+  await Seat.update(
+    {
+      seat_type: seatType,
+      price_modifier: priceModifier
+    },
+    {
+      where: { hall_id: hallId }
+    }
+  );
+  return { success: true };
+};
+

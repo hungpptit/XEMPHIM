@@ -1,5 +1,5 @@
 import {
-    listSeats, getSeatById, createSeat, updateSeat, deleteSeat, bulkCreateSeats
+    listSeats, getSeatById, getSeatsByIds, createSeat, updateSeat, deleteSeat, bulkCreateSeats
 } from "../services/seatService.js";
 import { getSeatMapForShowtime } from '../services/seatService.js';
 
@@ -9,6 +9,19 @@ export const getAllSeats = async (req, res) =>{
         res.json(seats);
     }catch( err){
         res.status(500).json({message: err.message});
+    }
+};
+
+export const getSeatsBatchHandler = async (req, res) => {
+    try {
+        const { seat_ids } = req.body;
+        if (!Array.isArray(seat_ids)) {
+            return res.status(400).json({ message: 'seat_ids must be an array of IDs' });
+        }
+        const seats = await getSeatsByIds(seat_ids);
+        res.json(seats);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
 
@@ -81,3 +94,57 @@ export const createBulkSeats = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const getSeatsByHallHandler = async (req, res) => {
+  try {
+    const { hallId } = req.params;
+    const seats = await (await import('../services/seatService.js')).getSeatsByHall(hallId);
+    res.json({ success: true, data: seats, total: seats.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+export const getSeatLayoutByHallHandler = async (req, res) => {
+  try {
+    const { hallId } = req.params;
+    const layout = await (await import('../services/seatService.js')).getSeatLayoutByHall(hallId);
+    res.json({ success: true, data: layout });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+export const initSeatsForHallHandler = async (req, res) => {
+  try {
+    const { hallId } = req.params;
+    const { rows, seatsPerRow, vipRows } = req.body;
+    const created = await (await import('../services/seatService.js')).initSeatsForHall(hallId, { rows, seatsPerRow, vipRows });
+    res.status(201).json({ success: true, message: `${created.length} ghế được tạo thành công`, data: created });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+export const deleteSeatsByHallHandler = async (req, res) => {
+  try {
+    const { hallId } = req.params;
+    const result = await (await import('../services/seatService.js')).deleteSeatsByHall(hallId);
+    res.json({ success: true, message: 'Ghế của phòng đã được xóa', data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+export const updateSeatTypeByHallHandler = async (req, res) => {
+  try {
+    const { hallId } = req.params;
+    const { seatType, priceModifier, totalPrice, basePrice } = req.body;
+    const modifier = priceModifier !== undefined ? priceModifier : (totalPrice && basePrice ? (totalPrice - basePrice) : 0);
+    const result = await (await import('../services/seatService.js')).updateSeatTypeByHall(hallId, { seatType, priceModifier: modifier });
+    res.json({ success: true, message: 'Đã cập nhật loại ghế thành công', data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+

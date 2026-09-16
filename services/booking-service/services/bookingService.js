@@ -2,78 +2,115 @@ import { Booking, BookingSeat, sequelize, Sequelize } from '../models/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import Redis from 'ioredis';
 import amqp from 'amqplib';
-import axios from 'axios';
+import httpClient from '../utils/httpClient.js';
 
 const PAYMENT_SERVICE = process.env.PAYMENT_SERVICE_URL || 'http://localhost:4005';
 const MOVIE_SERVICE = process.env.MOVIE_SERVICE_URL || 'http://localhost:4002';
 const SEAT_SERVICE = process.env.SEAT_SERVICE_URL || 'http://localhost:4003';
 const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://localhost:4001';
 
-// Initialize Redis client with fallback
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
-if (!redis) {
+// Khởi tạo Redis client với cơ chế dự phòng
+// Thiết kế: Sử dụng Redis làm Distributed Lock Manager (Trình quản lý khóa phân tán).
+// Nếu Redis gặp sự cố hoặc không được cấu hình, hệ thống sẽ tự động hạ cấp (fallback) sang cơ chế Pessimistic Locking ở tầng DB (SQL Server `LOCK.UPDATE`).
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 1 }) : null;
+if (redis) {
+  redis.on('error', (err) => console.warn('⚠️ [Redis Booking] Connection note:', err.message));
+} else {
   console.warn('⚠️ [Redis] REDIS_URL not configured. Distributed locking is disabled; falling back to DB transaction locks.');
 }
 
-// RabbitMQ notification publisher helper
+// Lua script chuẩn Redlock để giải phóng khóa an toàn: Chỉ xóa khóa nếu token khớp (chống xóa nhầm của phiên khác)
+const RELEASE_LOCK_LUA_SCRIPT = `
+  if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("del", KEYS[1])
+  else
+    return 0
+  end
+`;
+
+// Hàm hỗ trợ gửi thông báo qua HTTP làm phương án dự phòng/thay thế cho RabbitMQ
+async function sendNotificationViaHttp(msg) {
+  try {
+    const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4006';
+    await httpClient.post(`${notificationServiceUrl}/api/notifications/send`, msg);
+    console.log(`📧 [HTTP Notification] Successfully sent ticket notification via direct HTTP call`);
+  } catch (err) {
+    console.error('❌ [HTTP Notification] Failed to send ticket notification via HTTP fallback:', err.message);
+  }
+}
+
+// Hàm hỗ trợ phát (publish) thông báo tới RabbitMQ
 async function publishNotification(msg) {
   const mqUrl = process.env.CLOUDAMQP_URL || process.env.RABBITMQ_URL;
   if (!mqUrl) {
-    console.warn('⚠️ [RabbitMQ] CLOUDAMQP_URL/RABBITMQ_URL not configured. Email notification message cannot be published.');
+    console.warn('⚠️ [RabbitMQ] CLOUDAMQP_URL/RABBITMQ_URL not configured. Falling back to HTTP notification.');
+    await sendNotificationViaHttp(msg);
     return;
   }
   try {
     const conn = await amqp.connect(mqUrl);
     const channel = await conn.createChannel();
     const queue = 'ticket.notifications';
-    
+
     await channel.assertQueue(queue, { durable: true });
     channel.sendToQueue(queue, Buffer.from(JSON.stringify(msg)), { persistent: true });
     console.log(`📤 [RabbitMQ] Published ticket notification message to queue '${queue}'`);
-    
+
     await channel.close();
     await conn.close();
   } catch (err) {
     console.error('❌ [RabbitMQ] Error publishing notification message:', err.message);
+    console.log('🔄 [RabbitMQ Fallback] Attempting to send notification via HTTP...');
+    await sendNotificationViaHttp(msg);
   }
 }
 
-// Helper to acquire seat locks via Redis
-async function acquireSeatLocks(showtimeId, seatIds, ttlMs = 120000) {
-  if (!redis) return true; // fallback to DB lock
+// Hàm hỗ trợ khóa ghế (acquire seat locks) qua Redis với Lock Token
+// Thiết kế: Khóa phân tán (Distributed Lock) dựa trên cơ chế SET NX PX của Redis kèm token định danh phiên.
+// - Key format: lock:showtime:${showtimeId}:seat:${seatId}
+// - Value: lockToken (booking_code duy nhất)
+async function acquireSeatLocks(showtimeId, seatIds, ttlMs = 120000, lockToken = 'locked') {
+  if (!redis) return true; // dự phòng sử dụng khóa cơ sở dữ liệu (DB lock)
   const acquiredKeys = [];
   try {
     for (const seatId of seatIds) {
       const key = `lock:showtime:${showtimeId}:seat:${seatId}`;
-      const success = await redis.set(key, 'locked', 'NX', 'PX', ttlMs);
+      const success = await redis.set(key, lockToken, 'NX', 'PX', ttlMs);
       if (!success) {
-        // Release previously acquired keys in this transaction
+        // Giải phóng an toàn các khóa đã lấy được trước đó trong giao dịch này
         for (const k of acquiredKeys) {
-          await redis.del(k);
+          await redis.eval(RELEASE_LOCK_LUA_SCRIPT, 1, k, lockToken);
         }
-        return false; // Lock conflict
+        return false; // Tranh chấp khóa (Lock conflict)
       }
       acquiredKeys.push(key);
     }
     return true;
   } catch (err) {
     console.error('❌ [Redis Lock Error] Failed to acquire locks:', err.message);
-    return true; // Proceed with DB fallback lock if Redis fails
+    return true; // Tiếp tục với khóa DB dự phòng nếu Redis gặp sự cố
   }
 }
 
-// Helper to release seat locks via Redis
-async function releaseSeatLocks(showtimeId, seatIds) {
+// Hàm hỗ trợ giải phóng khóa ghế qua Redis an toàn bằng Lua Script
+async function releaseSeatLocks(showtimeId, seatIds, lockToken = null) {
   if (!redis || seatIds.length === 0) return;
   try {
     const keys = seatIds.map(seatId => `lock:showtime:${showtimeId}:seat:${seatId}`);
-    await redis.del(...keys);
+    if (lockToken) {
+      // Safe release: chỉ xóa nếu value trong Redis trùng với lockToken
+      for (const k of keys) {
+        await redis.eval(RELEASE_LOCK_LUA_SCRIPT, 1, k, lockToken);
+      }
+    } else {
+      await redis.del(...keys);
+    }
   } catch (err) {
     console.error('❌ [Redis Lock Error] Failed to release locks:', err.message);
   }
 }
 
-// Lock seats: create a booking with status='locked' and booking_seats
+// Khóa ghế: tạo một booking với trạng thái 'locked' và lưu thông tin ghế (booking_seats)
 export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSeconds = 120 }) => {
   if (!Array.isArray(seat_ids) || seat_ids.length === 0) {
     throw new Error('seat_ids required');
@@ -89,11 +126,12 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
     throw err;
   }
   const targetSeatIds = normalizedSeatIds;
+  const lockToken = uuidv4(); // Định danh token độc nhất cho phiên giữ ghế này
 
-  // 1. Try to acquire distributed locks in Redis
-  const lockedInRedis = await acquireSeatLocks(showtime_id, targetSeatIds, holdSeconds * 1000);
+  // 1. Thử lấy khóa phân tán (distributed locks) trong Redis
+  const lockedInRedis = await acquireSeatLocks(showtime_id, targetSeatIds, holdSeconds * 1000, lockToken);
   if (!lockedInRedis) {
-    // Conflict immediately
+    // Tranh chấp khóa xảy ra lập tức trả về lỗi cho Client
     return { success: false, conflicts: targetSeatIds };
   }
 
@@ -125,7 +163,9 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
     }
 
     if (conflicts.length > 0) {
-      await releaseSeatLocks(showtime_id, targetSeatIds);
+      // 1. Giải phóng ngay các khóa vừa tạo trên Redis bằng lockToken an toàn
+      await releaseSeatLocks(showtime_id, targetSeatIds, lockToken);
+      // 2. Rollback transaction DB
       if (!rolledBack) { await t.rollback(); rolledBack = true; }
       return { success: false, conflicts: Array.from(new Set(conflicts)) };
     }
@@ -134,33 +174,61 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
     const booking = await Booking.create({
       user_id,
       showtime_id,
-      booking_code: uuidv4(),
+      booking_code: lockToken,
       total_price: 0,
       status: 'locked',
       created_at: Sequelize.literal('SYSUTCDATETIME()'),
       expire_at: Sequelize.literal(`DATEADD(SECOND, ${Number(holdSeconds)}, SYSUTCDATETIME())`)
     }, { transaction: t });
 
-    // Fetch showtime details from movie-service
+    // Fetch showtime details with Redis caching
     let showtime;
-    try {
-      const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${showtime_id}`);
-      showtime = res.data;
-    } catch (apiErr) {
-      console.error('Failed fetching showtime from movie-service:', apiErr.message);
-      throw new Error('Showtime Service offline or Showtime not found');
+    const showtimeCacheKey = `showtime:meta:${showtime_id}`;
+    if (redis) {
+      try {
+        const cached = await redis.get(showtimeCacheKey);
+        if (cached) {
+          showtime = JSON.parse(cached);
+        }
+      } catch (cacheErr) {
+        console.warn('⚠️ [Redis] Error reading showtime cache:', cacheErr.message);
+      }
     }
 
-    // Fetch seat details from seat-service
-    const seatRows = await Promise.all(targetSeatIds.map(async (seatId) => {
+    if (!showtime) {
       try {
-        const res = await axios.get(`${SEAT_SERVICE}/api/seats/${seatId}`);
-        return res.data;
-      } catch (err) {
-        console.error(`Failed to get seat details for seatId ${seatId}:`, err.message);
-        throw new Error(`Seat ${seatId} not found or Seat Service offline`);
+        const res = await httpClient.get(`${MOVIE_SERVICE}/api/showtimes/${showtime_id}`);
+        showtime = res.data;
+        if (redis && showtime) {
+          await redis.set(showtimeCacheKey, JSON.stringify(showtime), 'EX', 300); // 5 mins TTL
+        }
+      } catch (apiErr) {
+        console.error('Failed fetching showtime from movie-service:', apiErr.message);
+        throw new Error('Showtime Service offline or Showtime not found');
       }
-    }));
+    }
+
+    // Fetch seat details from seat-service via Batch API
+    let seatRows = [];
+    try {
+      const res = await httpClient.post(`${SEAT_SERVICE}/api/seats/batch`, { seat_ids: targetSeatIds });
+      seatRows = res.data || [];
+    } catch (batchErr) {
+      console.warn('⚠️ [Seat Batch] Failed batch fetching, falling back to individual calls:', batchErr.message);
+      seatRows = await Promise.all(targetSeatIds.map(async (seatId) => {
+        try {
+          const res = await httpClient.get(`${SEAT_SERVICE}/api/seats/${seatId}`);
+          return res.data;
+        } catch (err) {
+          console.error(`Failed to get seat details for seatId ${seatId}:`, err.message);
+          throw new Error(`Seat ${seatId} not found or Seat Service offline`);
+        }
+      }));
+    }
+
+    if (seatRows.length !== targetSeatIds.length) {
+      throw new Error('Một hoặc nhiều ghế được chọn không tồn tại hoặc không hợp lệ');
+    }
 
     const bookingSeatCreates = seatRows.map(s => {
       const modifier = Number(s.price_modifier) || 1.0;
@@ -180,6 +248,7 @@ export const lockSeats = async ({ user_id, showtime_id, seat_ids = [], holdSecon
     await t.commit();
     return { success: true, booking: booking.toJSON() };
   } catch (err) {
+    // Giải phóng ngay các khóa đã lấy trên Redis để tránh rò rỉ khóa (Lock Leak)
     await releaseSeatLocks(showtime_id, targetSeatIds);
     if (!rolledBack) {
       try { await t.rollback(); } catch (e) { }
@@ -215,7 +284,7 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
     // Call payment-service to find a pending payment
     let payment = null;
     try {
-      const res = await axios.get(`${PAYMENT_SERVICE}/api/payments/booking/${booking.id}?status=pending`);
+      const res = await httpClient.get(`${PAYMENT_SERVICE}/api/payments/booking/${booking.id}?status=pending`);
       payment = res.data;
     } catch (err) {
       console.error('Failed to query payment-service for pending payment:', err.message);
@@ -231,7 +300,7 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
           response_code: payment_payload.response_code || null,
           amount: booking.total_price
         };
-        const updateRes = await axios.put(`${PAYMENT_SERVICE}/api/payments/record/${payment.id}`, updateData);
+        const updateRes = await httpClient.put(`${PAYMENT_SERVICE}/api/payments/record/${payment.id}`, updateData);
         payment = updateRes.data;
       } catch (err) {
         console.error('Failed to update payment record in payment-service:', err.message);
@@ -251,7 +320,7 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
           secure_hash: null,
           created_at: now
         };
-        const createRes = await axios.post(`${PAYMENT_SERVICE}/api/payments/record`, createData);
+        const createRes = await httpClient.post(`${PAYMENT_SERVICE}/api/payments/record`, createData);
         payment = createRes.data;
       } catch (err) {
         console.error('Failed to create paid payment record in payment-service:', err.message);
@@ -267,7 +336,7 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
     // Fetch related detail info via REST APIs for email notification
     let user = null;
     try {
-      const res = await axios.get(`${USER_SERVICE}/api/users/${booking.user_id}`);
+      const res = await httpClient.get(`${USER_SERVICE}/api/users/${booking.user_id}`);
       user = res.data;
     } catch (err) {
       console.error('Failed fetching user from user-service:', err.message);
@@ -275,7 +344,7 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
 
     let showtime = null;
     try {
-      const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${booking.showtime_id}`);
+      const res = await httpClient.get(`${MOVIE_SERVICE}/api/showtimes/${booking.showtime_id}`);
       showtime = res.data;
     } catch (err) {
       console.error('Failed fetching showtime from movie-service:', err.message);
@@ -284,7 +353,7 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
     let movie = null;
     if (showtime && showtime.movie_id) {
       try {
-        const res = await axios.get(`${MOVIE_SERVICE}/api/movies/${showtime.movie_id}`);
+        const res = await httpClient.get(`${MOVIE_SERVICE}/api/movies/${showtime.movie_id}`);
         movie = res.data.movie || res.data;
       } catch (err) {
         console.error('Failed fetching movie from movie-service:', err.message);
@@ -296,21 +365,28 @@ export const confirmPayment = async ({ booking_id, payment_method = 'unknown', p
       transaction: t
     });
 
-    const seats = await Promise.all(bookingSeats.map(async (bs) => {
-      try {
-        const res = await axios.get(`${SEAT_SERVICE}/api/seats/${bs.seat_id}`);
-        return res.data;
-      } catch (err) {
-        console.error(`Failed to get seat details for seatId ${bs.seat_id}:`, err.message);
-        return { id: bs.seat_id, row_name: '?', seat_number: bs.seat_id };
-      }
-    }));
+    const seatIds = bookingSeats.map(s => s.seat_id);
+    let seats = [];
+    try {
+      const res = await httpClient.post(`${SEAT_SERVICE}/api/seats/batch`, { seat_ids: seatIds });
+      seats = Array.isArray(res.data) ? res.data : [];
+    } catch (batchErr) {
+      console.warn('⚠️ [Seat Batch] Falling back to individual seat calls:', batchErr.message);
+      seats = await Promise.all(bookingSeats.map(async (bs) => {
+        try {
+          const res = await httpClient.get(`${SEAT_SERVICE}/api/seats/${bs.seat_id}`);
+          return res.data;
+        } catch (err) {
+          console.error(`Failed to get seat details for seatId ${bs.seat_id}:`, err.message);
+          return { id: bs.seat_id, row_name: '?', seat_number: bs.seat_id };
+        }
+      }));
+    }
 
     const seatList = seats.map(s => `${s.row_name}${s.seat_number}`).join(', ');
 
-    // Release Redis lock since booking is completed successfully
-    const seatIds = bookingSeats.map(s => s.seat_id);
-    await releaseSeatLocks(booking.showtime_id, seatIds);
+    // Release Redis lock safely using booking_code token since booking is completed successfully
+    await releaseSeatLocks(booking.showtime_id, seatIds, booking.booking_code);
 
     await t.commit();
 
@@ -382,7 +458,7 @@ export const expireLockedBookings = async () => {
 export const getUserBookings = async (userId) => {
   try {
     console.log('Getting bookings for user:', userId);
-    
+
     const bookings = await Booking.findAll({
       where: { user_id: userId },
       include: [{ model: BookingSeat }],
@@ -392,47 +468,74 @@ export const getUserBookings = async (userId) => {
     const showtimeIds = [...new Set(bookings.map(b => b.showtime_id).filter(Boolean))];
     const seatIds = [...new Set(bookings.flatMap(b => b.BookingSeats?.map(bs => bs.seat_id) || []).filter(Boolean))];
 
-    // Fetch showtimes from movie-service
-    const showtimes = await Promise.all(showtimeIds.map(async (sid) => {
+    // 1. Fetch showtimes from movie-service via Batch API
+    let showtimes = [];
+    if (showtimeIds.length > 0) {
       try {
-        const res = await axios.get(`${MOVIE_SERVICE}/api/showtimes/${sid}`);
-        return res.data;
+        const res = await httpClient.post(`${MOVIE_SERVICE}/api/showtimes/batch`, { ids: showtimeIds });
+        showtimes = Array.isArray(res.data) ? res.data : [];
       } catch (err) {
-        console.error(`Failed fetching showtime ${sid}:`, err.message);
-        return null;
+        console.warn('⚠️ [Showtime Batch] Failed batch fetching, falling back to individual calls:', err.message);
+        showtimes = (await Promise.all(showtimeIds.map(async (sid) => {
+          try {
+            const res = await httpClient.get(`${MOVIE_SERVICE}/api/showtimes/${sid}`);
+            return res.data;
+          } catch (e) {
+            console.error(`Failed fetching showtime ${sid}:`, e.message);
+            return null;
+          }
+        }))).filter(Boolean);
       }
-    }));
+    }
     const showtimeMap = showtimes.filter(Boolean).reduce((acc, st) => {
       acc[st.id] = st;
       return acc;
     }, {});
 
-    // Fetch movies for these showtimes
+    // 2. Fetch movies for these showtimes via Batch API
     const movieIds = [...new Set(showtimes.filter(Boolean).map(st => st.movie_id).filter(Boolean))];
-    const movies = await Promise.all(movieIds.map(async (mid) => {
+    let movies = [];
+    if (movieIds.length > 0) {
       try {
-        const res = await axios.get(`${MOVIE_SERVICE}/api/movies/${mid}`);
-        return res.data.movie || res.data;
+        const res = await httpClient.post(`${MOVIE_SERVICE}/api/movies/batch`, { ids: movieIds });
+        movies = Array.isArray(res.data) ? res.data : [];
       } catch (err) {
-        console.error(`Failed fetching movie ${mid}:`, err.message);
-        return null;
+        console.warn('⚠️ [Movie Batch] Failed batch fetching, falling back to individual calls:', err.message);
+        movies = (await Promise.all(movieIds.map(async (mid) => {
+          try {
+            const res = await httpClient.get(`${MOVIE_SERVICE}/api/movies/${mid}`);
+            return res.data.movie || res.data;
+          } catch (e) {
+            console.error(`Failed fetching movie ${mid}:`, e.message);
+            return null;
+          }
+        }))).filter(Boolean);
       }
-    }));
+    }
     const movieMap = movies.filter(Boolean).reduce((acc, m) => {
       acc[m.id] = m;
       return acc;
     }, {});
 
-    // Fetch seats from seat-service
-    const seats = await Promise.all(seatIds.map(async (sid) => {
+    // 3. Fetch seats from seat-service via Batch API
+    let seats = [];
+    if (seatIds.length > 0) {
       try {
-        const res = await axios.get(`${SEAT_SERVICE}/api/seats/${sid}`);
-        return res.data;
+        const res = await httpClient.post(`${SEAT_SERVICE}/api/seats/batch`, { seat_ids: seatIds });
+        seats = Array.isArray(res.data) ? res.data : [];
       } catch (err) {
-        console.error(`Failed fetching seat ${sid}:`, err.message);
-        return null;
+        console.warn('⚠️ [Seat Batch] Failed batch fetching, falling back to individual calls:', err.message);
+        seats = (await Promise.all(seatIds.map(async (sid) => {
+          try {
+            const res = await httpClient.get(`${SEAT_SERVICE}/api/seats/${sid}`);
+            return res.data;
+          } catch (e) {
+            console.error(`Failed fetching seat ${sid}:`, e.message);
+            return null;
+          }
+        }))).filter(Boolean);
       }
-    }));
+    }
     const seatMap = seats.filter(Boolean).reduce((acc, s) => {
       acc[s.id] = s;
       return acc;
@@ -508,7 +611,7 @@ export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
 
     // Void các payment pending cũ nếu có
     try {
-      await axios.post(`${PAYMENT_SERVICE}/api/payments/void-pending`, { booking_id: booking.id });
+      await httpClient.post(`${PAYMENT_SERVICE}/api/payments/void-pending`, { booking_id: booking.id });
     } catch (err) {
       console.error('Failed to void pending payments in payment-service:', err.message);
     }
@@ -516,7 +619,7 @@ export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
     // Call external Payment Service to create NEW ZaloPay order
     let zalopayResult;
     try {
-      const response = await axios.post(`${PAYMENT_SERVICE}/api/payments/orders`, {
+      const response = await httpClient.post(`${PAYMENT_SERVICE}/api/payments/orders`, {
         booking_id: booking.id,
         booking_code: booking.booking_code,
         amount: amount,
@@ -550,12 +653,12 @@ export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
         status: 'pending',
         created_at: now
       };
-      const createRes = await axios.post(`${PAYMENT_SERVICE}/api/payments/record`, createData);
+      const createRes = await httpClient.post(`${PAYMENT_SERVICE}/api/payments/record`, createData);
       payment = createRes.data;
     } catch (err) {
       console.error('Failed to create pending payment record in payment-service:', err.message);
       try {
-        const getRes = await axios.get(`${PAYMENT_SERVICE}/api/payments/booking/${booking.id}?status=pending`);
+        const getRes = await httpClient.get(`${PAYMENT_SERVICE}/api/payments/booking/${booking.id}?status=pending`);
         payment = getRes.data;
       } catch (queryErr) {
         throw new Error(`Failed to establish payment record: ${err.message}`);
@@ -573,7 +676,7 @@ export const createZaloPayQR = async ({ booking_id, expiresIn = 300 }) => {
       payment_id: payment?.id || null
     };
   } catch (err) {
-    try { await t.rollback(); } catch (e) {}
+    try { await t.rollback(); } catch (e) { }
     console.error('Error creating ZaloPay QR:', err);
     throw err;
   }
@@ -592,17 +695,17 @@ export const cancelBooking = async ({ booking_id }) => {
     const booking = await Booking.findByPk(booking_id, { transaction: t, lock: t.LOCK.UPDATE });
     if (!booking) { await t.rollback(); return { success: false, message: 'Booking not found' }; }
     if (booking.status === 'confirmed') { await t.rollback(); return { success: false, message: 'Cannot cancel a confirmed booking' }; }
-    
+
     booking.status = 'cancelled';
     await booking.save({ transaction: t });
-    
+
     // Release Redis lock as it is cancelled
     const bookingSeats = await BookingSeat.findAll({ where: { booking_id }, transaction: t });
     const seatIds = bookingSeats.map(s => s.seat_id);
-    await releaseSeatLocks(booking.showtime_id, seatIds);
+    await releaseSeatLocks(booking.showtime_id, seatIds, booking.booking_code);
 
     try {
-      await axios.post(`${PAYMENT_SERVICE}/api/payments/void-pending`, { booking_id: booking.id });
+      await httpClient.post(`${PAYMENT_SERVICE}/api/payments/void-pending`, { booking_id: booking.id });
     } catch (err) {
       console.error('Failed to void pending payments in payment-service:', err.message);
     }
@@ -619,57 +722,57 @@ export const cancelBooking = async ({ booking_id }) => {
 export const refundBooking = async ({ booking_id, user_id, reason = null }) => {
   const t = await sequelize.transaction();
   try {
-    const booking = await Booking.findByPk(booking_id, { 
+    const booking = await Booking.findByPk(booking_id, {
       include: [{ model: BookingSeat, attributes: ['id', 'seat_id'] }],
-      transaction: t, 
-      lock: t.LOCK.UPDATE 
+      transaction: t,
+      lock: t.LOCK.UPDATE
     });
-    
+
     if (!booking) {
       await t.rollback();
       return { success: false, message: 'Booking not found' };
     }
-    
+
     if (booking.status !== 'confirmed') {
       await t.rollback();
       return { success: false, message: 'Only confirmed bookings can be refunded' };
     }
-    
+
     // Fetch paid payment details from payment-service
     let originalPayment = null;
     try {
-      const res = await axios.get(`${PAYMENT_SERVICE}/api/payments/booking/${booking.id}?status=paid`);
+      const res = await httpClient.get(`${PAYMENT_SERVICE}/api/payments/booking/${booking.id}?status=paid`);
       originalPayment = res.data;
     } catch (err) {
       console.error('Failed fetching original payment from payment-service:', err.message);
     }
-    
+
     if (!originalPayment) {
       await t.rollback();
-      return { 
-        success: false, 
-        message: 'No successful payment record found for this booking.' 
+      return {
+        success: false,
+        message: 'No successful payment record found for this booking.'
       };
     }
-    
+
     const isZaloPay = originalPayment.payment_method === 'zalopay';
     let zalopayRefundResult = null;
-    
+
     if (isZaloPay) {
       const zpTransId = String(originalPayment.transaction_ref);
       const appTransId = originalPayment.payment_code;
-      
+
       if (!zpTransId || zpTransId.length < 10) {
         await t.rollback();
-        return { 
-          success: false, 
+        return {
+          success: false,
           message: 'Invalid ZaloPay transaction ID. This booking may not have been paid through ZaloPay properly.'
         };
       }
 
       // Call external Payment Service to initiate refund
       try {
-        const response = await axios.post(`${PAYMENT_SERVICE}/api/payments/refunds`, {
+        const response = await httpClient.post(`${PAYMENT_SERVICE}/api/payments/refunds`, {
           zp_trans_id: zpTransId,
           app_trans_id: appTransId,
           amount: booking.total_price,
@@ -688,14 +791,14 @@ export const refundBooking = async ({ booking_id, user_id, reason = null }) => {
 
       if (!zalopayRefundResult.success) {
         await t.rollback();
-        return { 
-          success: false, 
+        return {
+          success: false,
           message: `ZaloPay refund failed: ${zalopayRefundResult.return_message || 'Unknown error'}`,
           zalopay_error: zalopayRefundResult.zalopay_error || zalopayRefundResult
         };
       }
     }
-    
+
     let refund = null;
     try {
       const createData = {
@@ -711,24 +814,24 @@ export const refundBooking = async ({ booking_id, user_id, reason = null }) => {
         secure_hash: reason || 'User requested refund',
         created_at: new Date()
       };
-      const refundRes = await axios.post(`${PAYMENT_SERVICE}/api/payments/record`, createData);
+      const refundRes = await httpClient.post(`${PAYMENT_SERVICE}/api/payments/record`, createData);
       refund = refundRes.data;
 
       // Update original payment status to refunded
-      await axios.put(`${PAYMENT_SERVICE}/api/payments/record/${originalPayment.id}`, { status: 'refunded' });
+      await httpClient.put(`${PAYMENT_SERVICE}/api/payments/record/${originalPayment.id}`, { status: 'refunded' });
     } catch (err) {
       console.error('Failed to create refund payment record in payment-service:', err.message);
     }
-    
+
     booking.status = 'refunded';
     await booking.save({ transaction: t });
-    
+
     // Release Redis lock
     const seatIds = booking.BookingSeats?.map(s => s.seat_id) || [];
-    await releaseSeatLocks(booking.showtime_id, seatIds);
+    await releaseSeatLocks(booking.showtime_id, seatIds, booking.booking_code);
 
     await t.commit();
-    
+
     let refundMessage = 'Booking refunded successfully.';
     if (isZaloPay && zalopayRefundResult) {
       if (zalopayRefundResult.return_code === 1) {
@@ -737,10 +840,10 @@ export const refundBooking = async ({ booking_id, user_id, reason = null }) => {
         refundMessage = 'Yêu cầu hoàn tiền đã được gửi đến ZaloPay! Tiền sẽ được hoàn vào tài khoản ZaloPay của bạn.';
       }
     }
-    
-    return { 
-      success: true, 
-      booking: booking.toJSON(), 
+
+    return {
+      success: true,
+      booking: booking.toJSON(),
       refund: refund,
       zalopay_refund: zalopayRefundResult,
       message: refundMessage
@@ -758,7 +861,7 @@ export const expirePendingPayments = async () => {
     // 1. Call payment-service to expire pending payments in its DB
     let expiredInfo = { expiredCount: 0, bookingIds: [] };
     try {
-      const res = await axios.post(`${PAYMENT_SERVICE}/api/payments/expire-pending-records`);
+      const res = await httpClient.post(`${PAYMENT_SERVICE}/api/payments/expire-pending-records`);
       expiredInfo = res.data;
     } catch (apiErr) {
       console.error('Failed calling payment-service to expire records:', apiErr.message);
@@ -780,7 +883,7 @@ export const expirePendingPayments = async () => {
     // 3. Release Redis seat locks for each booking
     for (const b of bookingsToExpire) {
       const seatIds = b.BookingSeats?.map(x => x.seat_id) || [];
-      await releaseSeatLocks(b.showtime_id, seatIds);
+      await releaseSeatLocks(b.showtime_id, seatIds, b.booking_code);
     }
 
     // 4. Mark bookings as expired

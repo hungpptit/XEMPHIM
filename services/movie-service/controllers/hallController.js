@@ -6,10 +6,10 @@
 export const createHall = async (req, res) => {
   try {
     const { name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id, vipRows } = req.body;
-    const { CinemaHall, Seat } = req.app.locals.models;
+    const { CinemaHall } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
-    const hall = await hallService.createHall(CinemaHall, Seat, {
+    const hall = await hallService.createHall(CinemaHall, null, {
       name, rows, seatsPerRow, hallType, description, cinemaId, cinema_id, vipRows
     });
 
@@ -73,10 +73,10 @@ export const getHallById = async (req, res) => {
 export const getHallDetail = async (req, res) => {
   try {
     const { hallId } = req.params;
-    const { CinemaHall, Seat, Cinema } = req.app.locals.models;
+    const { CinemaHall, Cinema } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
-    const detail = await hallService.getHallDetail(CinemaHall, Seat, Cinema, { hallId });
+    const detail = await hallService.getHallDetail(CinemaHall, null, Cinema, { hallId });
 
     res.json({
       success: true,
@@ -140,10 +140,10 @@ export const updateHall = async (req, res) => {
 export const deleteHall = async (req, res) => {
   try {
     const { hallId } = req.params;
-    const { CinemaHall, Seat, Showtime } = req.app.locals.models;
+    const { CinemaHall, Showtime } = req.app.locals.models;
     
     const hallService = await import('../services/hallService.js');
-    const result = await hallService.deleteHall(CinemaHall, Seat, Showtime, hallId);
+    const result = await hallService.deleteHall(CinemaHall, null, Showtime, hallId);
 
     res.json({
       success: true,
@@ -158,3 +158,4 @@ export const deleteHall = async (req, res) => {
     });
   }
 };
+

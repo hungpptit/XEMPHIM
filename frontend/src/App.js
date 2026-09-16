@@ -1,7 +1,6 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 // import { Agentation } from 'agentation'; // nhớ comment czí này lại
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -16,12 +15,26 @@ import Profile from './modules/Auth/Profile';
 import AdminPanel from './modules/Admin';
 import './styles/theme.module.css';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const mainEl = document.getElementById('main-content');
+    if (mainEl) {
+      mainEl.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <Router>
-      <div className="App">
+      <ScrollToTop />
+      <div className="App flex flex-col h-screen overflow-hidden bg-[#121316]">
         <Navbar />
-        <main>
+        <main id="main-content" className="flex-1 w-full overflow-y-auto relative">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/movies" element={<Home />} />

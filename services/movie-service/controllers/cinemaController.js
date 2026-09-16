@@ -113,9 +113,9 @@ export const deleteCinema = async (req, res) => {
 
 export const getCinemaStats = async (req, res) => {
   try {
-    const { Cinema, CinemaHall, Seat, Movie } = req.app.locals.models;
+    const { Cinema, CinemaHall, Movie } = req.app.locals.models;
     const cinemaService = await import('../services/cinemaService.js');
-    const stats = await cinemaService.getCinemaStats(Cinema, CinemaHall, Seat, Movie);
+    const stats = await cinemaService.getCinemaStats(Cinema, CinemaHall, Movie);
 
     res.json({
       success: true,
@@ -129,3 +129,4 @@ export const getCinemaStats = async (req, res) => {
     });
   }
 };
+

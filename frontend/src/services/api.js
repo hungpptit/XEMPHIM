@@ -1,8 +1,12 @@
 import axios from 'axios';
+import { getFallbackResponse } from '../mock/mockFallback';
+
+const rawBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/$/, '')}/api`;
 
 const API = axios.create({
-  baseURL: 'http://localhost:8080/api',
-  timeout: 10000,
+  baseURL: API_BASE_URL,
+  timeout: 5000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -12,9 +16,26 @@ const API = axios.create({
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      window.location.href = '/login';
+    const isNetworkError = !error.response;
+    const status = error.response?.status;
+    const isServerError = [404, 500, 502, 503, 504].includes(status);
+
+    if (isNetworkError || isServerError) {
+      const url = error.config?.url || '';
+      const method = error.config?.method || 'get';
+      const fallback = getFallbackResponse(url, method, error.config?.data);
+      if (fallback !== null) {
+        return Promise.resolve({
+          data: fallback,
+          status: 200,
+          statusText: 'OK (Live Demo Fallback)',
+          headers: {},
+          config: error.config,
+        });
+      }
     }
+
+    // Do NOT redirect window.location.href on 401 - it causes infinite reload loops when unauthenticated
     return Promise.reject(error);
   }
 );
